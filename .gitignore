@@ -90,3 +90,7 @@ yarn-error.log*
 vendor/
 composer.phar
 composer.lock
+
+# Typespec
+node_modules
+package-lock.json

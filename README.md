@@ -1,48 +1,88 @@
-# EventHub - NoSQL Database Project
+# ndbx
 
-[![EventHub](https://github.com/{your_username}/{your_repo}/actions/workflows/eventhub.yml/badge.svg)](https://github.com/{your_username}/{your_repo}/actions/workflows/eventhub.yml)
+Backend-сервис для проекта по NoSQL базам данных.
+Проект реализован на Go и включает HTTP API, автоматическую документацию OpenAPI, а также инфраструктуру для профилирования.
 
-Backend-сервис платформы мероприятий для практического изучения NoSQL баз данных.
+## Ключевые возможности
 
-## С чего начать
+- HTTP API с минимальным набором эндпоинтов для проверки доступности.
+- Автогенерация OpenAPI спецификации и клиентского/серверного кода.
+- Встроенная документация в Swagger UI и ReDoc.
+- Профилирование через pprof.
 
-1. **‼️ Настройте репозиторий** — проведите обязательную настройку контрибьюторов и защиты ветки (см. ниже)
-2. **[Лабораторные работы](https://github.com/sitnikovik/ndbx/tree/main/docs/lab)** — технические задания для каждой лабораторной работы
-3. **[CONTRIBUTING.md](CONTRIBUTING.md)** — требования к структуре проекта, процесс разработки и проверки
-4. **[Документация курса](https://github.com/sitnikovik/ndbx)** — методические материалы и дополнительные ресурсы
+## Архитектура и структура
 
-> 💡 Не забудьте поменять `{your_username}` и `{your_repo}` в badge на ваши имя пользователя и название репозитория.
+- `cmd/app` — точка входа приложения.
+- `internal/app` — инициализация сервисов и жизненный цикл.
+- `internal/router` — HTTP-обработчики.
+- `pkg/httpserver` — инфраструктура HTTP сервера и middleware.
+- `config` — загрузка конфигурации из файла окружения.
+- `docs` — OpenAPI и статические страницы документации.
 
-## Настройка репозитория
+## Конфигурация
 
-### Защита основной ветки
+Приложение читает конфигурацию из файла, путь к которому задается переменной окружения `CONFIG_PATH`.
+Формат — пары `KEY=VALUE` (как в `.env`).
 
-После создания репозитория из шаблона **обязательно настройте правила защиты для ветки `main`**:
+Пример `.env.local`:
 
-1. Откройте **Settings** → **Branches** → **Add classic branch protection rule**
-2. В поле **Branch name pattern** укажите: `main`
-3. Включите следующие опции:
-   - **Require a pull request before merging**
-     - Require approvals: **1**: требует минимум одного одобрения перед слиянием
-   - ***Require status checks to pass before merging***
-     - Выберите *"autograder"*: проверит все лабораторные работы автоматически
-     - ***Require branches to be up to date before merging*** (рекомендуется):
-     требует, чтобы ветка PR была синхронизирована с последними изменениями из основной ветки перед слиянием
-   - ***Lock branch***: запрещает прямые коммиты в основную ветку
-   - ***Do not allow bypassing the above settings***: запрещает обход настроек защиты ветки
-4. Нажмите **Create** или **Save changes**
+```env
+LOG_LEVEL=info
+HTTP_PORT=8080
+PPROF_PORT=6060
+```
 
-> ⚠️ **Важно:** Без этих настроек автоматические проверки не будут блокировать PR с ошибками.
+## Быстрый старт (локально)
 
-### Добавление коллабораторов
+```bash
+make run-local
+```
 
-Чтобы преподаватели могли проводить код-ревью:
+Команда ожидает, что файл `.env.local` существует в корне проекта.
 
-1. Откройте **Settings** → **Collaborators**
-2. Нажмите **Add people**
-3. Добавьте всех кто есть в списке ревьюеров в файле [CODEOWNERS](CODEOWNERS)
-4. Выберите роль: **Write** (или выше), иначе ревьюер не сможет одобрить PR
+## Запуск в Docker
 
-## Помощь
+```bash
+make run
+make stop
+```
 
-Возникли вопросы? → [@sitnikovik](https://t.me/sitnikovik)
+## Документация API
+
+После запуска сервиса доступны следующие страницы:
+
+- ReDoc: `http://localhost:8080/api/docs`
+- Swagger UI: `http://localhost:8080/api/swagger`
+
+## Эндпоинты
+
+- Healthcheck: `GET /health`.
+- Ping: `GET /api/ping`.
+
+## Профилирование (pprof)
+
+pprof слушает порт `PPROF_PORT` (по умолчанию `6060`). Примеры:
+
+```bash
+go tool pprof -http=:8080 http://localhost:6060/debug/pprof/profile?seconds=10
+go tool pprof -http=:8080 http://localhost:6060/debug/pprof/trace?seconds=10
+```
+
+## Генерация кода
+
+```bash
+make code-gen
+```
+
+Команда запускает TypeSpec компиляцию и генерацию серверного кода из OpenAPI.
+
+## Тесты и качество кода
+
+```bash
+make test // TODO
+make lint
+```
+
+## Вклад в проект
+
+Правила разработки и формат PR описаны в [CONTRIBUTING.md](CONTRIBUTING.md). Ответственные за ревью — в [CODEOWNERS](CODEOWNERS).

@@ -1,0 +1,23 @@
+openapi: 3.0.0
+info:
+  title: ndbx-service
+  version: 0.0.0
+tags: []
+paths:
+  /api/ping:
+    get:
+      operationId: Api_ping
+      summary: ping
+      parameters: []
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            text/plain:
+              schema:
+                type: string
+components: {}
+servers:
+  - url: http://localhost:8080
+    description: localhost
+    variables: {}
