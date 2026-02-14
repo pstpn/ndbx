@@ -1,6 +1,7 @@
 package logger
 
 import (
+	"io"
 	"os"
 	"strings"
 
@@ -21,6 +22,10 @@ type Logger struct {
 }
 
 func New(level string) *Logger {
+	return NewWithOutput(level, os.Stdout)
+}
+
+func NewWithOutput(level string, w io.Writer) *Logger {
 	var l zerolog.Level
 
 	switch strings.ToLower(level) {
@@ -38,7 +43,7 @@ func New(level string) *Logger {
 
 	zerolog.SetGlobalLevel(l)
 
-	logger := zerolog.New(os.Stdout).
+	logger := zerolog.New(w).
 		With().
 		Timestamp().
 		Logger()
