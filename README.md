@@ -28,7 +28,7 @@ Backend-сервис для проекта по NoSQL базам данных.
 
 ```env
 LOG_LEVEL=info
-HTTP_PORT=8080
+APP_PORT=8080
 PPROF_PORT=6060
 ```
 
@@ -79,7 +79,7 @@ make code-gen
 ## Тесты и качество кода
 
 ```bash
-make test // TODO
+make test
 make lint
 ```
 
