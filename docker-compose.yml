@@ -6,8 +6,8 @@ services:
       dockerfile: Dockerfile
     container_name: backend-app
     ports:
-      - "8080:8080"
-      - "6060:6060"
+      - "8080:${APP_PORT}"
+      - "6060:${PPROF_PORT}"
     networks:
       - backend-network
     restart: no
