@@ -6,13 +6,13 @@ services:
       dockerfile: Dockerfile
     container_name: backend-app
     ports:
-      - "8080:${APP_PORT}"
-      - "6060:${PPROF_PORT}"
+      - "${APP_PORT}:${APP_PORT}"
+      - "${PPROF_PORT}:${PPROF_PORT}"
     networks:
       - backend-network
     restart: no
     healthcheck:
-      test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1:8080/health"]
+      test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1:${APP_PORT}/health"]
       interval: 10s
       timeout: 2s
       retries: 5
