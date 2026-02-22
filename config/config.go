@@ -17,8 +17,9 @@ type LoggerConfig struct {
 }
 
 type HTTPConfig struct {
-	Port      int `env:"APP_PORT,required"`
-	PprofPort int `env:"PPROF_PORT,required"`
+	Host      string `env:"APP_HOST,required"`
+	Port      int    `env:"APP_PORT,required"`
+	PprofPort int    `env:"PPROF_PORT,required"`
 }
 
 func NewConfig() (*Config, error) {

@@ -23,9 +23,6 @@ COPY ./docs/ ./docs/
 
 COPY --from=builder /app/gopher .
 
-EXPOSE 8080
-EXPOSE 6060
-
 ENV CONFIG_PATH /app/.env.local
 
 CMD ["./gopher"]

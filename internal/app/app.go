@@ -31,9 +31,9 @@ func Run(ctx context.Context, cfg *config.Config) error {
 		return fmt.Errorf("new oas handler: %w", err)
 	}
 
-	httpAddr := fmt.Sprintf("0.0.0.0:%d", cfg.Port)
+	httpAddr := fmt.Sprintf("%s:%d", cfg.Host, cfg.Port)
 	httpServer := httpserver.NewServer(l)
-	pprofAddr := fmt.Sprintf("0.0.0.0:%d", cfg.PprofPort)
+	pprofAddr := fmt.Sprintf("%s:%d", cfg.Host, cfg.PprofPort)
 	pprofServer := http.Server{Addr: pprofAddr, ReadHeaderTimeout: time.Second}
 
 	gr.Go(func() error {
