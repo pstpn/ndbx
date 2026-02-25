@@ -1,0 +1,23 @@
+services:
+  backend:
+    image: backend-app:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: backend-app
+    ports:
+      - "${APP_PORT}:${APP_PORT}"
+      - "${PPROF_PORT}:${PPROF_PORT}"
+    networks:
+      - backend-network
+    restart: no
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1:${APP_PORT}/health"]
+      interval: 10s
+      timeout: 2s
+      retries: 5
+
+networks:
+  backend-network:
+    name: backend-network
+    driver: bridge
