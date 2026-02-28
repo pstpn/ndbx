@@ -11,6 +11,68 @@ import (
 	"github.com/ogen-go/ogen/uri"
 )
 
+// APIHealthParams is parameters of Api_health operation.
+type APIHealthParams struct {
+	Cookie OptString `json:",omitempty,omitzero"`
+}
+
+func unpackAPIHealthParams(packed middleware.Parameters) (params APIHealthParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "Cookie",
+			In:   "header",
+		}
+		if v, ok := packed[key]; ok {
+			params.Cookie = v.(OptString)
+		}
+	}
+	return params
+}
+
+func decodeAPIHealthParams(args [0]string, argsEscaped bool, r *http.Request) (params APIHealthParams, _ error) {
+	h := uri.NewHeaderDecoder(r.Header)
+	// Decode header: Cookie.
+	if err := func() error {
+		cfg := uri.HeaderParameterDecodingConfig{
+			Name:    "Cookie",
+			Explode: false,
+		}
+		if err := h.HasParam(cfg); err == nil {
+			if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotCookieVal string
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotCookieVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.Cookie.SetTo(paramsDotCookieVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "Cookie",
+			In:   "header",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
 // APISessionParams is parameters of Api_session operation.
 type APISessionParams struct {
 	Cookie OptString `json:",omitempty,omitzero"`

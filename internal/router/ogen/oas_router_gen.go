@@ -11,6 +11,9 @@ import (
 )
 
 var (
+	rn1AllowedHeaders = map[string]string{
+		"GET": "Cookie",
+	}
 	rn3AllowedHeaders = map[string]string{
 		"POST": "Cookie",
 	}
@@ -54,9 +57,9 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			break
 		}
 		switch elem[0] {
-		case '/': // Prefix: "/api/"
+		case '/': // Prefix: "/"
 
-			if l := len("/api/"); len(elem) >= l && elem[0:l] == "/api/" {
+			if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
 				elem = elem[l:]
 			} else {
 				break
@@ -66,9 +69,9 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				break
 			}
 			switch elem[0] {
-			case 'p': // Prefix: "ping"
+			case 'h': // Prefix: "health"
 
-				if l := len("ping"); len(elem) >= l && elem[0:l] == "ping" {
+				if l := len("health"); len(elem) >= l && elem[0:l] == "health" {
 					elem = elem[l:]
 				} else {
 					break
@@ -78,11 +81,11 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 					// Leaf node.
 					switch r.Method {
 					case "GET":
-						s.handleAPIPingRequest([0]string{}, elemIsEscaped, w, r)
+						s.handleAPIHealthRequest([0]string{}, elemIsEscaped, w, r)
 					default:
 						s.notAllowed(w, r, notAllowedParams{
 							allowedMethods: "GET",
-							allowedHeaders: nil,
+							allowedHeaders: rn1AllowedHeaders,
 							acceptPost:     "",
 							acceptPatch:    "",
 						})
@@ -204,9 +207,9 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 			break
 		}
 		switch elem[0] {
-		case '/': // Prefix: "/api/"
+		case '/': // Prefix: "/"
 
-			if l := len("/api/"); len(elem) >= l && elem[0:l] == "/api/" {
+			if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
 				elem = elem[l:]
 			} else {
 				break
@@ -216,9 +219,9 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 				break
 			}
 			switch elem[0] {
-			case 'p': // Prefix: "ping"
+			case 'h': // Prefix: "health"
 
-				if l := len("ping"); len(elem) >= l && elem[0:l] == "ping" {
+				if l := len("health"); len(elem) >= l && elem[0:l] == "health" {
 					elem = elem[l:]
 				} else {
 					break
@@ -228,11 +231,11 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 					// Leaf node.
 					switch method {
 					case "GET":
-						r.name = APIPingOperation
-						r.summary = "ping"
-						r.operationID = "Api_ping"
+						r.name = APIHealthOperation
+						r.summary = "healthcheck with session"
+						r.operationID = "Api_health"
 						r.operationGroup = ""
-						r.pathPattern = "/api/ping"
+						r.pathPattern = "/health"
 						r.args = args
 						r.count = 0
 						return r, true
@@ -257,7 +260,7 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 						r.summary = "create or extend user's session"
 						r.operationID = "Api_session"
 						r.operationGroup = ""
-						r.pathPattern = "/api/session"
+						r.pathPattern = "/session"
 						r.args = args
 						r.count = 0
 						return r, true

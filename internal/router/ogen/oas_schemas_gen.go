@@ -2,24 +2,6 @@
 
 package api
 
-import (
-	"io"
-)
-
-type APIPingOK struct {
-	Data io.Reader
-}
-
-// Read reads data from the Data reader.
-//
-// Kept to satisfy the io.Reader interface.
-func (s APIPingOK) Read(p []byte) (n int, err error) {
-	if s.Data == nil {
-		return 0, io.EOF
-	}
-	return s.Data.Read(p)
-}
-
 // APISessionCreated is response for APISession operation.
 type APISessionCreated struct {
 	SetCookie string
@@ -53,6 +35,47 @@ func (s *APISessionOK) SetSetCookie(val string) {
 }
 
 func (*APISessionOK) aPISessionRes() {}
+
+// Ref: #/components/schemas/HealthResponse
+type HealthResponse struct {
+	Status string `json:"status"`
+}
+
+// GetStatus returns the value of Status.
+func (s *HealthResponse) GetStatus() string {
+	return s.Status
+}
+
+// SetStatus sets the value of Status.
+func (s *HealthResponse) SetStatus(val string) {
+	s.Status = val
+}
+
+// HealthResponseHeaders wraps HealthResponse with response headers.
+type HealthResponseHeaders struct {
+	Cookie   OptString
+	Response HealthResponse
+}
+
+// GetCookie returns the value of Cookie.
+func (s *HealthResponseHeaders) GetCookie() OptString {
+	return s.Cookie
+}
+
+// GetResponse returns the value of Response.
+func (s *HealthResponseHeaders) GetResponse() HealthResponse {
+	return s.Response
+}
+
+// SetCookie sets the value of Cookie.
+func (s *HealthResponseHeaders) SetCookie(val OptString) {
+	s.Cookie = val
+}
+
+// SetResponse sets the value of Response.
+func (s *HealthResponseHeaders) SetResponse(val HealthResponse) {
+	s.Response = val
+}
 
 // NewOptString returns new OptString with value set to v.
 func NewOptString(v string) OptString {

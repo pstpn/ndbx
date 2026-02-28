@@ -76,7 +76,7 @@ func (s *SessionService) CreateOrExtendSession(ctx context.Context, req *dto.Cre
 	}
 
 	return &dto.CreateOrExtendSessionResp{
-		SID:           newSID,
+		SID:           res.SID,
 		MaxAgeSeconds: s.sessionTTLSeconds,
 		IsCreated:     res.IsCreated,
 	}, nil

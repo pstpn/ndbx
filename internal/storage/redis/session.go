@@ -32,8 +32,8 @@ func (s *SessionStorage) SetOrUpdate(ctx context.Context, req *dto.SetOrUpdateRe
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	var oldValue dto.SessionValue
-	if err := s.client.Get(ctx, sessionKey(req.SID)).Scan(&oldValue); err != nil {
+	var rawOldValue []byte
+	if err := s.client.Get(ctx, sessionKey(req.SID)).Scan(&rawOldValue); err != nil {
 		if errors.Is(err, redis.Nil) {
 			if err := s.setValue(ctx, &dto.SetReq{
 				SID:   req.NewSID,
@@ -47,6 +47,11 @@ func (s *SessionStorage) SetOrUpdate(ctx context.Context, req *dto.SetOrUpdateRe
 		}
 
 		return nil, fmt.Errorf("get: %w", err)
+	}
+
+	var oldValue dto.SessionValue
+	if err := json.Unmarshal(rawOldValue, &oldValue); err != nil {
+		return nil, fmt.Errorf("unmarshal value: %w", err)
 	}
 
 	if err := s.setValue(ctx, &dto.SetReq{

@@ -4,19 +4,25 @@ info:
   version: 0.0.0
 tags: []
 paths:
-  /api/ping:
+  /health:
     get:
-      operationId: Api_ping
-      summary: ping
-      parameters: []
+      operationId: Api_health
+      summary: healthcheck with session
+      parameters:
+        - $ref: '#/components/parameters/HealthRequest'
       responses:
         '200':
           description: The request has succeeded.
-          content:
-            text/plain:
+          headers:
+            Cookie:
+              required: false
               schema:
                 type: string
-  /api/session:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+  /session:
     post:
       operationId: Api_session
       summary: create or extend user's session
@@ -39,12 +45,26 @@ paths:
                 type: string
 components:
   parameters:
+    HealthRequest:
+      name: Cookie
+      in: header
+      required: false
+      schema:
+        type: string
     SessionRequest:
       name: Cookie
       in: header
       required: false
       schema:
         type: string
+  schemas:
+    HealthResponse:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          type: string
 servers:
   - url: http://localhost:8080
     description: localhost

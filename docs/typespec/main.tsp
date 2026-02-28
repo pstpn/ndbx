@@ -9,6 +9,17 @@ namespace NDBXService;
 using TypeSpec.Http;
 using TypeSpec.Rest;
 
+model HealthRequest {
+    @header("Cookie")
+    cookie?: string;
+}
+
+model HealthResponse {
+    @header("Cookie")
+    cookie?: string;
+    status: string;
+}
+
 model SessionRequest {
     @header("Cookie")
     cookie?: string;
@@ -21,11 +32,10 @@ model SessionResponse {
     statusCode: 200 | 201;
 }
 
-@route("/api")
 namespace Api {
-    @summary("ping")
-    @route("/ping")
-    @get op ping(): string;
+    @summary("healthcheck with session")
+    @route("/health")
+    @get op health(...HealthRequest): HealthResponse;
 
     @summary("create or extend user's session")
     @route("/session")

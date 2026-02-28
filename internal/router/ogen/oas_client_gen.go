@@ -27,17 +27,17 @@ func trimTrailingSlashes(u *url.URL) {
 
 // Invoker invokes operations described by OpenAPI v3 specification.
 type Invoker interface {
-	// APIPing invokes Api_ping operation.
+	// APIHealth invokes Api_health operation.
 	//
-	// Ping.
+	// Healthcheck with session.
 	//
-	// GET /api/ping
-	APIPing(ctx context.Context) (APIPingOK, error)
+	// GET /health
+	APIHealth(ctx context.Context, params APIHealthParams) (*HealthResponseHeaders, error)
 	// APISession invokes Api_session operation.
 	//
 	// Create or extend user's session.
 	//
-	// POST /api/session
+	// POST /session
 	APISession(ctx context.Context, params APISessionParams) (APISessionRes, error)
 }
 
@@ -80,21 +80,21 @@ func (c *Client) requestURL(ctx context.Context) *url.URL {
 	return u
 }
 
-// APIPing invokes Api_ping operation.
+// APIHealth invokes Api_health operation.
 //
-// Ping.
+// Healthcheck with session.
 //
-// GET /api/ping
-func (c *Client) APIPing(ctx context.Context) (APIPingOK, error) {
-	res, err := c.sendAPIPing(ctx)
+// GET /health
+func (c *Client) APIHealth(ctx context.Context, params APIHealthParams) (*HealthResponseHeaders, error) {
+	res, err := c.sendAPIHealth(ctx, params)
 	return res, err
 }
 
-func (c *Client) sendAPIPing(ctx context.Context) (res APIPingOK, err error) {
+func (c *Client) sendAPIHealth(ctx context.Context, params APIHealthParams) (res *HealthResponseHeaders, err error) {
 	otelAttrs := []attribute.KeyValue{
-		otelogen.OperationID("Api_ping"),
+		otelogen.OperationID("Api_health"),
 		semconv.HTTPRequestMethodKey.String("GET"),
-		semconv.URLTemplateKey.String("/api/ping"),
+		semconv.URLTemplateKey.String("/health"),
 	}
 	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
 
@@ -110,7 +110,7 @@ func (c *Client) sendAPIPing(ctx context.Context) (res APIPingOK, err error) {
 	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
 
 	// Start a span for this request.
-	ctx, span := c.cfg.Tracer.Start(ctx, APIPingOperation,
+	ctx, span := c.cfg.Tracer.Start(ctx, APIHealthOperation,
 		trace.WithAttributes(otelAttrs...),
 		clientSpanKind,
 	)
@@ -128,13 +128,30 @@ func (c *Client) sendAPIPing(ctx context.Context) (res APIPingOK, err error) {
 	stage = "BuildURL"
 	u := uri.Clone(c.requestURL(ctx))
 	var pathParts [1]string
-	pathParts[0] = "/api/ping"
+	pathParts[0] = "/health"
 	uri.AddPathParts(u, pathParts[:]...)
 
 	stage = "EncodeRequest"
 	r, err := ht.NewRequest(ctx, "GET", u)
 	if err != nil {
 		return res, errors.Wrap(err, "create request")
+	}
+
+	stage = "EncodeHeaderParams"
+	h := uri.NewHeaderEncoder(r.Header)
+	{
+		cfg := uri.HeaderParameterEncodingConfig{
+			Name:    "Cookie",
+			Explode: false,
+		}
+		if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.Cookie.Get(); ok {
+				return e.EncodeValue(conv.StringToString(val))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode header")
+		}
 	}
 
 	stage = "SendRequest"
@@ -146,7 +163,7 @@ func (c *Client) sendAPIPing(ctx context.Context) (res APIPingOK, err error) {
 	defer body.Close()
 
 	stage = "DecodeResponse"
-	result, err := decodeAPIPingResponse(resp)
+	result, err := decodeAPIHealthResponse(resp)
 	if err != nil {
 		return res, errors.Wrap(err, "decode response")
 	}
@@ -158,7 +175,7 @@ func (c *Client) sendAPIPing(ctx context.Context) (res APIPingOK, err error) {
 //
 // Create or extend user's session.
 //
-// POST /api/session
+// POST /session
 func (c *Client) APISession(ctx context.Context, params APISessionParams) (APISessionRes, error) {
 	res, err := c.sendAPISession(ctx, params)
 	return res, err
@@ -168,7 +185,7 @@ func (c *Client) sendAPISession(ctx context.Context, params APISessionParams) (r
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("Api_session"),
 		semconv.HTTPRequestMethodKey.String("POST"),
-		semconv.URLTemplateKey.String("/api/session"),
+		semconv.URLTemplateKey.String("/session"),
 	}
 	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
 
@@ -202,7 +219,7 @@ func (c *Client) sendAPISession(ctx context.Context, params APISessionParams) (r
 	stage = "BuildURL"
 	u := uri.Clone(c.requestURL(ctx))
 	var pathParts [1]string
-	pathParts[0] = "/api/session"
+	pathParts[0] = "/session"
 	uri.AddPathParts(u, pathParts[:]...)
 
 	stage = "EncodeRequest"

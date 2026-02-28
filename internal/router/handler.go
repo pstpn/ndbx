@@ -1,7 +1,6 @@
 package router
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"strings"
@@ -29,8 +28,11 @@ func NewHandler(l logger.Interface, sessionService SessionService) *Handler {
 	}
 }
 
-func (h *Handler) APIPing(_ context.Context) (oas.APIPingOK, error) {
-	return oas.APIPingOK{Data: bytes.NewReader([]byte("pong"))}, nil
+func (h *Handler) APIHealth(ctx context.Context, params oas.APIHealthParams) (*oas.HealthResponseHeaders, error) {
+	return &oas.HealthResponseHeaders{
+		Cookie:   params.Cookie,
+		Response: oas.HealthResponse{Status: "ok"},
+	}, nil
 }
 
 func (h *Handler) APISession(ctx context.Context, params oas.APISessionParams) (oas.APISessionRes, error) {
@@ -76,5 +78,5 @@ func extractSID(cookieHeader string) string {
 
 // formSetCookie forms Set-Cookie header
 func formSetCookie(sid string, maxAgeSeconds int) string {
-	return fmt.Sprintf("Set-Cookie: X-Session-Id=%s; HttpOnly; Path=/; Max-Age=%d", sid, maxAgeSeconds)
+	return fmt.Sprintf("X-Session-Id=%s; HttpOnly; Path=/; Max-Age=%d", sid, maxAgeSeconds)
 }

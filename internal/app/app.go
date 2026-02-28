@@ -60,7 +60,6 @@ func Run(ctx context.Context, cfg *config.Config) error {
 				oasHandler,
 				httpserver.CORSMiddleware(l),
 				httpserver.DocsMiddleware(l),
-				httpserver.HeartbeatMiddleware("/health"),
 			),
 		)
 	})

@@ -8,17 +8,17 @@ import (
 
 // Handler handles operations described by OpenAPI v3 specification.
 type Handler interface {
-	// APIPing implements Api_ping operation.
+	// APIHealth implements Api_health operation.
 	//
-	// Ping.
+	// Healthcheck with session.
 	//
-	// GET /api/ping
-	APIPing(ctx context.Context) (APIPingOK, error)
+	// GET /health
+	APIHealth(ctx context.Context, params APIHealthParams) (*HealthResponseHeaders, error)
 	// APISession implements Api_session operation.
 	//
 	// Create or extend user's session.
 	//
-	// POST /api/session
+	// POST /session
 	APISession(ctx context.Context, params APISessionParams) (APISessionRes, error)
 }
 
