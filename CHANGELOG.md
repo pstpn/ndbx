@@ -61,3 +61,44 @@
 - *.gitignore*: добавлены игнорируемые файлы для Go проектов
 - *.env.local*: добавлены переменные PPROF_PORT, LOG_LEVEL
 - *Makefile*: добавлены команды для запуска, тестирования и генерации кода
+
+## [2.1.0] - 2026-02-28
+
+### Добавлено
+
+- *internal/router/ogen/oas_json_gen.go*: добавлены JSON-энкодеры/декодеры для новых схем API сессий.
+- *internal/router/ogen/oas_interfaces_gen.go*: добавлены интерфейсы операций, сгенерированные из OpenAPI.
+- *internal/service/dto/session.go*: добавлены DTO-запросы и DTO-ответы для операций сессий.
+- *internal/storage/redis/dto/session.go*: добавлены DTO для хранения сессий в Redis.
+- *internal/service/session.go*: добавлена сервисная логика создания и продления сессий.
+- *internal/storage/redis/session.go*: добавлена Redis-реализация хранения и продления сессий.
+- *pkg/redis/client.go*: добавлен клиент Redis для инициализации подключения и доступа к хранилищу.
+
+### Изменено
+
+- *.env.local*: обновлены локальные переменные окружения для запуска лабораторной работы.
+- *.labrc*: обновлён номер/состояние лабораторной работы.
+- *config/config.go*: обновлена конфигурация приложения для параметров сессий и Redis.
+- *docker-compose.yml*: обновлена конфигурация контейнеров для сервиса и Redis.
+- *docs/typespec/main.tsp*: расширена TypeSpec-спецификация методами API сессий.
+- *docs/openapi.yaml*: обновлён OpenAPI-контракт под методы `/health` и `/session`.
+- *go.mod*: обновлены зависимости, включая переход на `github.com/ovechkin-dm/mockio/v2`.
+- *go.sum*: обновлены контрольные суммы зависимостей после изменения модулей.
+- *internal/app/app.go*: обновлена инициализация приложения с подключением session-сервиса и Redis-хранилища.
+- *internal/router/handler.go*: реализованы методы обработчика API сессий и healthcheck.
+- *internal/router/handler_test.go*: добавлены и переработаны HTTP-тесты для `GET /health` и `POST /session`.
+- *internal/router/ogen/oas_cfg_gen.go*: обновлена конфигурация сгенерированного Ogen-сервера.
+- *internal/router/ogen/oas_client_gen.go*: обновлён клиент Ogen под новый контракт сессий.
+- *internal/router/ogen/oas_handlers_gen.go*: обновлена обработка операций Ogen для health/session.
+- *internal/router/ogen/oas_operations_gen.go*: обновлён список операций API и их сигнатуры.
+- *internal/router/ogen/oas_parameters_gen.go*: обновлены параметры запросов (включая cookie-заголовки).
+- *internal/router/ogen/oas_response_decoders_gen.go*: обновлены декодеры ответов для новых операций.
+- *internal/router/ogen/oas_response_encoders_gen.go*: обновлены энкодеры ответов для новых операций.
+- *internal/router/ogen/oas_router_gen.go*: обновлена маршрутизация Ogen для путей `/health` и `/session`.
+- *internal/router/ogen/oas_schemas_gen.go*: обновлены схемы OpenAPI-моделей.
+- *internal/router/ogen/oas_server_gen.go*: обновлена серверная обвязка Ogen для новых методов.
+- *internal/router/ogen/oas_unimplemented_gen.go*: обновлены заглушки нереализованных методов.
+
+### Удалено
+
+- *internal/router/handler_test.go*: удалён устаревший тест `TestHandler_APIPing` для неактуального эндпоинта `/api/ping`.
