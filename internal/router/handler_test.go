@@ -59,7 +59,7 @@ func TestHandler_APIHealth(t *testing.T) {
 			resp := w.Result()
 			t.Cleanup(func() { require.NoError(t, resp.Body.Close()) })
 			require.Equal(t, tt.expectedStatus, resp.StatusCode)
-			require.Equal(t, tt.expectedCookie, resp.Header.Get("Cookie"))
+			require.Equal(t, tt.expectedCookie, resp.Header.Get("Set-Cookie"))
 
 			body, err := io.ReadAll(resp.Body)
 			require.NoError(t, err)

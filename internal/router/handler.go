@@ -30,8 +30,8 @@ func NewHandler(l logger.Interface, sessionService SessionService) *Handler {
 
 func (h *Handler) APIHealth(ctx context.Context, params oas.APIHealthParams) (*oas.HealthResponseHeaders, error) {
 	return &oas.HealthResponseHeaders{
-		Cookie:   params.Cookie,
-		Response: oas.HealthResponse{Status: "ok"},
+		SetCookie: params.Cookie,
+		Response:  oas.HealthResponse{Status: "ok"},
 	}, nil
 }
 

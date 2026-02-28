@@ -53,13 +53,13 @@ func (s *HealthResponse) SetStatus(val string) {
 
 // HealthResponseHeaders wraps HealthResponse with response headers.
 type HealthResponseHeaders struct {
-	Cookie   OptString
-	Response HealthResponse
+	SetCookie OptString
+	Response  HealthResponse
 }
 
-// GetCookie returns the value of Cookie.
-func (s *HealthResponseHeaders) GetCookie() OptString {
-	return s.Cookie
+// GetSetCookie returns the value of SetCookie.
+func (s *HealthResponseHeaders) GetSetCookie() OptString {
+	return s.SetCookie
 }
 
 // GetResponse returns the value of Response.
@@ -67,9 +67,9 @@ func (s *HealthResponseHeaders) GetResponse() HealthResponse {
 	return s.Response
 }
 
-// SetCookie sets the value of Cookie.
-func (s *HealthResponseHeaders) SetCookie(val OptString) {
-	s.Cookie = val
+// SetSetCookie sets the value of SetCookie.
+func (s *HealthResponseHeaders) SetSetCookie(val OptString) {
+	s.SetCookie = val
 }
 
 // SetResponse sets the value of Response.

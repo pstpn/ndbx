@@ -15,23 +15,23 @@ import (
 
 func encodeAPIHealthResponse(response *HealthResponseHeaders, w http.ResponseWriter, span trace.Span) error {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	w.Header().Set("Access-Control-Expose-Headers", "Cookie")
+	w.Header().Set("Access-Control-Expose-Headers", "Set-Cookie")
 	// Encoding response headers.
 	{
 		h := uri.NewHeaderEncoder(w.Header())
-		// Encode "Cookie" header.
+		// Encode "Set-Cookie" header.
 		{
 			cfg := uri.HeaderParameterEncodingConfig{
-				Name:    "Cookie",
+				Name:    "Set-Cookie",
 				Explode: false,
 			}
 			if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
-				if val, ok := response.Cookie.Get(); ok {
+				if val, ok := response.SetCookie.Get(); ok {
 					return e.EncodeValue(conv.StringToString(val))
 				}
 				return nil
 			}); err != nil {
-				return errors.Wrap(err, "encode Cookie header")
+				return errors.Wrap(err, "encode Set-Cookie header")
 			}
 		}
 	}

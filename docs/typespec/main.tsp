@@ -15,8 +15,8 @@ model HealthRequest {
 }
 
 model HealthResponse {
-    @header("Cookie")
-    cookie?: string;
+    @header("Set-Cookie")
+    setCookie?: string;
     status: string;
 }
 

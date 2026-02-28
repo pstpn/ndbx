@@ -51,16 +51,16 @@ func decodeAPIHealthResponse(resp *http.Response) (res *HealthResponseHeaders, _
 			var wrapper HealthResponseHeaders
 			wrapper.Response = response
 			h := uri.NewHeaderDecoder(resp.Header)
-			// Parse "Cookie" header.
+			// Parse "Set-Cookie" header.
 			{
 				cfg := uri.HeaderParameterDecodingConfig{
-					Name:    "Cookie",
+					Name:    "Set-Cookie",
 					Explode: false,
 				}
 				if err := func() error {
 					if err := h.HasParam(cfg); err == nil {
 						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
-							var wrapperDotCookieVal string
+							var wrapperDotSetCookieVal string
 							if err := func() error {
 								val, err := d.DecodeValue()
 								if err != nil {
@@ -72,12 +72,12 @@ func decodeAPIHealthResponse(resp *http.Response) (res *HealthResponseHeaders, _
 									return err
 								}
 
-								wrapperDotCookieVal = c
+								wrapperDotSetCookieVal = c
 								return nil
 							}(); err != nil {
 								return err
 							}
-							wrapper.Cookie.SetTo(wrapperDotCookieVal)
+							wrapper.SetCookie.SetTo(wrapperDotSetCookieVal)
 							return nil
 						}); err != nil {
 							return err
@@ -85,7 +85,7 @@ func decodeAPIHealthResponse(resp *http.Response) (res *HealthResponseHeaders, _
 					}
 					return nil
 				}(); err != nil {
-					return res, errors.Wrap(err, "parse Cookie header")
+					return res, errors.Wrap(err, "parse Set-Cookie header")
 				}
 			}
 			return &wrapper, nil

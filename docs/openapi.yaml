@@ -14,7 +14,7 @@ paths:
         '200':
           description: The request has succeeded.
           headers:
-            Cookie:
+            Set-Cookie:
               required: false
               schema:
                 type: string
