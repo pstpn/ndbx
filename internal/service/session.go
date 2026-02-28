@@ -2,12 +2,12 @@ package service
 
 import (
 	"context"
-	"crypto/rand"
 	"fmt"
 	"time"
 
 	"ndbx/internal/service/dto"
 	rdto "ndbx/internal/storage/redis/dto"
+	"ndbx/pkg/cryptic"
 	"ndbx/pkg/logger"
 )
 
@@ -41,7 +41,7 @@ func (s *SessionService) GetSession(ctx context.Context, req *dto.GetSessionReq)
 }
 
 func (s *SessionService) CreateSession(ctx context.Context) (*dto.CreateSessionResp, error) {
-	sid := rand.Text()
+	sid := cryptic.SID()
 	now := time.Now().UTC()
 
 	if err := s.sessionStorage.Set(ctx, &rdto.SetReq{
@@ -59,7 +59,7 @@ func (s *SessionService) CreateSession(ctx context.Context) (*dto.CreateSessionR
 }
 
 func (s *SessionService) CreateOrExtendSession(ctx context.Context, req *dto.CreateOrExtendSessionReq) (*dto.CreateOrExtendSessionResp, error) {
-	newSID := rand.Text()
+	newSID := cryptic.SID()
 	now := time.Now().UTC()
 
 	res, err := s.sessionStorage.SetOrUpdate(ctx, &rdto.SetOrUpdateReq{
