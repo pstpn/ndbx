@@ -41,7 +41,7 @@ func (s *SessionService) GetSession(ctx context.Context, req *dto.GetSessionReq)
 }
 
 func (s *SessionService) CreateSession(ctx context.Context) (*dto.CreateSessionResp, error) {
-	sid := cryptic.SID()
+	sid := cryptic.MustSID()
 	now := time.Now().UTC()
 
 	if err := s.sessionStorage.Set(ctx, &rdto.SetReq{
@@ -59,7 +59,7 @@ func (s *SessionService) CreateSession(ctx context.Context) (*dto.CreateSessionR
 }
 
 func (s *SessionService) CreateOrExtendSession(ctx context.Context, req *dto.CreateOrExtendSessionReq) (*dto.CreateOrExtendSessionResp, error) {
-	newSID := cryptic.SID()
+	newSID := cryptic.MustSID()
 	now := time.Now().UTC()
 
 	res, err := s.sessionStorage.SetOrUpdate(ctx, &rdto.SetOrUpdateReq{

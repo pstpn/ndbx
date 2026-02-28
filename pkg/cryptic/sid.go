@@ -1,5 +1,17 @@
 package cryptic
 
-import "crypto/rand"
+import (
+	"crypto/rand"
+	"encoding/hex"
+)
 
-func SID() string { return rand.Text() + rand.Text() }
+const sidSizeBytes = 32
+
+func MustSID() string {
+	b := make([]byte, sidSizeBytes)
+	if _, err := rand.Read(b); err != nil {
+		panic(err)
+	}
+
+	return hex.EncodeToString(b)
+}
