@@ -8,6 +8,9 @@ services:
     ports:
       - "${APP_PORT}:${APP_PORT}"
       - "${PPROF_PORT}:${PPROF_PORT}"
+    depends_on:
+      redis:
+        condition: service_healthy
     networks:
       - backend-network
     restart: no
@@ -17,7 +20,42 @@ services:
       timeout: 2s
       retries: 5
 
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    command:
+      - sh
+      - -c
+      - |
+        if [ -z "$$REDIS_PASSWORD" ]; then
+          exec redis-server --appendonly yes
+        else
+          exec redis-server --appendonly yes --requirepass "$$REDIS_PASSWORD"
+        fi
+    ports:
+      - "${REDIS_PORT}:${REDIS_PORT}"
+    networks:
+      - backend-network
+    restart: unless-stopped
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - |
+          if [ -z "$$REDIS_PASSWORD" ]; then
+            redis-cli ping | grep -q PONG
+          else
+            redis-cli -a "$$REDIS_PASSWORD" ping | grep -q PONG
+          fi
+      interval: 5s
+      timeout: 2s
+      retries: 10
+
 networks:
   backend-network:
     name: backend-network
     driver: bridge
+
+volumes:
+  redis-data:

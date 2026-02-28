@@ -6,6 +6,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/ovechkin-dm/mockio/mock"
 	"github.com/stretchr/testify/require"
 
 	"ndbx/internal/router"
@@ -37,7 +38,9 @@ func TestHandler_APIPing(t *testing.T) {
 			req := httptest.NewRequest(tt.method, "/api/ping", http.NoBody)
 			w := httptest.NewRecorder()
 
-			srv, err := oas.NewServer(router.NewHandler(logger.NewWithOutput("debug", io.Discard)))
+			sessionService := mock.Mock[router.SessionService]()
+
+			srv, err := oas.NewServer(router.NewHandler(logger.NewWithOutput("debug", io.Discard), sessionService))
 			require.NoError(t, err)
 			srv.ServeHTTP(w, req)
 

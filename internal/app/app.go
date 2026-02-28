@@ -15,25 +15,42 @@ import (
 	"ndbx/config"
 	"ndbx/internal/router"
 	oas "ndbx/internal/router/ogen"
+	"ndbx/internal/service"
+	rstorage "ndbx/internal/storage/redis"
 	"ndbx/pkg/httpserver"
 	"ndbx/pkg/logger"
+	"ndbx/pkg/redis"
 )
 
 func Run(ctx context.Context, cfg *config.Config) error {
 	ctx, cancel := signal.NotifyContext(ctx, syscall.SIGINT, syscall.SIGTERM)
 	defer cancel()
 
-	l := logger.New(cfg.Level)
+	l := logger.New(cfg.LogLevel)
 	gr, ctx := errgroup.WithContext(ctx)
 
-	oasHandler, err := oas.NewServer(router.NewHandler(l))
+	redisClient, err := redis.NewClient(ctx, redisAddr(cfg.RedisHost, cfg.RedisPort), cfg.RedisDB, cfg.RedisPassword)
+	if err != nil {
+		return fmt.Errorf("new redis client: %w", err)
+	}
+	defer redisClient.Close()
+
+	// Storages
+	sessionStorage := rstorage.NewSessionStorage(redisClient)
+
+	// Services
+	sessionService := service.NewSessionService(l, sessionStorage, cfg.AppUserSessionTTLSeconds)
+
+	handler := router.NewHandler(l, sessionService)
+
+	oasHandler, err := oas.NewServer(handler)
 	if err != nil {
 		return fmt.Errorf("new oas handler: %w", err)
 	}
 
-	httpAddr := fmt.Sprintf("%s:%d", cfg.Host, cfg.Port)
+	httpAddr := fmt.Sprintf("%s:%d", cfg.HTTPHost, cfg.HTTPPort)
 	httpServer := httpserver.NewServer(l)
-	pprofAddr := fmt.Sprintf("%s:%d", cfg.Host, cfg.PprofPort)
+	pprofAddr := fmt.Sprintf("%s:%d", cfg.HTTPHost, cfg.PprofPort)
 	pprofServer := http.Server{Addr: pprofAddr, ReadHeaderTimeout: time.Second}
 
 	gr.Go(func() error {
@@ -65,4 +82,8 @@ func Run(ctx context.Context, cfg *config.Config) error {
 	})
 
 	return gr.Wait()
+}
+
+func redisAddr(host string, port int) string {
+	return fmt.Sprintf("%s:%d", host, port)
 }

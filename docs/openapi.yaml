@@ -16,7 +16,35 @@ paths:
             text/plain:
               schema:
                 type: string
-components: {}
+  /api/session:
+    post:
+      operationId: Api_session
+      summary: create or extend user's session
+      parameters:
+        - $ref: '#/components/parameters/SessionRequest'
+      responses:
+        '200':
+          description: The request has succeeded.
+          headers:
+            Set-Cookie:
+              required: true
+              schema:
+                type: string
+        '201':
+          description: The request has succeeded and a new resource has been created as a result.
+          headers:
+            Set-Cookie:
+              required: true
+              schema:
+                type: string
+components:
+  parameters:
+    SessionRequest:
+      name: Cookie
+      in: header
+      required: false
+      schema:
+        type: string
 servers:
   - url: http://localhost:8080
     description: localhost

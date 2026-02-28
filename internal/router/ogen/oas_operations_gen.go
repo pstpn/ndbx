@@ -6,5 +6,6 @@ package api
 type OperationName = string
 
 const (
-	APIPingOperation OperationName = "APIPing"
+	APIPingOperation    OperationName = "APIPing"
+	APISessionOperation OperationName = "APISession"
 )

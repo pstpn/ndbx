@@ -14,6 +14,12 @@ type Handler interface {
 	//
 	// GET /api/ping
 	APIPing(ctx context.Context) (APIPingOK, error)
+	// APISession implements Api_session operation.
+	//
+	// Create or extend user's session.
+	//
+	// POST /api/session
+	APISession(ctx context.Context, params APISessionParams) (APISessionRes, error)
 }
 
 // Server implements http server based on OpenAPI v3 specification and

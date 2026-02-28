@@ -21,3 +21,12 @@ var _ Handler = UnimplementedHandler{}
 func (UnimplementedHandler) APIPing(ctx context.Context) (r APIPingOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
+
+// APISession implements Api_session operation.
+//
+// Create or extend user's session.
+//
+// POST /api/session
+func (UnimplementedHandler) APISession(ctx context.Context, params APISessionParams) (r APISessionRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
