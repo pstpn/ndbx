@@ -2,6 +2,7 @@ package router_test
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -16,6 +17,8 @@ import (
 	"ndbx/internal/service/dto"
 	"ndbx/pkg/logger"
 )
+
+const mockTTL = 10
 
 func TestHandler_APIHealth(t *testing.T) {
 	t.Parallel()
@@ -37,7 +40,7 @@ func TestHandler_APIHealth(t *testing.T) {
 			cookie:         "X-Session-Id=sid-1; foo=bar",
 			expectedStatus: http.StatusOK,
 			expectedBody:   `{"status":"ok"}`,
-			expectedCookie: "X-Session-Id=sid-1; foo=bar",
+			expectedCookie: fmt.Sprintf("X-Session-Id=sid-1; HttpOnly; Path=/; Max-Age=%d", mockTTL),
 		},
 	}
 
@@ -158,7 +161,7 @@ func TestHandler_APISession(t *testing.T) {
 func newServer(t *testing.T, sessionService router.SessionService) http.Handler {
 	t.Helper()
 
-	srv, err := oas.NewServer(router.NewHandler(logger.NewWithOutput("debug", io.Discard), sessionService))
+	srv, err := oas.NewServer(router.NewHandler(logger.NewWithOutput("debug", io.Discard), sessionService, mockTTL))
 	require.NoError(t, err)
 
 	return srv

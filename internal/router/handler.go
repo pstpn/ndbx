@@ -17,21 +17,31 @@ type SessionService interface {
 }
 
 type Handler struct {
-	l              logger.Interface
-	sessionService SessionService
+	l                 logger.Interface
+	sessionService    SessionService
+	sessionTTLSeconds int
 }
 
-func NewHandler(l logger.Interface, sessionService SessionService) *Handler {
+func NewHandler(l logger.Interface, sessionService SessionService, sessionTTLSeconds int) *Handler {
 	return &Handler{
-		l:              l,
-		sessionService: sessionService,
+		l:                 l,
+		sessionService:    sessionService,
+		sessionTTLSeconds: sessionTTLSeconds,
 	}
 }
 
 func (h *Handler) APIHealth(ctx context.Context, params oas.APIHealthParams) (*oas.HealthResponseHeaders, error) {
+	var sid string
+	if params.Cookie.IsSet() {
+		sid = extractSID(params.Cookie.Value)
+	}
+
 	return &oas.HealthResponseHeaders{
-		SetCookie: params.Cookie,
-		Response:  oas.HealthResponse{Status: "ok"},
+		SetCookie: oas.OptString{
+			Value: formSetCookie(sid, h.sessionTTLSeconds),
+			Set:   params.Cookie.IsSet(),
+		},
+		Response: oas.HealthResponse{Status: "ok"},
 	}, nil
 }
 

@@ -41,7 +41,7 @@ func Run(ctx context.Context, cfg *config.Config) error {
 	// Services
 	sessionService := service.NewSessionService(l, sessionStorage, cfg.AppUserSessionTTLSeconds)
 
-	handler := router.NewHandler(l, sessionService)
+	handler := router.NewHandler(l, sessionService, cfg.AppUserSessionTTLSeconds)
 
 	oasHandler, err := oas.NewServer(handler)
 	if err != nil {
