@@ -9,17 +9,30 @@ import (
 
 type Config struct {
 	LoggerConfig
+	AppConfig
 	HTTPConfig
+	RedisConfig
 }
 
 type LoggerConfig struct {
-	Level string `env:"LOG_LEVEL,required"`
+	LogLevel string `env:"LOG_LEVEL,required"`
+}
+
+type AppConfig struct {
+	AppUserSessionTTLSeconds int `env:"APP_USER_SESSION_TTL,required"`
 }
 
 type HTTPConfig struct {
-	Host      string `env:"APP_HOST,required"`
-	Port      int    `env:"APP_PORT,required"`
+	HTTPHost  string `env:"APP_HOST,required"`
+	HTTPPort  int    `env:"APP_PORT,required"`
 	PprofPort int    `env:"PPROF_PORT,required"`
+}
+
+type RedisConfig struct {
+	RedisHost     string `env:"REDIS_HOST,required"`
+	RedisPort     int    `env:"REDIS_PORT,required"`
+	RedisPassword string `env:"REDIS_PASSWORD,required"`
+	RedisDB       int    `env:"REDIS_DB,required"`
 }
 
 func NewConfig() (*Config, error) {

@@ -13,11 +13,20 @@ type UnimplementedHandler struct{}
 
 var _ Handler = UnimplementedHandler{}
 
-// APIPing implements Api_ping operation.
+// APIHealth implements Api_health operation.
 //
-// Ping.
+// Healthcheck with session.
 //
-// GET /api/ping
-func (UnimplementedHandler) APIPing(ctx context.Context) (r APIPingOK, _ error) {
+// GET /health
+func (UnimplementedHandler) APIHealth(ctx context.Context, params APIHealthParams) (r *HealthResponseHeaders, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// APISession implements Api_session operation.
+//
+// Create or extend user's session.
+//
+// POST /session
+func (UnimplementedHandler) APISession(ctx context.Context, params APISessionParams) (r APISessionRes, _ error) {
 	return r, ht.ErrNotImplemented
 }

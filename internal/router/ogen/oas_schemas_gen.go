@@ -2,20 +2,123 @@
 
 package api
 
-import (
-	"io"
-)
-
-type APIPingOK struct {
-	Data io.Reader
+// APISessionCreated is response for APISession operation.
+type APISessionCreated struct {
+	SetCookie string
 }
 
-// Read reads data from the Data reader.
-//
-// Kept to satisfy the io.Reader interface.
-func (s APIPingOK) Read(p []byte) (n int, err error) {
-	if s.Data == nil {
-		return 0, io.EOF
+// GetSetCookie returns the value of SetCookie.
+func (s *APISessionCreated) GetSetCookie() string {
+	return s.SetCookie
+}
+
+// SetSetCookie sets the value of SetCookie.
+func (s *APISessionCreated) SetSetCookie(val string) {
+	s.SetCookie = val
+}
+
+func (*APISessionCreated) aPISessionRes() {}
+
+// APISessionOK is response for APISession operation.
+type APISessionOK struct {
+	SetCookie string
+}
+
+// GetSetCookie returns the value of SetCookie.
+func (s *APISessionOK) GetSetCookie() string {
+	return s.SetCookie
+}
+
+// SetSetCookie sets the value of SetCookie.
+func (s *APISessionOK) SetSetCookie(val string) {
+	s.SetCookie = val
+}
+
+func (*APISessionOK) aPISessionRes() {}
+
+// Ref: #/components/schemas/HealthResponse
+type HealthResponse struct {
+	Status string `json:"status"`
+}
+
+// GetStatus returns the value of Status.
+func (s *HealthResponse) GetStatus() string {
+	return s.Status
+}
+
+// SetStatus sets the value of Status.
+func (s *HealthResponse) SetStatus(val string) {
+	s.Status = val
+}
+
+// HealthResponseHeaders wraps HealthResponse with response headers.
+type HealthResponseHeaders struct {
+	SetCookie OptString
+	Response  HealthResponse
+}
+
+// GetSetCookie returns the value of SetCookie.
+func (s *HealthResponseHeaders) GetSetCookie() OptString {
+	return s.SetCookie
+}
+
+// GetResponse returns the value of Response.
+func (s *HealthResponseHeaders) GetResponse() HealthResponse {
+	return s.Response
+}
+
+// SetSetCookie sets the value of SetCookie.
+func (s *HealthResponseHeaders) SetSetCookie(val OptString) {
+	s.SetCookie = val
+}
+
+// SetResponse sets the value of Response.
+func (s *HealthResponseHeaders) SetResponse(val HealthResponse) {
+	s.Response = val
+}
+
+// NewOptString returns new OptString with value set to v.
+func NewOptString(v string) OptString {
+	return OptString{
+		Value: v,
+		Set:   true,
 	}
-	return s.Data.Read(p)
+}
+
+// OptString is optional string.
+type OptString struct {
+	Value string
+	Set   bool
+}
+
+// IsSet returns true if OptString was set.
+func (o OptString) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptString) Reset() {
+	var v string
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptString) SetTo(v string) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptString) Get() (v string, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptString) Or(d string) string {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
 }

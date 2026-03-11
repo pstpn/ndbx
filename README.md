@@ -5,9 +5,10 @@ Backend-сервис для проекта по NoSQL базам данных.
 
 ## Ключевые возможности
 
-- HTTP API с минимальным набором эндпоинтов для проверки доступности.
+- HTTP API для healthcheck и управления пользовательской сессией.
 - Автогенерация OpenAPI спецификации и клиентского/серверного кода.
 - Встроенная документация в Swagger UI и ReDoc.
+- Хранение сессий в Redis с продлением TTL.
 - Профилирование через pprof.
 
 ## Архитектура и структура
@@ -15,7 +16,10 @@ Backend-сервис для проекта по NoSQL базам данных.
 - `cmd/app` — точка входа приложения.
 - `internal/app` — инициализация сервисов и жизненный цикл.
 - `internal/router` — HTTP-обработчики.
+- `internal/service` — бизнес-логика.
+- `internal/storage/redis` — работа с Redis-хранилищем.
 - `pkg/httpserver` — инфраструктура HTTP сервера и middleware.
+- `pkg/redis` - Redis-клиент.
 - `config` — загрузка конфигурации из файла окружения.
 - `docs` — OpenAPI и статические страницы документации.
 
@@ -28,8 +32,15 @@ Backend-сервис для проекта по NoSQL базам данных.
 
 ```env
 LOG_LEVEL=info
+APP_HOST=0.0.0.0
 APP_PORT=8080
 PPROF_PORT=6060
+APP_USER_SESSION_TTL=60
+
+REDIS_HOST=redis
+REDIS_PORT=6379
+REDIS_PASSWORD=
+REDIS_DB=0
 ```
 
 ## Быстрый старт (локально)
@@ -57,7 +68,11 @@ make stop
 ## Эндпоинты
 
 - Healthcheck: `GET /health`.
-- Ping: `GET /api/ping`.
+	- Возвращает `200` и JSON `{"status":"ok"}`.
+	- При передаче заголовка `Cookie` пробрасывает его в ответ.
+- Session API: `POST /session`.
+	- При отсутствии `X-Session-Id` создаёт новую сессию и возвращает `201` + `Set-Cookie`.
+	- При наличии `X-Session-Id` продлевает/пересоздаёт сессию и возвращает `200` или `201` + `Set-Cookie`.
 
 ## Профилирование (pprof)
 

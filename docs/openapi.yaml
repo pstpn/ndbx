@@ -4,19 +4,67 @@ info:
   version: 0.0.0
 tags: []
 paths:
-  /api/ping:
+  /health:
     get:
-      operationId: Api_ping
-      summary: ping
-      parameters: []
+      operationId: Api_health
+      summary: healthcheck with session
+      parameters:
+        - $ref: '#/components/parameters/HealthRequest'
       responses:
         '200':
           description: The request has succeeded.
-          content:
-            text/plain:
+          headers:
+            Set-Cookie:
+              required: false
               schema:
                 type: string
-components: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+  /session:
+    post:
+      operationId: Api_session
+      summary: create or extend user's session
+      parameters:
+        - $ref: '#/components/parameters/SessionRequest'
+      responses:
+        '200':
+          description: The request has succeeded.
+          headers:
+            Set-Cookie:
+              required: true
+              schema:
+                type: string
+        '201':
+          description: The request has succeeded and a new resource has been created as a result.
+          headers:
+            Set-Cookie:
+              required: true
+              schema:
+                type: string
+components:
+  parameters:
+    HealthRequest:
+      name: Cookie
+      in: header
+      required: false
+      schema:
+        type: string
+    SessionRequest:
+      name: Cookie
+      in: header
+      required: false
+      schema:
+        type: string
+  schemas:
+    HealthResponse:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          type: string
 servers:
   - url: http://localhost:8080
     description: localhost
