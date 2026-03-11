@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/ovechkin-dm/mockio/v2/mock"
 	"github.com/ovechkin-dm/mockio/v2/mockopts"
@@ -85,7 +86,7 @@ func TestHandler_APISession(t *testing.T) {
 			name: "create session when cookie missing",
 			setup: func(sessionService router.SessionService) {
 				mock.WhenDouble(sessionService.CreateSession(mock.AnyContext())).
-					ThenReturn(&dto.CreateSessionResp{SID: "new-sid", MaxAgeSeconds: 100}, nil)
+					ThenReturn(&dto.CreateSessionResp{SID: "new-sid", TTL: time.Second * 100}, nil)
 			},
 			expectedStatus:    http.StatusCreated,
 			expectedSetCookie: "X-Session-Id=new-sid; HttpOnly; Path=/; Max-Age=100",
@@ -95,7 +96,7 @@ func TestHandler_APISession(t *testing.T) {
 			cookie: "foo=bar",
 			setup: func(sessionService router.SessionService) {
 				mock.WhenDouble(sessionService.CreateSession(mock.AnyContext())).
-					ThenReturn(&dto.CreateSessionResp{SID: "created-sid", MaxAgeSeconds: 120}, nil)
+					ThenReturn(&dto.CreateSessionResp{SID: "created-sid", TTL: time.Second * 120}, nil)
 			},
 			expectedStatus:    http.StatusCreated,
 			expectedSetCookie: "X-Session-Id=created-sid; HttpOnly; Path=/; Max-Age=120",

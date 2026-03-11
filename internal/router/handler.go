@@ -58,7 +58,7 @@ func (h *Handler) APISession(ctx context.Context, params oas.APISessionParams) (
 			return nil, err
 		}
 
-		return &oas.APISessionCreated{SetCookie: formSetCookie(session.SID, session.MaxAgeSeconds)}, nil
+		return &oas.APISessionCreated{SetCookie: formSetCookie(session.SID, int(session.TTL.Seconds()))}, nil
 	}
 
 	session, err := h.sessionService.CreateOrExtendSession(ctx, &dto.CreateOrExtendSessionReq{SID: sid})

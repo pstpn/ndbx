@@ -18,13 +18,13 @@ const (
 )
 
 type SessionStorage struct {
-	mu     *sync.Mutex
 	client *redis.Client
+	mu     sync.Mutex
 }
 
 func NewSessionStorage(c *redis.Client) *SessionStorage {
 	return &SessionStorage{
-		mu:     &sync.Mutex{},
+		mu:     sync.Mutex{},
 		client: c,
 	}
 }

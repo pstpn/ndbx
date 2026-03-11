@@ -55,7 +55,7 @@ func (s *SessionService) CreateSession(ctx context.Context) (*dto.CreateSessionR
 		return nil, fmt.Errorf("create session: %w", err)
 	}
 
-	return &dto.CreateSessionResp{SID: sid, MaxAgeSeconds: s.sessionTTLSeconds}, nil
+	return &dto.CreateSessionResp{SID: sid, TTL: time.Duration(s.sessionTTLSeconds) * time.Second}, nil
 }
 
 func (s *SessionService) CreateOrExtendSession(ctx context.Context, req *dto.CreateOrExtendSessionReq) (*dto.CreateOrExtendSessionResp, error) {

@@ -12,8 +12,8 @@ type GetSessionResp struct {
 }
 
 type CreateSessionResp struct {
-	SID           string
-	MaxAgeSeconds int
+	SID string
+	TTL time.Duration
 }
 
 type CreateOrExtendSessionReq struct {
