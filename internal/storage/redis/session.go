@@ -92,14 +92,15 @@ func (s *SessionStorage) Get(ctx context.Context, req *dto.GetReq) (*dto.GetResp
 }
 
 func (s *SessionStorage) setValue(ctx context.Context, req *dto.SetReq) error {
-	pipe := s.client.TxPipeline()
-	pipe.HSet(ctx, sessionKey(req.SID),
+	if err := s.client.HSetEXWithArgs(ctx, sessionKey(req.SID),
+		&redis.HSetEXOptions{
+			ExpirationType: redis.HSetEXExpirationEX,
+			ExpirationVal:  int64(req.TTL.Seconds()),
+		},
 		createdAtField, req.Value.CreatedAt.UTC().Format(time.RFC3339),
 		updatedAtField, req.Value.UpdatedAt.UTC().Format(time.RFC3339),
-	)
-	pipe.Expire(ctx, sessionKey(req.SID), req.TTL)
-	if _, err := pipe.Exec(ctx); err != nil {
-		return fmt.Errorf("hset with expire: %w", err)
+	).Err(); err != nil {
+		return fmt.Errorf("hsetex: %w", err)
 	}
 
 	return nil
