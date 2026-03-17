@@ -11,11 +11,24 @@ import (
 )
 
 var (
+	rn4AllowedHeaders = map[string]string{
+		"POST": "Content-Type,Cookie",
+	}
+	rn6AllowedHeaders = map[string]string{
+		"POST": "Cookie",
+	}
 	rn1AllowedHeaders = map[string]string{
-		"GET": "Cookie",
+		"GET":  "Cookie",
+		"POST": "Content-Type,Cookie",
 	}
 	rn3AllowedHeaders = map[string]string{
+		"GET": "Cookie",
+	}
+	rn8AllowedHeaders = map[string]string{
 		"POST": "Cookie",
+	}
+	rn7AllowedHeaders = map[string]string{
+		"POST": "Content-Type,Cookie",
 	}
 )
 
@@ -69,6 +82,97 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				break
 			}
 			switch elem[0] {
+			case 'a': // Prefix: "auth/log"
+
+				if l := len("auth/log"); len(elem) >= l && elem[0:l] == "auth/log" {
+					elem = elem[l:]
+				} else {
+					break
+				}
+
+				if len(elem) == 0 {
+					break
+				}
+				switch elem[0] {
+				case 'i': // Prefix: "in"
+
+					if l := len("in"); len(elem) >= l && elem[0:l] == "in" {
+						elem = elem[l:]
+					} else {
+						break
+					}
+
+					if len(elem) == 0 {
+						// Leaf node.
+						switch r.Method {
+						case "POST":
+							s.handleAPILoginRequest([0]string{}, elemIsEscaped, w, r)
+						default:
+							s.notAllowed(w, r, notAllowedParams{
+								allowedMethods: "POST",
+								allowedHeaders: rn4AllowedHeaders,
+								acceptPost:     "application/json",
+								acceptPatch:    "",
+							})
+						}
+
+						return
+					}
+
+				case 'o': // Prefix: "out"
+
+					if l := len("out"); len(elem) >= l && elem[0:l] == "out" {
+						elem = elem[l:]
+					} else {
+						break
+					}
+
+					if len(elem) == 0 {
+						// Leaf node.
+						switch r.Method {
+						case "POST":
+							s.handleAPILogoutRequest([0]string{}, elemIsEscaped, w, r)
+						default:
+							s.notAllowed(w, r, notAllowedParams{
+								allowedMethods: "POST",
+								allowedHeaders: rn6AllowedHeaders,
+								acceptPost:     "",
+								acceptPatch:    "",
+							})
+						}
+
+						return
+					}
+
+				}
+
+			case 'e': // Prefix: "events"
+
+				if l := len("events"); len(elem) >= l && elem[0:l] == "events" {
+					elem = elem[l:]
+				} else {
+					break
+				}
+
+				if len(elem) == 0 {
+					// Leaf node.
+					switch r.Method {
+					case "GET":
+						s.handleAPIGetEventsRequest([0]string{}, elemIsEscaped, w, r)
+					case "POST":
+						s.handleAPICreateEventRequest([0]string{}, elemIsEscaped, w, r)
+					default:
+						s.notAllowed(w, r, notAllowedParams{
+							allowedMethods: "GET,POST",
+							allowedHeaders: rn1AllowedHeaders,
+							acceptPost:     "application/json",
+							acceptPatch:    "",
+						})
+					}
+
+					return
+				}
+
 			case 'h': // Prefix: "health"
 
 				if l := len("health"); len(elem) >= l && elem[0:l] == "health" {
@@ -85,7 +189,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 					default:
 						s.notAllowed(w, r, notAllowedParams{
 							allowedMethods: "GET",
-							allowedHeaders: rn1AllowedHeaders,
+							allowedHeaders: rn3AllowedHeaders,
 							acceptPost:     "",
 							acceptPatch:    "",
 						})
@@ -110,8 +214,33 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 					default:
 						s.notAllowed(w, r, notAllowedParams{
 							allowedMethods: "POST",
-							allowedHeaders: rn3AllowedHeaders,
+							allowedHeaders: rn8AllowedHeaders,
 							acceptPost:     "",
+							acceptPatch:    "",
+						})
+					}
+
+					return
+				}
+
+			case 'u': // Prefix: "users"
+
+				if l := len("users"); len(elem) >= l && elem[0:l] == "users" {
+					elem = elem[l:]
+				} else {
+					break
+				}
+
+				if len(elem) == 0 {
+					// Leaf node.
+					switch r.Method {
+					case "POST":
+						s.handleAPIRegisterRequest([0]string{}, elemIsEscaped, w, r)
+					default:
+						s.notAllowed(w, r, notAllowedParams{
+							allowedMethods: "POST",
+							allowedHeaders: rn7AllowedHeaders,
+							acceptPost:     "application/json",
 							acceptPatch:    "",
 						})
 					}
@@ -219,6 +348,104 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 				break
 			}
 			switch elem[0] {
+			case 'a': // Prefix: "auth/log"
+
+				if l := len("auth/log"); len(elem) >= l && elem[0:l] == "auth/log" {
+					elem = elem[l:]
+				} else {
+					break
+				}
+
+				if len(elem) == 0 {
+					break
+				}
+				switch elem[0] {
+				case 'i': // Prefix: "in"
+
+					if l := len("in"); len(elem) >= l && elem[0:l] == "in" {
+						elem = elem[l:]
+					} else {
+						break
+					}
+
+					if len(elem) == 0 {
+						// Leaf node.
+						switch method {
+						case "POST":
+							r.name = APILoginOperation
+							r.summary = "authenticate user"
+							r.operationID = "Api_login"
+							r.operationGroup = ""
+							r.pathPattern = "/auth/login"
+							r.args = args
+							r.count = 0
+							return r, true
+						default:
+							return
+						}
+					}
+
+				case 'o': // Prefix: "out"
+
+					if l := len("out"); len(elem) >= l && elem[0:l] == "out" {
+						elem = elem[l:]
+					} else {
+						break
+					}
+
+					if len(elem) == 0 {
+						// Leaf node.
+						switch method {
+						case "POST":
+							r.name = APILogoutOperation
+							r.summary = "logout user"
+							r.operationID = "Api_logout"
+							r.operationGroup = ""
+							r.pathPattern = "/auth/logout"
+							r.args = args
+							r.count = 0
+							return r, true
+						default:
+							return
+						}
+					}
+
+				}
+
+			case 'e': // Prefix: "events"
+
+				if l := len("events"); len(elem) >= l && elem[0:l] == "events" {
+					elem = elem[l:]
+				} else {
+					break
+				}
+
+				if len(elem) == 0 {
+					// Leaf node.
+					switch method {
+					case "GET":
+						r.name = APIGetEventsOperation
+						r.summary = "get events with filtering and pagination"
+						r.operationID = "Api_getEvents"
+						r.operationGroup = ""
+						r.pathPattern = "/events"
+						r.args = args
+						r.count = 0
+						return r, true
+					case "POST":
+						r.name = APICreateEventOperation
+						r.summary = "create a new event"
+						r.operationID = "Api_createEvent"
+						r.operationGroup = ""
+						r.pathPattern = "/events"
+						r.args = args
+						r.count = 0
+						return r, true
+					default:
+						return
+					}
+				}
+
 			case 'h': // Prefix: "health"
 
 				if l := len("health"); len(elem) >= l && elem[0:l] == "health" {
@@ -261,6 +488,31 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 						r.operationID = "Api_session"
 						r.operationGroup = ""
 						r.pathPattern = "/session"
+						r.args = args
+						r.count = 0
+						return r, true
+					default:
+						return
+					}
+				}
+
+			case 'u': // Prefix: "users"
+
+				if l := len("users"); len(elem) >= l && elem[0:l] == "users" {
+					elem = elem[l:]
+				} else {
+					break
+				}
+
+				if len(elem) == 0 {
+					// Leaf node.
+					switch method {
+					case "POST":
+						r.name = APIRegisterOperation
+						r.summary = "register a new user"
+						r.operationID = "Api_register"
+						r.operationGroup = ""
+						r.pathPattern = "/users"
 						r.args = args
 						r.count = 0
 						return r, true

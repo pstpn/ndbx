@@ -5,6 +5,7 @@ import "time"
 type SessionValue struct {
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
+	UserID    string    `json:"user_id"`
 }
 
 type SetReq struct {
@@ -31,4 +32,13 @@ type GetReq struct {
 
 type GetResp struct {
 	SessionValue
+}
+
+type SetUserIDReq struct {
+	SID    string
+	UserID string
+}
+
+type DeleteReq struct {
+	SID string
 }

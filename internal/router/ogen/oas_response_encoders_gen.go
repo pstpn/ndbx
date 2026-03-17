@@ -8,10 +8,169 @@ import (
 	"github.com/go-faster/errors"
 	"github.com/go-faster/jx"
 	"github.com/ogen-go/ogen/conv"
+	ht "github.com/ogen-go/ogen/http"
 	"github.com/ogen-go/ogen/uri"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 )
+
+func encodeAPICreateEventResponse(response APICreateEventRes, w http.ResponseWriter, span trace.Span) error {
+	switch response := response.(type) {
+	case *APICreateEventCreatedHeaders:
+		w.Header().Set("Content-Type", "application/json; charset=utf-8")
+		w.Header().Set("Access-Control-Expose-Headers", "Set-Cookie")
+		// Encoding response headers.
+		{
+			h := uri.NewHeaderEncoder(w.Header())
+			// Encode "Set-Cookie" header.
+			{
+				cfg := uri.HeaderParameterEncodingConfig{
+					Name:    "Set-Cookie",
+					Explode: false,
+				}
+				if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
+					return e.EncodeValue(conv.StringToString(response.SetCookie))
+				}); err != nil {
+					return errors.Wrap(err, "encode Set-Cookie header")
+				}
+			}
+		}
+		w.WriteHeader(201)
+		span.SetStatus(codes.Ok, http.StatusText(201))
+
+		e := new(jx.Encoder)
+		response.Response.Encode(e)
+		if _, err := e.WriteTo(w); err != nil {
+			return errors.Wrap(err, "write")
+		}
+
+		return nil
+
+	case *ErrorResponseStatusCodeWithHeaders:
+		w.Header().Set("Content-Type", "application/json; charset=utf-8")
+		w.Header().Set("Access-Control-Expose-Headers", "Set-Cookie")
+		// Encoding response headers.
+		{
+			h := uri.NewHeaderEncoder(w.Header())
+			// Encode "Set-Cookie" header.
+			{
+				cfg := uri.HeaderParameterEncodingConfig{
+					Name:    "Set-Cookie",
+					Explode: false,
+				}
+				if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
+					return e.EncodeValue(conv.StringToString(response.SetCookie))
+				}); err != nil {
+					return errors.Wrap(err, "encode Set-Cookie header")
+				}
+			}
+		}
+		code := response.StatusCode
+		if code == 0 {
+			// Set default status code.
+			code = http.StatusOK
+		}
+		w.WriteHeader(code)
+		if st := http.StatusText(code); code >= http.StatusBadRequest {
+			span.SetStatus(codes.Error, st)
+		} else {
+			span.SetStatus(codes.Ok, st)
+		}
+
+		e := new(jx.Encoder)
+		response.Response.Encode(e)
+		if _, err := e.WriteTo(w); err != nil {
+			return errors.Wrap(err, "write")
+		}
+
+		if code >= http.StatusInternalServerError {
+			return errors.Wrapf(ht.ErrInternalServerErrorResponse, "code: %d, message: %s", code, http.StatusText(code))
+		}
+		return nil
+
+	default:
+		return errors.Errorf("unexpected response type: %T", response)
+	}
+}
+
+func encodeAPIGetEventsResponse(response APIGetEventsRes, w http.ResponseWriter, span trace.Span) error {
+	switch response := response.(type) {
+	case *GetEventsResponseHeaders:
+		w.Header().Set("Content-Type", "application/json; charset=utf-8")
+		w.Header().Set("Access-Control-Expose-Headers", "Set-Cookie")
+		// Encoding response headers.
+		{
+			h := uri.NewHeaderEncoder(w.Header())
+			// Encode "Set-Cookie" header.
+			{
+				cfg := uri.HeaderParameterEncodingConfig{
+					Name:    "Set-Cookie",
+					Explode: false,
+				}
+				if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
+					return e.EncodeValue(conv.StringToString(response.SetCookie))
+				}); err != nil {
+					return errors.Wrap(err, "encode Set-Cookie header")
+				}
+			}
+		}
+		w.WriteHeader(200)
+		span.SetStatus(codes.Ok, http.StatusText(200))
+
+		e := new(jx.Encoder)
+		response.Response.Encode(e)
+		if _, err := e.WriteTo(w); err != nil {
+			return errors.Wrap(err, "write")
+		}
+
+		return nil
+
+	case *ErrorResponseStatusCodeWithHeaders:
+		w.Header().Set("Content-Type", "application/json; charset=utf-8")
+		w.Header().Set("Access-Control-Expose-Headers", "Set-Cookie")
+		// Encoding response headers.
+		{
+			h := uri.NewHeaderEncoder(w.Header())
+			// Encode "Set-Cookie" header.
+			{
+				cfg := uri.HeaderParameterEncodingConfig{
+					Name:    "Set-Cookie",
+					Explode: false,
+				}
+				if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
+					return e.EncodeValue(conv.StringToString(response.SetCookie))
+				}); err != nil {
+					return errors.Wrap(err, "encode Set-Cookie header")
+				}
+			}
+		}
+		code := response.StatusCode
+		if code == 0 {
+			// Set default status code.
+			code = http.StatusOK
+		}
+		w.WriteHeader(code)
+		if st := http.StatusText(code); code >= http.StatusBadRequest {
+			span.SetStatus(codes.Error, st)
+		} else {
+			span.SetStatus(codes.Ok, st)
+		}
+
+		e := new(jx.Encoder)
+		response.Response.Encode(e)
+		if _, err := e.WriteTo(w); err != nil {
+			return errors.Wrap(err, "write")
+		}
+
+		if code >= http.StatusInternalServerError {
+			return errors.Wrapf(ht.ErrInternalServerErrorResponse, "code: %d, message: %s", code, http.StatusText(code))
+		}
+		return nil
+
+	default:
+		return errors.Errorf("unexpected response type: %T", response)
+	}
+}
 
 func encodeAPIHealthResponse(response *HealthResponseHeaders, w http.ResponseWriter, span trace.Span) error {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
@@ -45,6 +204,222 @@ func encodeAPIHealthResponse(response *HealthResponseHeaders, w http.ResponseWri
 	}
 
 	return nil
+}
+
+func encodeAPILoginResponse(response APILoginRes, w http.ResponseWriter, span trace.Span) error {
+	switch response := response.(type) {
+	case *APILoginNoContent:
+		w.Header().Set("Access-Control-Expose-Headers", "Set-Cookie")
+		// Encoding response headers.
+		{
+			h := uri.NewHeaderEncoder(w.Header())
+			// Encode "Set-Cookie" header.
+			{
+				cfg := uri.HeaderParameterEncodingConfig{
+					Name:    "Set-Cookie",
+					Explode: false,
+				}
+				if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
+					return e.EncodeValue(conv.StringToString(response.SetCookie))
+				}); err != nil {
+					return errors.Wrap(err, "encode Set-Cookie header")
+				}
+			}
+		}
+		w.WriteHeader(204)
+		span.SetStatus(codes.Ok, http.StatusText(204))
+
+		return nil
+
+	case *ErrorResponseStatusCodeWithHeaders:
+		w.Header().Set("Content-Type", "application/json; charset=utf-8")
+		w.Header().Set("Access-Control-Expose-Headers", "Set-Cookie")
+		// Encoding response headers.
+		{
+			h := uri.NewHeaderEncoder(w.Header())
+			// Encode "Set-Cookie" header.
+			{
+				cfg := uri.HeaderParameterEncodingConfig{
+					Name:    "Set-Cookie",
+					Explode: false,
+				}
+				if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
+					return e.EncodeValue(conv.StringToString(response.SetCookie))
+				}); err != nil {
+					return errors.Wrap(err, "encode Set-Cookie header")
+				}
+			}
+		}
+		code := response.StatusCode
+		if code == 0 {
+			// Set default status code.
+			code = http.StatusOK
+		}
+		w.WriteHeader(code)
+		if st := http.StatusText(code); code >= http.StatusBadRequest {
+			span.SetStatus(codes.Error, st)
+		} else {
+			span.SetStatus(codes.Ok, st)
+		}
+
+		e := new(jx.Encoder)
+		response.Response.Encode(e)
+		if _, err := e.WriteTo(w); err != nil {
+			return errors.Wrap(err, "write")
+		}
+
+		if code >= http.StatusInternalServerError {
+			return errors.Wrapf(ht.ErrInternalServerErrorResponse, "code: %d, message: %s", code, http.StatusText(code))
+		}
+		return nil
+
+	default:
+		return errors.Errorf("unexpected response type: %T", response)
+	}
+}
+
+func encodeAPILogoutResponse(response APILogoutRes, w http.ResponseWriter, span trace.Span) error {
+	switch response := response.(type) {
+	case *APILogoutNoContent:
+		w.Header().Set("Access-Control-Expose-Headers", "Set-Cookie")
+		// Encoding response headers.
+		{
+			h := uri.NewHeaderEncoder(w.Header())
+			// Encode "Set-Cookie" header.
+			{
+				cfg := uri.HeaderParameterEncodingConfig{
+					Name:    "Set-Cookie",
+					Explode: false,
+				}
+				if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
+					return e.EncodeValue(conv.StringToString(response.SetCookie))
+				}); err != nil {
+					return errors.Wrap(err, "encode Set-Cookie header")
+				}
+			}
+		}
+		w.WriteHeader(204)
+		span.SetStatus(codes.Ok, http.StatusText(204))
+
+		return nil
+
+	case *ErrorResponseStatusCodeWithHeaders:
+		w.Header().Set("Content-Type", "application/json; charset=utf-8")
+		w.Header().Set("Access-Control-Expose-Headers", "Set-Cookie")
+		// Encoding response headers.
+		{
+			h := uri.NewHeaderEncoder(w.Header())
+			// Encode "Set-Cookie" header.
+			{
+				cfg := uri.HeaderParameterEncodingConfig{
+					Name:    "Set-Cookie",
+					Explode: false,
+				}
+				if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
+					return e.EncodeValue(conv.StringToString(response.SetCookie))
+				}); err != nil {
+					return errors.Wrap(err, "encode Set-Cookie header")
+				}
+			}
+		}
+		code := response.StatusCode
+		if code == 0 {
+			// Set default status code.
+			code = http.StatusOK
+		}
+		w.WriteHeader(code)
+		if st := http.StatusText(code); code >= http.StatusBadRequest {
+			span.SetStatus(codes.Error, st)
+		} else {
+			span.SetStatus(codes.Ok, st)
+		}
+
+		e := new(jx.Encoder)
+		response.Response.Encode(e)
+		if _, err := e.WriteTo(w); err != nil {
+			return errors.Wrap(err, "write")
+		}
+
+		if code >= http.StatusInternalServerError {
+			return errors.Wrapf(ht.ErrInternalServerErrorResponse, "code: %d, message: %s", code, http.StatusText(code))
+		}
+		return nil
+
+	default:
+		return errors.Errorf("unexpected response type: %T", response)
+	}
+}
+
+func encodeAPIRegisterResponse(response APIRegisterRes, w http.ResponseWriter, span trace.Span) error {
+	switch response := response.(type) {
+	case *APIRegisterCreated:
+		w.Header().Set("Access-Control-Expose-Headers", "Set-Cookie")
+		// Encoding response headers.
+		{
+			h := uri.NewHeaderEncoder(w.Header())
+			// Encode "Set-Cookie" header.
+			{
+				cfg := uri.HeaderParameterEncodingConfig{
+					Name:    "Set-Cookie",
+					Explode: false,
+				}
+				if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
+					return e.EncodeValue(conv.StringToString(response.SetCookie))
+				}); err != nil {
+					return errors.Wrap(err, "encode Set-Cookie header")
+				}
+			}
+		}
+		w.WriteHeader(201)
+		span.SetStatus(codes.Ok, http.StatusText(201))
+
+		return nil
+
+	case *ErrorResponseStatusCodeWithHeaders:
+		w.Header().Set("Content-Type", "application/json; charset=utf-8")
+		w.Header().Set("Access-Control-Expose-Headers", "Set-Cookie")
+		// Encoding response headers.
+		{
+			h := uri.NewHeaderEncoder(w.Header())
+			// Encode "Set-Cookie" header.
+			{
+				cfg := uri.HeaderParameterEncodingConfig{
+					Name:    "Set-Cookie",
+					Explode: false,
+				}
+				if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
+					return e.EncodeValue(conv.StringToString(response.SetCookie))
+				}); err != nil {
+					return errors.Wrap(err, "encode Set-Cookie header")
+				}
+			}
+		}
+		code := response.StatusCode
+		if code == 0 {
+			// Set default status code.
+			code = http.StatusOK
+		}
+		w.WriteHeader(code)
+		if st := http.StatusText(code); code >= http.StatusBadRequest {
+			span.SetStatus(codes.Error, st)
+		} else {
+			span.SetStatus(codes.Ok, st)
+		}
+
+		e := new(jx.Encoder)
+		response.Response.Encode(e)
+		if _, err := e.WriteTo(w); err != nil {
+			return errors.Wrap(err, "write")
+		}
+
+		if code >= http.StatusInternalServerError {
+			return errors.Wrapf(ht.ErrInternalServerErrorResponse, "code: %d, message: %s", code, http.StatusText(code))
+		}
+		return nil
+
+	default:
+		return errors.Errorf("unexpected response type: %T", response)
+	}
 }
 
 func encodeAPISessionResponse(response APISessionRes, w http.ResponseWriter, span trace.Span) error {
@@ -93,6 +468,48 @@ func encodeAPISessionResponse(response APISessionRes, w http.ResponseWriter, spa
 		w.WriteHeader(201)
 		span.SetStatus(codes.Ok, http.StatusText(201))
 
+		return nil
+
+	case *ErrorResponseStatusCodeWithHeaders:
+		w.Header().Set("Content-Type", "application/json; charset=utf-8")
+		w.Header().Set("Access-Control-Expose-Headers", "Set-Cookie")
+		// Encoding response headers.
+		{
+			h := uri.NewHeaderEncoder(w.Header())
+			// Encode "Set-Cookie" header.
+			{
+				cfg := uri.HeaderParameterEncodingConfig{
+					Name:    "Set-Cookie",
+					Explode: false,
+				}
+				if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
+					return e.EncodeValue(conv.StringToString(response.SetCookie))
+				}); err != nil {
+					return errors.Wrap(err, "encode Set-Cookie header")
+				}
+			}
+		}
+		code := response.StatusCode
+		if code == 0 {
+			// Set default status code.
+			code = http.StatusOK
+		}
+		w.WriteHeader(code)
+		if st := http.StatusText(code); code >= http.StatusBadRequest {
+			span.SetStatus(codes.Error, st)
+		} else {
+			span.SetStatus(codes.Ok, st)
+		}
+
+		e := new(jx.Encoder)
+		response.Response.Encode(e)
+		if _, err := e.WriteTo(w); err != nil {
+			return errors.Wrap(err, "write")
+		}
+
+		if code >= http.StatusInternalServerError {
+			return errors.Wrapf(ht.ErrInternalServerErrorResponse, "code: %d, message: %s", code, http.StatusText(code))
+		}
 		return nil
 
 	default:

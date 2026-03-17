@@ -15,6 +15,7 @@ import (
 const (
 	createdAtField = "created_at"
 	updatedAtField = "updated_at"
+	userIDField    = "user_id"
 )
 
 type SessionStorage struct {
@@ -61,7 +62,7 @@ func (s *SessionStorage) SetOrUpdate(ctx context.Context, req *dto.SetOrUpdateRe
 
 	if err := s.setValue(ctx, &dto.SetReq{
 		SID:   req.SID,
-		Value: dto.SessionValue{CreatedAt: createdAt, UpdatedAt: req.NewValue.UpdatedAt},
+		Value: dto.SessionValue{CreatedAt: createdAt, UpdatedAt: req.NewValue.UpdatedAt, UserID: req.NewValue.UserID},
 		TTL:   req.TTL,
 	}); err != nil {
 		return nil, err
@@ -71,12 +72,12 @@ func (s *SessionStorage) SetOrUpdate(ctx context.Context, req *dto.SetOrUpdateRe
 }
 
 func (s *SessionStorage) Get(ctx context.Context, req *dto.GetReq) (*dto.GetResp, error) {
-	res, err := s.client.HMGet(ctx, sessionKey(req.SID), createdAtField, updatedAtField).Result()
+	res, err := s.client.HMGet(ctx, sessionKey(req.SID), createdAtField, updatedAtField, userIDField).Result()
 	if err != nil {
 		return nil, fmt.Errorf("hmget: %w", err)
 	}
-	if len(res) != 2 || res[0] == nil || res[1] == nil {
-		return nil, fmt.Errorf("invalid : %w", redis.Nil)
+	if len(res) != 3 || res[0] == nil || res[1] == nil {
+		return nil, redis.Nil
 	}
 
 	createdAt, err := parseTime(res[0], time.RFC3339, createdAtField)
@@ -88,7 +89,24 @@ func (s *SessionStorage) Get(ctx context.Context, req *dto.GetReq) (*dto.GetResp
 		return nil, err
 	}
 
-	return &dto.GetResp{SessionValue: dto.SessionValue{CreatedAt: createdAt, UpdatedAt: updatedAt}}, nil
+	userID := ""
+	if res[2] != nil {
+		userIDValue, ok := res[2].(string)
+		if !ok {
+			return nil, fmt.Errorf("invalid %q field type: expected: string", userIDField)
+		}
+		userID = userIDValue
+	}
+
+	return &dto.GetResp{SessionValue: dto.SessionValue{CreatedAt: createdAt, UpdatedAt: updatedAt, UserID: userID}}, nil
+}
+
+func (s *SessionStorage) Delete(ctx context.Context, req *dto.DeleteReq) error {
+	if err := s.client.Del(ctx, sessionKey(req.SID)).Err(); err != nil {
+		return fmt.Errorf("delete session: %w", err)
+	}
+
+	return nil
 }
 
 func (s *SessionStorage) setValue(ctx context.Context, req *dto.SetReq) error {
@@ -99,6 +117,7 @@ func (s *SessionStorage) setValue(ctx context.Context, req *dto.SetReq) error {
 		},
 		createdAtField, req.Value.CreatedAt.UTC().Format(time.RFC3339),
 		updatedAtField, req.Value.UpdatedAt.UTC().Format(time.RFC3339),
+		userIDField, req.Value.UserID,
 	).Err(); err != nil {
 		return fmt.Errorf("hsetex: %w", err)
 	}

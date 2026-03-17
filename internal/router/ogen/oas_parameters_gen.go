@@ -11,6 +11,270 @@ import (
 	"github.com/ogen-go/ogen/uri"
 )
 
+// APICreateEventParams is parameters of Api_createEvent operation.
+type APICreateEventParams struct {
+	Cookie OptString `json:",omitempty,omitzero"`
+}
+
+func unpackAPICreateEventParams(packed middleware.Parameters) (params APICreateEventParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "Cookie",
+			In:   "header",
+		}
+		if v, ok := packed[key]; ok {
+			params.Cookie = v.(OptString)
+		}
+	}
+	return params
+}
+
+func decodeAPICreateEventParams(args [0]string, argsEscaped bool, r *http.Request) (params APICreateEventParams, _ error) {
+	h := uri.NewHeaderDecoder(r.Header)
+	// Decode header: Cookie.
+	if err := func() error {
+		cfg := uri.HeaderParameterDecodingConfig{
+			Name:    "Cookie",
+			Explode: false,
+		}
+		if err := h.HasParam(cfg); err == nil {
+			if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotCookieVal string
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotCookieVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.Cookie.SetTo(paramsDotCookieVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "Cookie",
+			In:   "header",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
+// APIGetEventsParams is parameters of Api_getEvents operation.
+type APIGetEventsParams struct {
+	Cookie OptString `json:",omitempty,omitzero"`
+	Title  OptString `json:",omitempty,omitzero"`
+	Limit  int64
+	Offset int64
+}
+
+func unpackAPIGetEventsParams(packed middleware.Parameters) (params APIGetEventsParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "Cookie",
+			In:   "header",
+		}
+		if v, ok := packed[key]; ok {
+			params.Cookie = v.(OptString)
+		}
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "title",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.Title = v.(OptString)
+		}
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "limit",
+			In:   "query",
+		}
+		params.Limit = packed[key].(int64)
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "offset",
+			In:   "query",
+		}
+		params.Offset = packed[key].(int64)
+	}
+	return params
+}
+
+func decodeAPIGetEventsParams(args [0]string, argsEscaped bool, r *http.Request) (params APIGetEventsParams, _ error) {
+	q := uri.NewQueryDecoder(r.URL.Query())
+	h := uri.NewHeaderDecoder(r.Header)
+	// Decode header: Cookie.
+	if err := func() error {
+		cfg := uri.HeaderParameterDecodingConfig{
+			Name:    "Cookie",
+			Explode: false,
+		}
+		if err := h.HasParam(cfg); err == nil {
+			if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotCookieVal string
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotCookieVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.Cookie.SetTo(paramsDotCookieVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "Cookie",
+			In:   "header",
+			Err:  err,
+		}
+	}
+	// Decode query: title.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "title",
+			Style:   uri.QueryStyleForm,
+			Explode: false,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotTitleVal string
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotTitleVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.Title.SetTo(paramsDotTitleVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "title",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	// Decode query: limit.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "limit",
+			Style:   uri.QueryStyleForm,
+			Explode: false,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToInt64(val)
+				if err != nil {
+					return err
+				}
+
+				params.Limit = c
+				return nil
+			}); err != nil {
+				return err
+			}
+		} else {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "limit",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	// Decode query: offset.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "offset",
+			Style:   uri.QueryStyleForm,
+			Explode: false,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToInt64(val)
+				if err != nil {
+					return err
+				}
+
+				params.Offset = c
+				return nil
+			}); err != nil {
+				return err
+			}
+		} else {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "offset",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
 // APIHealthParams is parameters of Api_health operation.
 type APIHealthParams struct {
 	Cookie OptString `json:",omitempty,omitzero"`
@@ -30,6 +294,192 @@ func unpackAPIHealthParams(packed middleware.Parameters) (params APIHealthParams
 }
 
 func decodeAPIHealthParams(args [0]string, argsEscaped bool, r *http.Request) (params APIHealthParams, _ error) {
+	h := uri.NewHeaderDecoder(r.Header)
+	// Decode header: Cookie.
+	if err := func() error {
+		cfg := uri.HeaderParameterDecodingConfig{
+			Name:    "Cookie",
+			Explode: false,
+		}
+		if err := h.HasParam(cfg); err == nil {
+			if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotCookieVal string
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotCookieVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.Cookie.SetTo(paramsDotCookieVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "Cookie",
+			In:   "header",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
+// APILoginParams is parameters of Api_login operation.
+type APILoginParams struct {
+	Cookie OptString `json:",omitempty,omitzero"`
+}
+
+func unpackAPILoginParams(packed middleware.Parameters) (params APILoginParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "Cookie",
+			In:   "header",
+		}
+		if v, ok := packed[key]; ok {
+			params.Cookie = v.(OptString)
+		}
+	}
+	return params
+}
+
+func decodeAPILoginParams(args [0]string, argsEscaped bool, r *http.Request) (params APILoginParams, _ error) {
+	h := uri.NewHeaderDecoder(r.Header)
+	// Decode header: Cookie.
+	if err := func() error {
+		cfg := uri.HeaderParameterDecodingConfig{
+			Name:    "Cookie",
+			Explode: false,
+		}
+		if err := h.HasParam(cfg); err == nil {
+			if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotCookieVal string
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotCookieVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.Cookie.SetTo(paramsDotCookieVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "Cookie",
+			In:   "header",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
+// APILogoutParams is parameters of Api_logout operation.
+type APILogoutParams struct {
+	Cookie OptString `json:",omitempty,omitzero"`
+}
+
+func unpackAPILogoutParams(packed middleware.Parameters) (params APILogoutParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "Cookie",
+			In:   "header",
+		}
+		if v, ok := packed[key]; ok {
+			params.Cookie = v.(OptString)
+		}
+	}
+	return params
+}
+
+func decodeAPILogoutParams(args [0]string, argsEscaped bool, r *http.Request) (params APILogoutParams, _ error) {
+	h := uri.NewHeaderDecoder(r.Header)
+	// Decode header: Cookie.
+	if err := func() error {
+		cfg := uri.HeaderParameterDecodingConfig{
+			Name:    "Cookie",
+			Explode: false,
+		}
+		if err := h.HasParam(cfg); err == nil {
+			if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotCookieVal string
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotCookieVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.Cookie.SetTo(paramsDotCookieVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "Cookie",
+			In:   "header",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
+// APIRegisterParams is parameters of Api_register operation.
+type APIRegisterParams struct {
+	Cookie OptString `json:",omitempty,omitzero"`
+}
+
+func unpackAPIRegisterParams(packed middleware.Parameters) (params APIRegisterParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "Cookie",
+			In:   "header",
+		}
+		if v, ok := packed[key]; ok {
+			params.Cookie = v.(OptString)
+		}
+	}
+	return params
+}
+
+func decodeAPIRegisterParams(args [0]string, argsEscaped bool, r *http.Request) (params APIRegisterParams, _ error) {
 	h := uri.NewHeaderDecoder(r.Header)
 	// Decode header: Cookie.
 	if err := func() error {

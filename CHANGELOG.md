@@ -102,3 +102,32 @@
 ### Удалено
 
 - *internal/router/handler_test.go*: удалён устаревший тест `TestHandler_APIPing` для неактуального эндпоинта `/api/ping`.
+
+## [3.0.0] - 2026-03-17
+
+### Добавлено
+
+- *internal/service/dto/event.go*: добавлены DTO для операций создания и чтения событий.
+- *internal/service/dto/user.go*: добавлены DTO для регистрации и аутентификации пользователей.
+- *internal/storage/mongodb/dto/event.go*: добавлены DTO документов событий MongoDB.
+- *internal/storage/mongodb/dto/user.go*: добавлены DTO документов пользователей MongoDB.
+- *internal/storage/mongodb/event.go*: добавлено хранилище событий с индексами и фильтрацией.
+- *internal/storage/mongodb/user.go*: добавлено хранилище пользователей с уникальным индексом по `username`.
+- *pkg/httpserver/validator.go*: добавлены общие валидаторы для обязательных строк, параметров пагинации и RFC3339-дат.
+
+### Изменено
+
+- *README.md*: документация обновлена под лабораторную работу с пользователями, авторизацией и событиями.
+- *.env.local*: расширен набор переменных окружения для подключения MongoDB.
+- *docker-compose.yml*: обновлена инфраструктура запуска c MongoDB и Redis.
+- *docs/typespec/main.tsp*: TypeSpec-спецификация расширена endpoint-ами `/users`, `/auth/login`, `/auth/logout` и `/events`.
+- *docs/openapi.yaml*: OpenAPI-контракт обновлён под новые методы пользователей и событий.
+- *internal/app/app.go*: инициализация приложения расширена сервисами и storage для MongoDB.
+- *internal/router/errors.go*: обновлены ошибки API для пользователей и событий.
+- *internal/router/handler.go*: реализованы обработчики регистрации, логина, логаута, создания и получения событий.
+- *internal/router/handler_test.go*: добавлены и обновлены HTTP-тесты для пользовательских сценариев и событий.
+- *internal/router/ogen/*: ogen-код синхронизирован с новым контрактом OpenAPI.
+- *internal/service/event.go*: сервис событий переведён на DTO и доменные ошибки `already exists`.
+- *internal/service/session.go*: сервис сессий обновлён для хранения `user_id` и корректной обработки `not found`.
+- *internal/service/user.go*: добавлены регистрация пользователя с bcrypt и аутентификация по логину/паролю.
+- *internal/storage/redis/session.go*: Redis-хранилище сессий обновлено под поле `user_id`.

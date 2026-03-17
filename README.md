@@ -1,32 +1,32 @@
 # ndbx
 
-Backend-сервис для проекта по NoSQL базам данных.
-Проект реализован на Go и включает HTTP API, автоматическую документацию OpenAPI, а также инфраструктуру для профилирования.
+Backend-сервис для проекта по NoSQL базам данных. Проект реализован на Go, использует Redis для сессий, MongoDB для пользователей и событий, а HTTP-контракт и серверная обвязка генерируются из TypeSpec/OpenAPI.
 
-## Ключевые возможности
+## Возможности
 
-- HTTP API для healthcheck и управления пользовательской сессией.
-- Автогенерация OpenAPI спецификации и клиентского/серверного кода.
-- Встроенная документация в Swagger UI и ReDoc.
-- Хранение сессий в Redis с продлением TTL.
-- Профилирование через pprof.
+- healthcheck и управление анонимной сессией;
+- регистрация пользователей и аутентификация по логину и паролю;
+- создание событий от имени авторизованного пользователя;
+- просмотр событий с фильтрацией по названию и пагинацией;
+- автогенерация OpenAPI и ogen-сервера;
+- Swagger UI, ReDoc и pprof.
 
-## Архитектура и структура
+## Архитектура
 
-- `cmd/app` — точка входа приложения.
-- `internal/app` — инициализация сервисов и жизненный цикл.
-- `internal/router` — HTTP-обработчики.
-- `internal/service` — бизнес-логика.
-- `internal/storage/redis` — работа с Redis-хранилищем.
-- `pkg/httpserver` — инфраструктура HTTP сервера и middleware.
-- `pkg/redis` - Redis-клиент.
-- `config` — загрузка конфигурации из файла окружения.
-- `docs` — OpenAPI и статические страницы документации.
+- `cmd/app` — точка входа приложения;
+- `config` — загрузка конфигурации;
+- `internal/app` — инициализация зависимостей и жизненный цикл;
+- `internal/router` — HTTP-хендлеры и сгенерированный ogen-код;
+- `internal/service` — бизнес-логика;
+- `internal/storage/mongodb` — MongoDB-хранилище пользователей и событий;
+- `internal/storage/redis` — Redis-хранилище сессий;
+- `pkg/httpserver` — HTTP-инфраструктура и общие валидаторы;
+- `pkg/logger` — логирование;
+- `docs` — TypeSpec, OpenAPI и страницы документации.
 
 ## Конфигурация
 
-Приложение читает конфигурацию из файла, путь к которому задается переменной окружения `CONFIG_PATH`.
-Формат — пары `KEY=VALUE` (как в `.env`).
+Приложение читает переменные окружения из файла, путь к которому задаётся через `CONFIG_PATH`. Формат файла — `KEY=VALUE`.
 
 Пример `.env.local`:
 
@@ -34,24 +34,30 @@ Backend-сервис для проекта по NoSQL базам данных.
 LOG_LEVEL=info
 APP_HOST=0.0.0.0
 APP_PORT=8080
-PPROF_PORT=6060
 APP_USER_SESSION_TTL=60
+PPROF_PORT=6060
 
 REDIS_HOST=redis
 REDIS_PORT=6379
 REDIS_PASSWORD=
 REDIS_DB=0
+
+MONGODB_DATABASE=eventhub
+MONGODB_USER=your_mongodb_username
+MONGODB_PASSWORD=your_mongodb_password
+MONGODB_HOST=mongodb
+MONGODB_PORT=27017
 ```
 
-## Быстрый старт (локально)
+## Запуск
+
+Локально:
 
 ```bash
 make run-local
 ```
 
-Команда ожидает, что файл `.env.local` существует в корне проекта.
-
-## Запуск в Docker
+В Docker:
 
 ```bash
 make run
@@ -60,28 +66,20 @@ make stop
 
 ## Документация API
 
-После запуска сервиса доступны следующие страницы:
+После запуска сервиса доступны:
 
 - ReDoc: `http://localhost:8080/api/docs`
 - Swagger UI: `http://localhost:8080/api/swagger`
 
-## Эндпоинты
+## Основные endpoint-ы
 
-- Healthcheck: `GET /health`.
-	- Возвращает `200` и JSON `{"status":"ok"}`.
-	- При передаче заголовка `Cookie` пробрасывает его в ответ.
-- Session API: `POST /session`.
-	- При отсутствии `X-Session-Id` создаёт новую сессию и возвращает `201` + `Set-Cookie`.
-	- При наличии `X-Session-Id` продлевает/пересоздаёт сессию и возвращает `200` или `201` + `Set-Cookie`.
-
-## Профилирование (pprof)
-
-pprof слушает порт `PPROF_PORT` (по умолчанию `6060`). Примеры:
-
-```bash
-go tool pprof -http=:8080 http://localhost:6060/debug/pprof/profile?seconds=10
-go tool pprof -http=:8080 http://localhost:6060/debug/pprof/trace?seconds=10
-```
+- `GET /health` — healthcheck;
+- `POST /session` — создание или продление анонимной сессии;
+- `POST /users` — регистрация пользователя;
+- `POST /auth/login` — аутентификация пользователя и привязка сессии;
+- `POST /auth/logout` — завершение пользовательской сессии;
+- `POST /events` — создание события авторизованным пользователем;
+- `GET /events` — получение событий с параметрами `title`, `limit`, `offset`.
 
 ## Генерация кода
 
@@ -89,15 +87,22 @@ go tool pprof -http=:8080 http://localhost:6060/debug/pprof/trace?seconds=10
 make code-gen
 ```
 
-Команда запускает TypeSpec компиляцию и генерацию серверного кода из OpenAPI.
+Команда пересобирает OpenAPI-спецификацию из TypeSpec и обновляет ogen-код сервера.
 
-## Тесты и качество кода
+## Проверки
 
 ```bash
 make test
 make lint
 ```
 
-## Вклад в проект
+## Профилирование
 
-Правила разработки и формат PR описаны в [CONTRIBUTING.md](CONTRIBUTING.md). Ответственные за ревью — в [CODEOWNERS](CODEOWNERS).
+```bash
+go tool pprof -http=:8080 http://localhost:6060/debug/pprof/profile?seconds=10
+go tool pprof -http=:8080 http://localhost:6060/debug/pprof/trace?seconds=10
+```
+
+## Разработка
+
+Правила внесения изменений описаны в [CONTRIBUTING.md](CONTRIBUTING.md). Ответственные за ревью указаны в [CODEOWNERS](CODEOWNERS).

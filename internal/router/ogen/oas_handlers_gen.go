@@ -33,6 +33,319 @@ func (c *codeRecorder) Unwrap() http.ResponseWriter {
 	return c.ResponseWriter
 }
 
+// handleAPICreateEventRequest handles Api_createEvent operation.
+//
+// Create a new event.
+//
+// POST /events
+func (s *Server) handleAPICreateEventRequest(args [0]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
+	statusWriter := &codeRecorder{ResponseWriter: w}
+	w = statusWriter
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("Api_createEvent"),
+		semconv.HTTPRequestMethodKey.String("POST"),
+		semconv.HTTPRouteKey.String("/events"),
+	}
+	// Add attributes from config.
+	otelAttrs = append(otelAttrs, s.cfg.Attributes...)
+
+	// Start a span for this request.
+	ctx, span := s.cfg.Tracer.Start(r.Context(), APICreateEventOperation,
+		trace.WithAttributes(otelAttrs...),
+		serverSpanKind,
+	)
+	defer span.End()
+
+	// Add Labeler to context.
+	labeler := &Labeler{attrs: otelAttrs}
+	ctx = contextWithLabeler(ctx, labeler)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		elapsedDuration := time.Since(startTime)
+
+		attrSet := labeler.AttributeSet()
+		attrs := attrSet.ToSlice()
+		code := statusWriter.status
+		if code != 0 {
+			codeAttr := semconv.HTTPResponseStatusCode(code)
+			attrs = append(attrs, codeAttr)
+			span.SetAttributes(codeAttr)
+		}
+		attrOpt := metric.WithAttributes(attrs...)
+
+		// Increment request counter.
+		s.requests.Add(ctx, 1, attrOpt)
+
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		s.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), attrOpt)
+	}()
+
+	var (
+		recordError = func(stage string, err error) {
+			span.RecordError(err)
+
+			// https://opentelemetry.io/docs/specs/semconv/http/http-spans/#status
+			// Span Status MUST be left unset if HTTP status code was in the 1xx, 2xx or 3xx ranges,
+			// unless there was another error (e.g., network error receiving the response body; or 3xx codes with
+			// max redirects exceeded), in which case status MUST be set to Error.
+			code := statusWriter.status
+			if code < 100 || code >= 500 {
+				span.SetStatus(codes.Error, stage)
+			}
+
+			attrSet := labeler.AttributeSet()
+			attrs := attrSet.ToSlice()
+			if code != 0 {
+				attrs = append(attrs, semconv.HTTPResponseStatusCode(code))
+			}
+
+			s.errors.Add(ctx, 1, metric.WithAttributes(attrs...))
+		}
+		err          error
+		opErrContext = ogenerrors.OperationContext{
+			Name: APICreateEventOperation,
+			ID:   "Api_createEvent",
+		}
+	)
+	params, err := decodeAPICreateEventParams(args, argsEscaped, r)
+	if err != nil {
+		err = &ogenerrors.DecodeParamsError{
+			OperationContext: opErrContext,
+			Err:              err,
+		}
+		defer recordError("DecodeParams", err)
+		s.cfg.ErrorHandler(ctx, w, r, err)
+		return
+	}
+
+	var rawBody []byte
+	request, rawBody, close, err := s.decodeAPICreateEventRequest(r)
+	if err != nil {
+		err = &ogenerrors.DecodeRequestError{
+			OperationContext: opErrContext,
+			Err:              err,
+		}
+		defer recordError("DecodeRequest", err)
+		s.cfg.ErrorHandler(ctx, w, r, err)
+		return
+	}
+	defer func() {
+		if err := close(); err != nil {
+			recordError("CloseRequest", err)
+		}
+	}()
+
+	var response APICreateEventRes
+	if m := s.cfg.Middleware; m != nil {
+		mreq := middleware.Request{
+			Context:          ctx,
+			OperationName:    APICreateEventOperation,
+			OperationSummary: "create a new event",
+			OperationID:      "Api_createEvent",
+			Body:             request,
+			RawBody:          rawBody,
+			Params: middleware.Parameters{
+				{
+					Name: "Cookie",
+					In:   "header",
+				}: params.Cookie,
+			},
+			Raw: r,
+		}
+
+		type (
+			Request  = *CreateEventRequest
+			Params   = APICreateEventParams
+			Response = APICreateEventRes
+		)
+		response, err = middleware.HookMiddleware[
+			Request,
+			Params,
+			Response,
+		](
+			m,
+			mreq,
+			unpackAPICreateEventParams,
+			func(ctx context.Context, request Request, params Params) (response Response, err error) {
+				response, err = s.h.APICreateEvent(ctx, request, params)
+				return response, err
+			},
+		)
+	} else {
+		response, err = s.h.APICreateEvent(ctx, request, params)
+	}
+	if err != nil {
+		defer recordError("Internal", err)
+		s.cfg.ErrorHandler(ctx, w, r, err)
+		return
+	}
+
+	if err := encodeAPICreateEventResponse(response, w, span); err != nil {
+		defer recordError("EncodeResponse", err)
+		if !errors.Is(err, ht.ErrInternalServerErrorResponse) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+		}
+		return
+	}
+}
+
+// handleAPIGetEventsRequest handles Api_getEvents operation.
+//
+// Get events with filtering and pagination.
+//
+// GET /events
+func (s *Server) handleAPIGetEventsRequest(args [0]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
+	statusWriter := &codeRecorder{ResponseWriter: w}
+	w = statusWriter
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("Api_getEvents"),
+		semconv.HTTPRequestMethodKey.String("GET"),
+		semconv.HTTPRouteKey.String("/events"),
+	}
+	// Add attributes from config.
+	otelAttrs = append(otelAttrs, s.cfg.Attributes...)
+
+	// Start a span for this request.
+	ctx, span := s.cfg.Tracer.Start(r.Context(), APIGetEventsOperation,
+		trace.WithAttributes(otelAttrs...),
+		serverSpanKind,
+	)
+	defer span.End()
+
+	// Add Labeler to context.
+	labeler := &Labeler{attrs: otelAttrs}
+	ctx = contextWithLabeler(ctx, labeler)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		elapsedDuration := time.Since(startTime)
+
+		attrSet := labeler.AttributeSet()
+		attrs := attrSet.ToSlice()
+		code := statusWriter.status
+		if code != 0 {
+			codeAttr := semconv.HTTPResponseStatusCode(code)
+			attrs = append(attrs, codeAttr)
+			span.SetAttributes(codeAttr)
+		}
+		attrOpt := metric.WithAttributes(attrs...)
+
+		// Increment request counter.
+		s.requests.Add(ctx, 1, attrOpt)
+
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		s.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), attrOpt)
+	}()
+
+	var (
+		recordError = func(stage string, err error) {
+			span.RecordError(err)
+
+			// https://opentelemetry.io/docs/specs/semconv/http/http-spans/#status
+			// Span Status MUST be left unset if HTTP status code was in the 1xx, 2xx or 3xx ranges,
+			// unless there was another error (e.g., network error receiving the response body; or 3xx codes with
+			// max redirects exceeded), in which case status MUST be set to Error.
+			code := statusWriter.status
+			if code < 100 || code >= 500 {
+				span.SetStatus(codes.Error, stage)
+			}
+
+			attrSet := labeler.AttributeSet()
+			attrs := attrSet.ToSlice()
+			if code != 0 {
+				attrs = append(attrs, semconv.HTTPResponseStatusCode(code))
+			}
+
+			s.errors.Add(ctx, 1, metric.WithAttributes(attrs...))
+		}
+		err          error
+		opErrContext = ogenerrors.OperationContext{
+			Name: APIGetEventsOperation,
+			ID:   "Api_getEvents",
+		}
+	)
+	params, err := decodeAPIGetEventsParams(args, argsEscaped, r)
+	if err != nil {
+		err = &ogenerrors.DecodeParamsError{
+			OperationContext: opErrContext,
+			Err:              err,
+		}
+		defer recordError("DecodeParams", err)
+		s.cfg.ErrorHandler(ctx, w, r, err)
+		return
+	}
+
+	var rawBody []byte
+
+	var response APIGetEventsRes
+	if m := s.cfg.Middleware; m != nil {
+		mreq := middleware.Request{
+			Context:          ctx,
+			OperationName:    APIGetEventsOperation,
+			OperationSummary: "get events with filtering and pagination",
+			OperationID:      "Api_getEvents",
+			Body:             nil,
+			RawBody:          rawBody,
+			Params: middleware.Parameters{
+				{
+					Name: "Cookie",
+					In:   "header",
+				}: params.Cookie,
+				{
+					Name: "title",
+					In:   "query",
+				}: params.Title,
+				{
+					Name: "limit",
+					In:   "query",
+				}: params.Limit,
+				{
+					Name: "offset",
+					In:   "query",
+				}: params.Offset,
+			},
+			Raw: r,
+		}
+
+		type (
+			Request  = struct{}
+			Params   = APIGetEventsParams
+			Response = APIGetEventsRes
+		)
+		response, err = middleware.HookMiddleware[
+			Request,
+			Params,
+			Response,
+		](
+			m,
+			mreq,
+			unpackAPIGetEventsParams,
+			func(ctx context.Context, request Request, params Params) (response Response, err error) {
+				response, err = s.h.APIGetEvents(ctx, params)
+				return response, err
+			},
+		)
+	} else {
+		response, err = s.h.APIGetEvents(ctx, params)
+	}
+	if err != nil {
+		defer recordError("Internal", err)
+		s.cfg.ErrorHandler(ctx, w, r, err)
+		return
+	}
+
+	if err := encodeAPIGetEventsResponse(response, w, span); err != nil {
+		defer recordError("EncodeResponse", err)
+		if !errors.Is(err, ht.ErrInternalServerErrorResponse) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+		}
+		return
+	}
+}
+
 // handleAPIHealthRequest handles Api_health operation.
 //
 // Healthcheck with session.
@@ -168,6 +481,465 @@ func (s *Server) handleAPIHealthRequest(args [0]string, argsEscaped bool, w http
 	}
 
 	if err := encodeAPIHealthResponse(response, w, span); err != nil {
+		defer recordError("EncodeResponse", err)
+		if !errors.Is(err, ht.ErrInternalServerErrorResponse) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+		}
+		return
+	}
+}
+
+// handleAPILoginRequest handles Api_login operation.
+//
+// Authenticate user.
+//
+// POST /auth/login
+func (s *Server) handleAPILoginRequest(args [0]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
+	statusWriter := &codeRecorder{ResponseWriter: w}
+	w = statusWriter
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("Api_login"),
+		semconv.HTTPRequestMethodKey.String("POST"),
+		semconv.HTTPRouteKey.String("/auth/login"),
+	}
+	// Add attributes from config.
+	otelAttrs = append(otelAttrs, s.cfg.Attributes...)
+
+	// Start a span for this request.
+	ctx, span := s.cfg.Tracer.Start(r.Context(), APILoginOperation,
+		trace.WithAttributes(otelAttrs...),
+		serverSpanKind,
+	)
+	defer span.End()
+
+	// Add Labeler to context.
+	labeler := &Labeler{attrs: otelAttrs}
+	ctx = contextWithLabeler(ctx, labeler)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		elapsedDuration := time.Since(startTime)
+
+		attrSet := labeler.AttributeSet()
+		attrs := attrSet.ToSlice()
+		code := statusWriter.status
+		if code != 0 {
+			codeAttr := semconv.HTTPResponseStatusCode(code)
+			attrs = append(attrs, codeAttr)
+			span.SetAttributes(codeAttr)
+		}
+		attrOpt := metric.WithAttributes(attrs...)
+
+		// Increment request counter.
+		s.requests.Add(ctx, 1, attrOpt)
+
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		s.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), attrOpt)
+	}()
+
+	var (
+		recordError = func(stage string, err error) {
+			span.RecordError(err)
+
+			// https://opentelemetry.io/docs/specs/semconv/http/http-spans/#status
+			// Span Status MUST be left unset if HTTP status code was in the 1xx, 2xx or 3xx ranges,
+			// unless there was another error (e.g., network error receiving the response body; or 3xx codes with
+			// max redirects exceeded), in which case status MUST be set to Error.
+			code := statusWriter.status
+			if code < 100 || code >= 500 {
+				span.SetStatus(codes.Error, stage)
+			}
+
+			attrSet := labeler.AttributeSet()
+			attrs := attrSet.ToSlice()
+			if code != 0 {
+				attrs = append(attrs, semconv.HTTPResponseStatusCode(code))
+			}
+
+			s.errors.Add(ctx, 1, metric.WithAttributes(attrs...))
+		}
+		err          error
+		opErrContext = ogenerrors.OperationContext{
+			Name: APILoginOperation,
+			ID:   "Api_login",
+		}
+	)
+	params, err := decodeAPILoginParams(args, argsEscaped, r)
+	if err != nil {
+		err = &ogenerrors.DecodeParamsError{
+			OperationContext: opErrContext,
+			Err:              err,
+		}
+		defer recordError("DecodeParams", err)
+		s.cfg.ErrorHandler(ctx, w, r, err)
+		return
+	}
+
+	var rawBody []byte
+	request, rawBody, close, err := s.decodeAPILoginRequest(r)
+	if err != nil {
+		err = &ogenerrors.DecodeRequestError{
+			OperationContext: opErrContext,
+			Err:              err,
+		}
+		defer recordError("DecodeRequest", err)
+		s.cfg.ErrorHandler(ctx, w, r, err)
+		return
+	}
+	defer func() {
+		if err := close(); err != nil {
+			recordError("CloseRequest", err)
+		}
+	}()
+
+	var response APILoginRes
+	if m := s.cfg.Middleware; m != nil {
+		mreq := middleware.Request{
+			Context:          ctx,
+			OperationName:    APILoginOperation,
+			OperationSummary: "authenticate user",
+			OperationID:      "Api_login",
+			Body:             request,
+			RawBody:          rawBody,
+			Params: middleware.Parameters{
+				{
+					Name: "Cookie",
+					In:   "header",
+				}: params.Cookie,
+			},
+			Raw: r,
+		}
+
+		type (
+			Request  = *LoginRequest
+			Params   = APILoginParams
+			Response = APILoginRes
+		)
+		response, err = middleware.HookMiddleware[
+			Request,
+			Params,
+			Response,
+		](
+			m,
+			mreq,
+			unpackAPILoginParams,
+			func(ctx context.Context, request Request, params Params) (response Response, err error) {
+				response, err = s.h.APILogin(ctx, request, params)
+				return response, err
+			},
+		)
+	} else {
+		response, err = s.h.APILogin(ctx, request, params)
+	}
+	if err != nil {
+		defer recordError("Internal", err)
+		s.cfg.ErrorHandler(ctx, w, r, err)
+		return
+	}
+
+	if err := encodeAPILoginResponse(response, w, span); err != nil {
+		defer recordError("EncodeResponse", err)
+		if !errors.Is(err, ht.ErrInternalServerErrorResponse) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+		}
+		return
+	}
+}
+
+// handleAPILogoutRequest handles Api_logout operation.
+//
+// Logout user.
+//
+// POST /auth/logout
+func (s *Server) handleAPILogoutRequest(args [0]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
+	statusWriter := &codeRecorder{ResponseWriter: w}
+	w = statusWriter
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("Api_logout"),
+		semconv.HTTPRequestMethodKey.String("POST"),
+		semconv.HTTPRouteKey.String("/auth/logout"),
+	}
+	// Add attributes from config.
+	otelAttrs = append(otelAttrs, s.cfg.Attributes...)
+
+	// Start a span for this request.
+	ctx, span := s.cfg.Tracer.Start(r.Context(), APILogoutOperation,
+		trace.WithAttributes(otelAttrs...),
+		serverSpanKind,
+	)
+	defer span.End()
+
+	// Add Labeler to context.
+	labeler := &Labeler{attrs: otelAttrs}
+	ctx = contextWithLabeler(ctx, labeler)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		elapsedDuration := time.Since(startTime)
+
+		attrSet := labeler.AttributeSet()
+		attrs := attrSet.ToSlice()
+		code := statusWriter.status
+		if code != 0 {
+			codeAttr := semconv.HTTPResponseStatusCode(code)
+			attrs = append(attrs, codeAttr)
+			span.SetAttributes(codeAttr)
+		}
+		attrOpt := metric.WithAttributes(attrs...)
+
+		// Increment request counter.
+		s.requests.Add(ctx, 1, attrOpt)
+
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		s.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), attrOpt)
+	}()
+
+	var (
+		recordError = func(stage string, err error) {
+			span.RecordError(err)
+
+			// https://opentelemetry.io/docs/specs/semconv/http/http-spans/#status
+			// Span Status MUST be left unset if HTTP status code was in the 1xx, 2xx or 3xx ranges,
+			// unless there was another error (e.g., network error receiving the response body; or 3xx codes with
+			// max redirects exceeded), in which case status MUST be set to Error.
+			code := statusWriter.status
+			if code < 100 || code >= 500 {
+				span.SetStatus(codes.Error, stage)
+			}
+
+			attrSet := labeler.AttributeSet()
+			attrs := attrSet.ToSlice()
+			if code != 0 {
+				attrs = append(attrs, semconv.HTTPResponseStatusCode(code))
+			}
+
+			s.errors.Add(ctx, 1, metric.WithAttributes(attrs...))
+		}
+		err          error
+		opErrContext = ogenerrors.OperationContext{
+			Name: APILogoutOperation,
+			ID:   "Api_logout",
+		}
+	)
+	params, err := decodeAPILogoutParams(args, argsEscaped, r)
+	if err != nil {
+		err = &ogenerrors.DecodeParamsError{
+			OperationContext: opErrContext,
+			Err:              err,
+		}
+		defer recordError("DecodeParams", err)
+		s.cfg.ErrorHandler(ctx, w, r, err)
+		return
+	}
+
+	var rawBody []byte
+
+	var response APILogoutRes
+	if m := s.cfg.Middleware; m != nil {
+		mreq := middleware.Request{
+			Context:          ctx,
+			OperationName:    APILogoutOperation,
+			OperationSummary: "logout user",
+			OperationID:      "Api_logout",
+			Body:             nil,
+			RawBody:          rawBody,
+			Params: middleware.Parameters{
+				{
+					Name: "Cookie",
+					In:   "header",
+				}: params.Cookie,
+			},
+			Raw: r,
+		}
+
+		type (
+			Request  = struct{}
+			Params   = APILogoutParams
+			Response = APILogoutRes
+		)
+		response, err = middleware.HookMiddleware[
+			Request,
+			Params,
+			Response,
+		](
+			m,
+			mreq,
+			unpackAPILogoutParams,
+			func(ctx context.Context, request Request, params Params) (response Response, err error) {
+				response, err = s.h.APILogout(ctx, params)
+				return response, err
+			},
+		)
+	} else {
+		response, err = s.h.APILogout(ctx, params)
+	}
+	if err != nil {
+		defer recordError("Internal", err)
+		s.cfg.ErrorHandler(ctx, w, r, err)
+		return
+	}
+
+	if err := encodeAPILogoutResponse(response, w, span); err != nil {
+		defer recordError("EncodeResponse", err)
+		if !errors.Is(err, ht.ErrInternalServerErrorResponse) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+		}
+		return
+	}
+}
+
+// handleAPIRegisterRequest handles Api_register operation.
+//
+// Register a new user.
+//
+// POST /users
+func (s *Server) handleAPIRegisterRequest(args [0]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
+	statusWriter := &codeRecorder{ResponseWriter: w}
+	w = statusWriter
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("Api_register"),
+		semconv.HTTPRequestMethodKey.String("POST"),
+		semconv.HTTPRouteKey.String("/users"),
+	}
+	// Add attributes from config.
+	otelAttrs = append(otelAttrs, s.cfg.Attributes...)
+
+	// Start a span for this request.
+	ctx, span := s.cfg.Tracer.Start(r.Context(), APIRegisterOperation,
+		trace.WithAttributes(otelAttrs...),
+		serverSpanKind,
+	)
+	defer span.End()
+
+	// Add Labeler to context.
+	labeler := &Labeler{attrs: otelAttrs}
+	ctx = contextWithLabeler(ctx, labeler)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		elapsedDuration := time.Since(startTime)
+
+		attrSet := labeler.AttributeSet()
+		attrs := attrSet.ToSlice()
+		code := statusWriter.status
+		if code != 0 {
+			codeAttr := semconv.HTTPResponseStatusCode(code)
+			attrs = append(attrs, codeAttr)
+			span.SetAttributes(codeAttr)
+		}
+		attrOpt := metric.WithAttributes(attrs...)
+
+		// Increment request counter.
+		s.requests.Add(ctx, 1, attrOpt)
+
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		s.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), attrOpt)
+	}()
+
+	var (
+		recordError = func(stage string, err error) {
+			span.RecordError(err)
+
+			// https://opentelemetry.io/docs/specs/semconv/http/http-spans/#status
+			// Span Status MUST be left unset if HTTP status code was in the 1xx, 2xx or 3xx ranges,
+			// unless there was another error (e.g., network error receiving the response body; or 3xx codes with
+			// max redirects exceeded), in which case status MUST be set to Error.
+			code := statusWriter.status
+			if code < 100 || code >= 500 {
+				span.SetStatus(codes.Error, stage)
+			}
+
+			attrSet := labeler.AttributeSet()
+			attrs := attrSet.ToSlice()
+			if code != 0 {
+				attrs = append(attrs, semconv.HTTPResponseStatusCode(code))
+			}
+
+			s.errors.Add(ctx, 1, metric.WithAttributes(attrs...))
+		}
+		err          error
+		opErrContext = ogenerrors.OperationContext{
+			Name: APIRegisterOperation,
+			ID:   "Api_register",
+		}
+	)
+	params, err := decodeAPIRegisterParams(args, argsEscaped, r)
+	if err != nil {
+		err = &ogenerrors.DecodeParamsError{
+			OperationContext: opErrContext,
+			Err:              err,
+		}
+		defer recordError("DecodeParams", err)
+		s.cfg.ErrorHandler(ctx, w, r, err)
+		return
+	}
+
+	var rawBody []byte
+	request, rawBody, close, err := s.decodeAPIRegisterRequest(r)
+	if err != nil {
+		err = &ogenerrors.DecodeRequestError{
+			OperationContext: opErrContext,
+			Err:              err,
+		}
+		defer recordError("DecodeRequest", err)
+		s.cfg.ErrorHandler(ctx, w, r, err)
+		return
+	}
+	defer func() {
+		if err := close(); err != nil {
+			recordError("CloseRequest", err)
+		}
+	}()
+
+	var response APIRegisterRes
+	if m := s.cfg.Middleware; m != nil {
+		mreq := middleware.Request{
+			Context:          ctx,
+			OperationName:    APIRegisterOperation,
+			OperationSummary: "register a new user",
+			OperationID:      "Api_register",
+			Body:             request,
+			RawBody:          rawBody,
+			Params: middleware.Parameters{
+				{
+					Name: "Cookie",
+					In:   "header",
+				}: params.Cookie,
+			},
+			Raw: r,
+		}
+
+		type (
+			Request  = *UserRegisterRequest
+			Params   = APIRegisterParams
+			Response = APIRegisterRes
+		)
+		response, err = middleware.HookMiddleware[
+			Request,
+			Params,
+			Response,
+		](
+			m,
+			mreq,
+			unpackAPIRegisterParams,
+			func(ctx context.Context, request Request, params Params) (response Response, err error) {
+				response, err = s.h.APIRegister(ctx, request, params)
+				return response, err
+			},
+		)
+	} else {
+		response, err = s.h.APIRegister(ctx, request, params)
+	}
+	if err != nil {
+		defer recordError("Internal", err)
+		s.cfg.ErrorHandler(ctx, w, r, err)
+		return
+	}
+
+	if err := encodeAPIRegisterResponse(response, w, span); err != nil {
 		defer recordError("EncodeResponse", err)
 		if !errors.Is(err, ht.ErrInternalServerErrorResponse) {
 			s.cfg.ErrorHandler(ctx, w, r, err)

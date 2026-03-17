@@ -16,9 +16,11 @@ import (
 	"ndbx/internal/router"
 	oas "ndbx/internal/router/ogen"
 	"ndbx/internal/service"
+	mstorage "ndbx/internal/storage/mongodb"
 	rstorage "ndbx/internal/storage/redis"
 	"ndbx/pkg/httpserver"
 	"ndbx/pkg/logger"
+	"ndbx/pkg/mongodb"
 	"ndbx/pkg/redis"
 )
 
@@ -35,13 +37,37 @@ func Run(ctx context.Context, cfg *config.Config) error {
 	}
 	defer redisClient.Close()
 
+	mongoDBClient, err := mongodb.New(
+		ctx,
+		cfg.MongoDBUser,
+		cfg.MongoDBPassword,
+		cfg.MongoDBHost,
+		cfg.MongoDBPort,
+		cfg.MongoDBDatabase,
+	)
+	if err != nil {
+		return fmt.Errorf("new mongodb client: %w", err)
+	}
+	defer mongoDBClient.Close(ctx)
+
 	// Storages
 	sessionStorage := rstorage.NewSessionStorage(redisClient)
+	userStorage := mstorage.NewUserStorage(mongoDBClient.DB())
+	eventStorage := mstorage.NewEventStorage(mongoDBClient.DB())
+
+	if err := userStorage.CreateIndex(ctx); err != nil {
+		return fmt.Errorf("create user indexes: %w", err)
+	}
+	if err := eventStorage.CreateIndexes(ctx); err != nil {
+		return fmt.Errorf("create event indexes: %w", err)
+	}
 
 	// Services
 	sessionService := service.NewSessionService(l, sessionStorage, cfg.AppUserSessionTTLSeconds)
+	userService := service.NewUserService(l, userStorage)
+	eventService := service.NewEventService(l, eventStorage)
 
-	handler := router.NewHandler(l, sessionService, cfg.AppUserSessionTTLSeconds)
+	handler := router.NewHandler(l, sessionService, userService, eventService, cfg.AppUserSessionTTLSeconds)
 
 	oasHandler, err := oas.NewServer(handler)
 	if err != nil {

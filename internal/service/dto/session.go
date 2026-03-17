@@ -9,6 +9,11 @@ type GetSessionReq struct {
 type GetSessionResp struct {
 	CreatedAt time.Time
 	UpdatedAt time.Time
+	UserID    string
+}
+
+type CreateSessionReq struct {
+	UserID string
 }
 
 type CreateSessionResp struct {
@@ -17,11 +22,21 @@ type CreateSessionResp struct {
 }
 
 type CreateOrExtendSessionReq struct {
-	SID string
+	SID    string
+	UserID string
 }
 
 type CreateOrExtendSessionResp struct {
 	SID           string
 	MaxAgeSeconds int
 	IsCreated     bool
+}
+
+type SetUserIDReq struct {
+	SID    string
+	UserID string
+}
+
+type DeleteSessionReq struct {
+	SID string
 }

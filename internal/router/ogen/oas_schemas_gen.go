@@ -2,6 +2,99 @@
 
 package api
 
+type APICreateEventCreated struct {
+	ID string `json:"id"`
+}
+
+// GetID returns the value of ID.
+func (s *APICreateEventCreated) GetID() string {
+	return s.ID
+}
+
+// SetID sets the value of ID.
+func (s *APICreateEventCreated) SetID(val string) {
+	s.ID = val
+}
+
+// APICreateEventCreatedHeaders wraps APICreateEventCreated with response headers.
+type APICreateEventCreatedHeaders struct {
+	SetCookie string
+	Response  APICreateEventCreated
+}
+
+// GetSetCookie returns the value of SetCookie.
+func (s *APICreateEventCreatedHeaders) GetSetCookie() string {
+	return s.SetCookie
+}
+
+// GetResponse returns the value of Response.
+func (s *APICreateEventCreatedHeaders) GetResponse() APICreateEventCreated {
+	return s.Response
+}
+
+// SetSetCookie sets the value of SetCookie.
+func (s *APICreateEventCreatedHeaders) SetSetCookie(val string) {
+	s.SetCookie = val
+}
+
+// SetResponse sets the value of Response.
+func (s *APICreateEventCreatedHeaders) SetResponse(val APICreateEventCreated) {
+	s.Response = val
+}
+
+func (*APICreateEventCreatedHeaders) aPICreateEventRes() {}
+
+// APILoginNoContent is response for APILogin operation.
+type APILoginNoContent struct {
+	SetCookie string
+}
+
+// GetSetCookie returns the value of SetCookie.
+func (s *APILoginNoContent) GetSetCookie() string {
+	return s.SetCookie
+}
+
+// SetSetCookie sets the value of SetCookie.
+func (s *APILoginNoContent) SetSetCookie(val string) {
+	s.SetCookie = val
+}
+
+func (*APILoginNoContent) aPILoginRes() {}
+
+// APILogoutNoContent is response for APILogout operation.
+type APILogoutNoContent struct {
+	SetCookie string
+}
+
+// GetSetCookie returns the value of SetCookie.
+func (s *APILogoutNoContent) GetSetCookie() string {
+	return s.SetCookie
+}
+
+// SetSetCookie sets the value of SetCookie.
+func (s *APILogoutNoContent) SetSetCookie(val string) {
+	s.SetCookie = val
+}
+
+func (*APILogoutNoContent) aPILogoutRes() {}
+
+// APIRegisterCreated is response for APIRegister operation.
+type APIRegisterCreated struct {
+	SetCookie string
+}
+
+// GetSetCookie returns the value of SetCookie.
+func (s *APIRegisterCreated) GetSetCookie() string {
+	return s.SetCookie
+}
+
+// SetSetCookie sets the value of SetCookie.
+func (s *APIRegisterCreated) SetSetCookie(val string) {
+	s.SetCookie = val
+}
+
+func (*APIRegisterCreated) aPIRegisterRes() {}
+
 // APISessionCreated is response for APISession operation.
 type APISessionCreated struct {
 	SetCookie string
@@ -35,6 +128,270 @@ func (s *APISessionOK) SetSetCookie(val string) {
 }
 
 func (*APISessionOK) aPISessionRes() {}
+
+// Ref: #/components/schemas/CreateEventRequest
+type CreateEventRequest struct {
+	Title       string    `json:"title"`
+	Address     string    `json:"address"`
+	Description OptString `json:"description"`
+	StartedAt   string    `json:"started_at"`
+	FinishedAt  string    `json:"finished_at"`
+}
+
+// GetTitle returns the value of Title.
+func (s *CreateEventRequest) GetTitle() string {
+	return s.Title
+}
+
+// GetAddress returns the value of Address.
+func (s *CreateEventRequest) GetAddress() string {
+	return s.Address
+}
+
+// GetDescription returns the value of Description.
+func (s *CreateEventRequest) GetDescription() OptString {
+	return s.Description
+}
+
+// GetStartedAt returns the value of StartedAt.
+func (s *CreateEventRequest) GetStartedAt() string {
+	return s.StartedAt
+}
+
+// GetFinishedAt returns the value of FinishedAt.
+func (s *CreateEventRequest) GetFinishedAt() string {
+	return s.FinishedAt
+}
+
+// SetTitle sets the value of Title.
+func (s *CreateEventRequest) SetTitle(val string) {
+	s.Title = val
+}
+
+// SetAddress sets the value of Address.
+func (s *CreateEventRequest) SetAddress(val string) {
+	s.Address = val
+}
+
+// SetDescription sets the value of Description.
+func (s *CreateEventRequest) SetDescription(val OptString) {
+	s.Description = val
+}
+
+// SetStartedAt sets the value of StartedAt.
+func (s *CreateEventRequest) SetStartedAt(val string) {
+	s.StartedAt = val
+}
+
+// SetFinishedAt sets the value of FinishedAt.
+func (s *CreateEventRequest) SetFinishedAt(val string) {
+	s.FinishedAt = val
+}
+
+// Ref: #/components/schemas/ErrorResponse
+type ErrorResponse struct {
+	Message OptString `json:"message"`
+}
+
+// GetMessage returns the value of Message.
+func (s *ErrorResponse) GetMessage() OptString {
+	return s.Message
+}
+
+// SetMessage sets the value of Message.
+func (s *ErrorResponse) SetMessage(val OptString) {
+	s.Message = val
+}
+
+// ErrorResponseStatusCodeWithHeaders wraps ErrorResponse with status code and response headers.
+type ErrorResponseStatusCodeWithHeaders struct {
+	StatusCode int
+	SetCookie  string
+	Response   ErrorResponse
+}
+
+// GetStatusCode returns the value of StatusCode.
+func (s *ErrorResponseStatusCodeWithHeaders) GetStatusCode() int {
+	return s.StatusCode
+}
+
+// GetSetCookie returns the value of SetCookie.
+func (s *ErrorResponseStatusCodeWithHeaders) GetSetCookie() string {
+	return s.SetCookie
+}
+
+// GetResponse returns the value of Response.
+func (s *ErrorResponseStatusCodeWithHeaders) GetResponse() ErrorResponse {
+	return s.Response
+}
+
+// SetStatusCode sets the value of StatusCode.
+func (s *ErrorResponseStatusCodeWithHeaders) SetStatusCode(val int) {
+	s.StatusCode = val
+}
+
+// SetSetCookie sets the value of SetCookie.
+func (s *ErrorResponseStatusCodeWithHeaders) SetSetCookie(val string) {
+	s.SetCookie = val
+}
+
+// SetResponse sets the value of Response.
+func (s *ErrorResponseStatusCodeWithHeaders) SetResponse(val ErrorResponse) {
+	s.Response = val
+}
+
+func (*ErrorResponseStatusCodeWithHeaders) aPICreateEventRes() {}
+func (*ErrorResponseStatusCodeWithHeaders) aPIGetEventsRes()   {}
+func (*ErrorResponseStatusCodeWithHeaders) aPILoginRes()       {}
+func (*ErrorResponseStatusCodeWithHeaders) aPILogoutRes()      {}
+func (*ErrorResponseStatusCodeWithHeaders) aPIRegisterRes()    {}
+func (*ErrorResponseStatusCodeWithHeaders) aPISessionRes()     {}
+
+// Ref: #/components/schemas/EventData
+type EventData struct {
+	ID          string       `json:"id"`
+	Title       string       `json:"title"`
+	Description OptString    `json:"description"`
+	Location    LocationInfo `json:"location"`
+	StartedAt   string       `json:"started_at"`
+	FinishedAt  string       `json:"finished_at"`
+	CreatedAt   string       `json:"created_at"`
+	CreatedBy   string       `json:"created_by"`
+}
+
+// GetID returns the value of ID.
+func (s *EventData) GetID() string {
+	return s.ID
+}
+
+// GetTitle returns the value of Title.
+func (s *EventData) GetTitle() string {
+	return s.Title
+}
+
+// GetDescription returns the value of Description.
+func (s *EventData) GetDescription() OptString {
+	return s.Description
+}
+
+// GetLocation returns the value of Location.
+func (s *EventData) GetLocation() LocationInfo {
+	return s.Location
+}
+
+// GetStartedAt returns the value of StartedAt.
+func (s *EventData) GetStartedAt() string {
+	return s.StartedAt
+}
+
+// GetFinishedAt returns the value of FinishedAt.
+func (s *EventData) GetFinishedAt() string {
+	return s.FinishedAt
+}
+
+// GetCreatedAt returns the value of CreatedAt.
+func (s *EventData) GetCreatedAt() string {
+	return s.CreatedAt
+}
+
+// GetCreatedBy returns the value of CreatedBy.
+func (s *EventData) GetCreatedBy() string {
+	return s.CreatedBy
+}
+
+// SetID sets the value of ID.
+func (s *EventData) SetID(val string) {
+	s.ID = val
+}
+
+// SetTitle sets the value of Title.
+func (s *EventData) SetTitle(val string) {
+	s.Title = val
+}
+
+// SetDescription sets the value of Description.
+func (s *EventData) SetDescription(val OptString) {
+	s.Description = val
+}
+
+// SetLocation sets the value of Location.
+func (s *EventData) SetLocation(val LocationInfo) {
+	s.Location = val
+}
+
+// SetStartedAt sets the value of StartedAt.
+func (s *EventData) SetStartedAt(val string) {
+	s.StartedAt = val
+}
+
+// SetFinishedAt sets the value of FinishedAt.
+func (s *EventData) SetFinishedAt(val string) {
+	s.FinishedAt = val
+}
+
+// SetCreatedAt sets the value of CreatedAt.
+func (s *EventData) SetCreatedAt(val string) {
+	s.CreatedAt = val
+}
+
+// SetCreatedBy sets the value of CreatedBy.
+func (s *EventData) SetCreatedBy(val string) {
+	s.CreatedBy = val
+}
+
+// Ref: #/components/schemas/GetEventsResponse
+type GetEventsResponse struct {
+	Events []EventData `json:"events"`
+	Count  int64       `json:"count"`
+}
+
+// GetEvents returns the value of Events.
+func (s *GetEventsResponse) GetEvents() []EventData {
+	return s.Events
+}
+
+// GetCount returns the value of Count.
+func (s *GetEventsResponse) GetCount() int64 {
+	return s.Count
+}
+
+// SetEvents sets the value of Events.
+func (s *GetEventsResponse) SetEvents(val []EventData) {
+	s.Events = val
+}
+
+// SetCount sets the value of Count.
+func (s *GetEventsResponse) SetCount(val int64) {
+	s.Count = val
+}
+
+// GetEventsResponseHeaders wraps GetEventsResponse with response headers.
+type GetEventsResponseHeaders struct {
+	SetCookie string
+	Response  GetEventsResponse
+}
+
+// GetSetCookie returns the value of SetCookie.
+func (s *GetEventsResponseHeaders) GetSetCookie() string {
+	return s.SetCookie
+}
+
+// GetResponse returns the value of Response.
+func (s *GetEventsResponseHeaders) GetResponse() GetEventsResponse {
+	return s.Response
+}
+
+// SetSetCookie sets the value of SetCookie.
+func (s *GetEventsResponseHeaders) SetSetCookie(val string) {
+	s.SetCookie = val
+}
+
+// SetResponse sets the value of Response.
+func (s *GetEventsResponseHeaders) SetResponse(val GetEventsResponse) {
+	s.Response = val
+}
+
+func (*GetEventsResponseHeaders) aPIGetEventsRes() {}
 
 // Ref: #/components/schemas/HealthResponse
 type HealthResponse struct {
@@ -75,6 +432,47 @@ func (s *HealthResponseHeaders) SetSetCookie(val OptString) {
 // SetResponse sets the value of Response.
 func (s *HealthResponseHeaders) SetResponse(val HealthResponse) {
 	s.Response = val
+}
+
+// Ref: #/components/schemas/LocationInfo
+type LocationInfo struct {
+	Address string `json:"address"`
+}
+
+// GetAddress returns the value of Address.
+func (s *LocationInfo) GetAddress() string {
+	return s.Address
+}
+
+// SetAddress sets the value of Address.
+func (s *LocationInfo) SetAddress(val string) {
+	s.Address = val
+}
+
+// Ref: #/components/schemas/LoginRequest
+type LoginRequest struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
+
+// GetUsername returns the value of Username.
+func (s *LoginRequest) GetUsername() string {
+	return s.Username
+}
+
+// GetPassword returns the value of Password.
+func (s *LoginRequest) GetPassword() string {
+	return s.Password
+}
+
+// SetUsername sets the value of Username.
+func (s *LoginRequest) SetUsername(val string) {
+	s.Username = val
+}
+
+// SetPassword sets the value of Password.
+func (s *LoginRequest) SetPassword(val string) {
+	s.Password = val
 }
 
 // NewOptString returns new OptString with value set to v.
@@ -121,4 +519,41 @@ func (o OptString) Or(d string) string {
 		return v
 	}
 	return d
+}
+
+// Ref: #/components/schemas/UserRegisterRequest
+type UserRegisterRequest struct {
+	FullName string `json:"full_name"`
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
+
+// GetFullName returns the value of FullName.
+func (s *UserRegisterRequest) GetFullName() string {
+	return s.FullName
+}
+
+// GetUsername returns the value of Username.
+func (s *UserRegisterRequest) GetUsername() string {
+	return s.Username
+}
+
+// GetPassword returns the value of Password.
+func (s *UserRegisterRequest) GetPassword() string {
+	return s.Password
+}
+
+// SetFullName sets the value of FullName.
+func (s *UserRegisterRequest) SetFullName(val string) {
+	s.FullName = val
+}
+
+// SetUsername sets the value of Username.
+func (s *UserRegisterRequest) SetUsername(val string) {
+	s.Username = val
+}
+
+// SetPassword sets the value of Password.
+func (s *UserRegisterRequest) SetPassword(val string) {
+	s.Password = val
 }

@@ -11,6 +11,8 @@ services:
     depends_on:
       redis:
         condition: service_healthy
+      mongo:
+        condition: service_healthy
     networks:
       - backend-network
     restart: no
@@ -52,6 +54,25 @@ services:
       timeout: 2s
       retries: 10
 
+  mongo:
+    image: mongo:8.0.0
+    container_name: mongo
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGODB_USER}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGODB_PASSWORD}
+      MONGO_INITDB_DATABASE: ${MONGODB_DATABASE}
+    ports:
+      - "${MONGODB_PORT}:${MONGODB_PORT}"
+    networks:
+      - backend-network
+    restart: unless-stopped
+    volumes:
+      - mongo-data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 5s
+      timeout: 2s
+      retries: 10
 networks:
   backend-network:
     name: backend-network
@@ -59,3 +80,4 @@ networks:
 
 volumes:
   redis-data:
+  mongo-data:
