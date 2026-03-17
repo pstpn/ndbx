@@ -175,7 +175,7 @@ func (h *Handler) APICreateEvent(ctx context.Context, req *oas.CreateEventReques
 	sid := extractSID(params.Cookie.Value)
 	setCookie := formSetCookie(sid, h.sessionTTLSeconds)
 	if sid == "" {
-		return NewUnauthorizedError(setCookie, nil), nil
+		return &oas.APICreateEventUnauthorized{SetCookie: setCookie}, nil
 	}
 
 	if err := httpv.NotEmpty("title", req.Title); err != nil {
@@ -196,14 +196,14 @@ func (h *Handler) APICreateEvent(ctx context.Context, req *oas.CreateEventReques
 	session, err := h.sessionService.GetSession(ctx, &dto.GetSessionReq{SID: sid})
 	if err != nil {
 		if errors.Is(err, service.ErrNotFound) {
-			return NewUnauthorizedError(setCookie, nil), nil
+			return &oas.APICreateEventUnauthorized{SetCookie: setCookie}, nil
 		}
 
 		h.l.Errorf("failed to get session: %s", err.Error())
 		return NewInternalError(), nil
 	}
 	if session.UserID == "" {
-		return NewUnauthorizedError(setCookie, nil), nil
+		return &oas.APICreateEventUnauthorized{SetCookie: setCookie}, nil
 	}
 
 	eventResp, err := h.eventService.CreateEvent(ctx, &dto.CreateEventReq{

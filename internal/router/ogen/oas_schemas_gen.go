@@ -44,6 +44,23 @@ func (s *APICreateEventCreatedHeaders) SetResponse(val APICreateEventCreated) {
 
 func (*APICreateEventCreatedHeaders) aPICreateEventRes() {}
 
+// APICreateEventUnauthorized is response for APICreateEvent operation.
+type APICreateEventUnauthorized struct {
+	SetCookie string
+}
+
+// GetSetCookie returns the value of SetCookie.
+func (s *APICreateEventUnauthorized) GetSetCookie() string {
+	return s.SetCookie
+}
+
+// SetSetCookie sets the value of SetCookie.
+func (s *APICreateEventUnauthorized) SetSetCookie(val string) {
+	s.SetCookie = val
+}
+
+func (*APICreateEventUnauthorized) aPICreateEventRes() {}
+
 // APILoginNoContent is response for APILogin operation.
 type APILoginNoContent struct {
 	SetCookie string

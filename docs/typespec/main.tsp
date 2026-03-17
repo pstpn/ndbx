@@ -108,6 +108,13 @@ model CreateEventResponse {
     body: {id: string}
 }
 
+model CreateEventUnauthorizedResponse {
+    @header("Set-Cookie")
+    setCookie: string;
+    @statusCode
+    statusCode: 401;
+}
+
 model GetEventsRequest {
     @header("Cookie")
     cookie?: string;
@@ -151,7 +158,7 @@ namespace Api {
 
     @summary("create a new event")
     @route("/events")
-    @post op createEvent(@body body: CreateEventRequest, ...CookieRequest): CreateEventResponse | ErrorResponse;
+    @post op createEvent(@body body: CreateEventRequest, ...CookieRequest): CreateEventResponse | CreateEventUnauthorizedResponse | ErrorResponse;
 
     @summary("get events with filtering and pagination")
     @route("/events")

@@ -427,6 +427,7 @@ func TestHandler_APILogout(t *testing.T) {
 		setup          func(sessionService router.SessionService)
 		expectedStatus int
 		expectedCookie string
+		expectedBody   string
 	}{
 		{
 			name:   "successful logout with session",
@@ -452,6 +453,7 @@ func TestHandler_APILogout(t *testing.T) {
 					ThenReturn(errors.New("delete error"))
 			},
 			expectedStatus: http.StatusInternalServerError,
+			expectedBody:   `{"message":"internal error"}`,
 		},
 	}
 
@@ -479,6 +481,14 @@ func TestHandler_APILogout(t *testing.T) {
 			t.Cleanup(func() { require.NoError(t, resp.Body.Close()) })
 			require.Equal(t, tt.expectedStatus, resp.StatusCode)
 			require.Equal(t, tt.expectedCookie, resp.Header.Get("Set-Cookie"))
+
+			body, err := io.ReadAll(resp.Body)
+			require.NoError(t, err)
+			if tt.expectedBody == "" {
+				require.Empty(t, body)
+			} else {
+				require.JSONEq(t, tt.expectedBody, string(body))
+			}
 		})
 	}
 }
@@ -529,6 +539,7 @@ func TestHandler_APICreateEvent(t *testing.T) {
 			requestBody:    createEventRequestBody("Test Event", "", "Test Address", "2023-01-01T10:00:00Z", "2023-01-01T12:00:00Z"),
 			expectedStatus: http.StatusUnauthorized,
 			expectedCookie: "X-Session-Id=; HttpOnly; Path=/; Max-Age=0",
+			expectedBody:   "",
 		},
 		{
 			name:        "session not found",
@@ -541,6 +552,7 @@ func TestHandler_APICreateEvent(t *testing.T) {
 			},
 			expectedStatus: http.StatusUnauthorized,
 			expectedCookie: fmt.Sprintf("X-Session-Id=invalid-sid; HttpOnly; Path=/; Max-Age=%d", mockTTL),
+			expectedBody:   "",
 		},
 		{
 			name:        "session without user",
@@ -557,6 +569,7 @@ func TestHandler_APICreateEvent(t *testing.T) {
 			},
 			expectedStatus: http.StatusUnauthorized,
 			expectedCookie: fmt.Sprintf("X-Session-Id=anon-sid; HttpOnly; Path=/; Max-Age=%d", mockTTL),
+			expectedBody:   "",
 		},
 		{
 			name:           "empty title",
@@ -625,6 +638,7 @@ func TestHandler_APICreateEvent(t *testing.T) {
 					ThenReturn(nil, errors.New("internal error"))
 			},
 			expectedStatus: http.StatusInternalServerError,
+			expectedBody:   `{"message":"internal error"}`,
 		},
 	}
 
@@ -653,10 +667,12 @@ func TestHandler_APICreateEvent(t *testing.T) {
 			t.Cleanup(func() { require.NoError(t, resp.Body.Close()) })
 			require.Equal(t, tt.expectedStatus, resp.StatusCode)
 			require.Equal(t, tt.expectedCookie, resp.Header.Get("Set-Cookie"))
+			body, err := io.ReadAll(resp.Body)
 			if tt.expectedBody != "" {
-				body, err := io.ReadAll(resp.Body)
 				require.NoError(t, err)
 				require.JSONEq(t, tt.expectedBody, string(body))
+			} else {
+				require.Empty(t, body)
 			}
 		})
 	}
