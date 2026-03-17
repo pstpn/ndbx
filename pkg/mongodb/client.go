@@ -16,13 +16,14 @@ type Client struct {
 }
 
 func New(ctx context.Context, user string, password string, host string, port int, database string) (*Client, error) {
-	opts := options.Client().
-		ApplyURI("mongodb://" + net.JoinHostPort(host, strconv.Itoa(port)) + "/").
-		SetAuth(options.Credential{
+	opts := options.Client().ApplyURI("mongodb://" + net.JoinHostPort(host, strconv.Itoa(port)) + "/")
+	if user != "" || password != "" {
+		opts.SetAuth(options.Credential{
 			Username:   user,
 			Password:   password,
 			AuthSource: "admin",
 		})
+	}
 	client, err := mongo.Connect(ctx, opts)
 	if err != nil {
 		return nil, fmt.Errorf("connect to mongodb: %w", err)
