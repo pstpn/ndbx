@@ -442,7 +442,7 @@ func TestHandler_APILogout(t *testing.T) {
 		},
 		{
 			name:           "logout without session",
-			expectedStatus: http.StatusNoContent,
+			expectedStatus: http.StatusUnauthorized,
 			expectedCookie: "X-Session-Id=; HttpOnly; Path=/; Max-Age=0",
 		},
 		{

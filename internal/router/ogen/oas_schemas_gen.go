@@ -95,6 +95,23 @@ func (s *APILogoutNoContent) SetSetCookie(val string) {
 
 func (*APILogoutNoContent) aPILogoutRes() {}
 
+// APILogoutUnauthorized is response for APILogout operation.
+type APILogoutUnauthorized struct {
+	SetCookie string
+}
+
+// GetSetCookie returns the value of SetCookie.
+func (s *APILogoutUnauthorized) GetSetCookie() string {
+	return s.SetCookie
+}
+
+// SetSetCookie sets the value of SetCookie.
+func (s *APILogoutUnauthorized) SetSetCookie(val string) {
+	s.SetCookie = val
+}
+
+func (*APILogoutUnauthorized) aPILogoutRes() {}
+
 // APIRegisterCreated is response for APIRegister operation.
 type APIRegisterCreated struct {
 	SetCookie string

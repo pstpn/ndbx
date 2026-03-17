@@ -49,6 +49,13 @@ paths:
               required: true
               schema:
                 type: string
+        '401':
+          description: Access is unauthorized.
+          headers:
+            Set-Cookie:
+              required: true
+              schema:
+                type: string
         default:
           description: An unexpected error response.
           headers:

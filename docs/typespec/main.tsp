@@ -76,6 +76,13 @@ model LogoutResponse {
     statusCode: 204;
 }
 
+model LogoutUnauthorizedResponse {
+    @header("Set-Cookie")
+    setCookie: string;
+    @statusCode
+    statusCode: 401;
+}
+
 model LocationInfo {
     address: string;
 }
@@ -154,7 +161,7 @@ namespace Api {
 
     @summary("logout user")
     @route("/auth/logout")
-    @post op logout(...CookieRequest): LogoutResponse | ErrorResponse;
+    @post op logout(...CookieRequest): LogoutResponse | LogoutUnauthorizedResponse | ErrorResponse;
 
     @summary("create a new event")
     @route("/events")

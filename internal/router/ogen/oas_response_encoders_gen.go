@@ -326,6 +326,29 @@ func encodeAPILogoutResponse(response APILogoutRes, w http.ResponseWriter, span 
 
 		return nil
 
+	case *APILogoutUnauthorized:
+		w.Header().Set("Access-Control-Expose-Headers", "Set-Cookie")
+		// Encoding response headers.
+		{
+			h := uri.NewHeaderEncoder(w.Header())
+			// Encode "Set-Cookie" header.
+			{
+				cfg := uri.HeaderParameterEncodingConfig{
+					Name:    "Set-Cookie",
+					Explode: false,
+				}
+				if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
+					return e.EncodeValue(conv.StringToString(response.SetCookie))
+				}); err != nil {
+					return errors.Wrap(err, "encode Set-Cookie header")
+				}
+			}
+		}
+		w.WriteHeader(401)
+		span.SetStatus(codes.Error, http.StatusText(401))
+
+		return nil
+
 	case *ErrorResponseStatusCodeWithHeaders:
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 		w.Header().Set("Access-Control-Expose-Headers", "Set-Cookie")

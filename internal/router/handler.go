@@ -166,9 +166,11 @@ func (h *Handler) APILogout(ctx context.Context, params oas.APILogoutParams) (oa
 			h.l.Errorf("failed to delete session: %s", err.Error())
 			return NewInternalError(), nil
 		}
+
+		return &oas.APILogoutNoContent{SetCookie: formSetCookie(sid, 0)}, nil
 	}
 
-	return &oas.APILogoutNoContent{SetCookie: formSetCookie(sid, 0)}, nil
+	return &oas.APILogoutUnauthorized{SetCookie: formSetCookie(sid, h.sessionTTLSeconds)}, nil
 }
 
 func (h *Handler) APICreateEvent(ctx context.Context, req *oas.CreateEventRequest, params oas.APICreateEventParams) (oas.APICreateEventRes, error) {
