@@ -128,9 +128,9 @@ model GetEventsRequest {
     @query
     title?: string;
     @query
-    limit: int64;
+    limit?: int64;
     @query
-    offset: int64;
+    offset?: int64;
 }
 
 model GetEventsResponse {

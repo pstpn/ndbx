@@ -1,7 +1,6 @@
 package httpserver
 
 import (
-	"errors"
 	"fmt"
 	"time"
 )
@@ -13,12 +12,9 @@ func NotEmpty(fieldName string, value string) error {
 	return nil
 }
 
-func NotNegative(limit int64, offset int64) error {
-	if limit < 0 {
-		return errors.New("invalid \"limit\" parameter")
-	}
-	if offset < 0 {
-		return errors.New("invalid \"offset\" parameter")
+func NotNegative(fieldName string, val int64) error {
+	if val < 0 {
+		return fmt.Errorf("invalid \"%s\" parameter", fieldName)
 	}
 	return nil
 }

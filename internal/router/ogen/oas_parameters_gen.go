@@ -77,8 +77,8 @@ func decodeAPICreateEventParams(args [0]string, argsEscaped bool, r *http.Reques
 type APIGetEventsParams struct {
 	Cookie OptString `json:",omitempty,omitzero"`
 	Title  OptString `json:",omitempty,omitzero"`
-	Limit  int64
-	Offset int64
+	Limit  OptInt64  `json:",omitempty,omitzero"`
+	Offset OptInt64  `json:",omitempty,omitzero"`
 }
 
 func unpackAPIGetEventsParams(packed middleware.Parameters) (params APIGetEventsParams) {
@@ -105,14 +105,18 @@ func unpackAPIGetEventsParams(packed middleware.Parameters) (params APIGetEvents
 			Name: "limit",
 			In:   "query",
 		}
-		params.Limit = packed[key].(int64)
+		if v, ok := packed[key]; ok {
+			params.Limit = v.(OptInt64)
+		}
 	}
 	{
 		key := middleware.ParameterKey{
 			Name: "offset",
 			In:   "query",
 		}
-		params.Offset = packed[key].(int64)
+		if v, ok := packed[key]; ok {
+			params.Offset = v.(OptInt64)
+		}
 	}
 	return params
 }
@@ -210,23 +214,28 @@ func decodeAPIGetEventsParams(args [0]string, argsEscaped bool, r *http.Request)
 
 		if err := q.HasParam(cfg); err == nil {
 			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
-				val, err := d.DecodeValue()
-				if err != nil {
+				var paramsDotLimitVal int64
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToInt64(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotLimitVal = c
+					return nil
+				}(); err != nil {
 					return err
 				}
-
-				c, err := conv.ToInt64(val)
-				if err != nil {
-					return err
-				}
-
-				params.Limit = c
+				params.Limit.SetTo(paramsDotLimitVal)
 				return nil
 			}); err != nil {
 				return err
 			}
-		} else {
-			return err
 		}
 		return nil
 	}(); err != nil {
@@ -246,23 +255,28 @@ func decodeAPIGetEventsParams(args [0]string, argsEscaped bool, r *http.Request)
 
 		if err := q.HasParam(cfg); err == nil {
 			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
-				val, err := d.DecodeValue()
-				if err != nil {
+				var paramsDotOffsetVal int64
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToInt64(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotOffsetVal = c
+					return nil
+				}(); err != nil {
 					return err
 				}
-
-				c, err := conv.ToInt64(val)
-				if err != nil {
-					return err
-				}
-
-				params.Offset = c
+				params.Offset.SetTo(paramsDotOffsetVal)
 				return nil
 			}); err != nil {
 				return err
 			}
-		} else {
-			return err
 		}
 		return nil
 	}(); err != nil {

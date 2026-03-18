@@ -243,7 +243,7 @@ components:
     GetEventsRequest.limit:
       name: limit
       in: query
-      required: true
+      required: false
       schema:
         type: integer
         format: int64
@@ -251,7 +251,7 @@ components:
     GetEventsRequest.offset:
       name: offset
       in: query
-      required: true
+      required: false
       schema:
         type: integer
         format: int64

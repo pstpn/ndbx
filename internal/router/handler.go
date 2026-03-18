@@ -14,6 +14,11 @@ import (
 	"ndbx/pkg/logger"
 )
 
+const (
+	defaultLimit  = 10
+	defaultOffset = 0
+)
+
 type SessionService interface {
 	GetSession(ctx context.Context, req *dto.GetSessionReq) (*dto.GetSessionResp, error)
 	CreateSession(ctx context.Context, req *dto.CreateSessionReq) (*dto.CreateSessionResp, error)
@@ -248,12 +253,21 @@ func (h *Handler) APICreateEvent(ctx context.Context, req *oas.CreateEventReques
 func (h *Handler) APIGetEvents(ctx context.Context, params oas.APIGetEventsParams) (oas.APIGetEventsRes, error) {
 	setCookie := formSetCookie(extractSID(params.Cookie.Value), h.sessionTTLSeconds)
 
-	if err := httpv.NotNegative(params.Limit, params.Offset); err != nil {
-		return NewBadRequestError(setCookie, err), nil
+	limit, offset := int64(defaultLimit), int64(defaultOffset)
+	if params.Limit.IsSet() {
+		if err := httpv.NotNegative("limit", params.Limit.Value); err != nil {
+			return NewBadRequestError(setCookie, err), nil
+		}
+		limit = params.Limit.Value
 	}
-	title := params.Title.Value
+	if params.Offset.IsSet() {
+		if err := httpv.NotNegative("offset", params.Offset.Value); err != nil {
+			return NewBadRequestError(setCookie, err), nil
+		}
+		offset = params.Offset.Value
+	}
 
-	resp, err := h.EventService.GetEvents(ctx, &dto.GetEventsReq{Title: title, Limit: params.Limit, Offset: params.Offset})
+	resp, err := h.EventService.GetEvents(ctx, &dto.GetEventsReq{Title: params.Title.Value, Limit: limit, Offset: offset})
 	if err != nil {
 		h.l.Errorf("failed to get events: %s", err.Error())
 		return NewInternalError(), nil
