@@ -62,7 +62,10 @@ func TestHandler_APIHealth(t *testing.T) {
 			}
 			w := httptest.NewRecorder()
 
-			srv := newServer(t, sessionService, userService, eventService)
+			h := newHandler(t, sessionService, userService, eventService)
+			srv, err := oas.NewServer(h)
+			require.NoError(t, err)
+
 			srv.ServeHTTP(w, req)
 
 			resp := w.Result()
@@ -81,58 +84,58 @@ func TestHandler_APISession(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		name              string
-		cookie            string
-		setup             func(sessionService router.SessionService)
-		expectedStatus    int
-		expectedSetCookie string
+		name           string
+		cookie         string
+		setup          func(h *router.Handler)
+		expectedStatus int
+		expectedCookie string
 	}{
 		{
 			name: "create session when cookie missing",
-			setup: func(sessionService router.SessionService) {
-				mock.WhenDouble(sessionService.CreateSession(mock.AnyContext(), mock.Any[*dto.CreateSessionReq]())).
-					ThenReturn(&dto.CreateSessionResp{SID: "new-sid", TTL: time.Second * 100}, nil)
+			setup: func(h *router.Handler) {
+				mock.WhenDouble(h.SessionService.CreateSession(mock.AnyContext(), mock.Any[*dto.CreateSessionReq]())).
+					ThenReturn(&dto.CreateSessionResp{SID: "new-sid", TTL: time.Second * mockTTL}, nil)
 			},
-			expectedStatus:    http.StatusCreated,
-			expectedSetCookie: "X-Session-Id=new-sid; HttpOnly; Path=/; Max-Age=100",
+			expectedStatus: http.StatusCreated,
+			expectedCookie: fmt.Sprintf("X-Session-Id=new-sid; HttpOnly; Path=/; Max-Age=%d", mockTTL),
 		},
 		{
 			name:   "create session when session cookie missing in header",
 			cookie: "foo=bar",
-			setup: func(sessionService router.SessionService) {
-				mock.WhenDouble(sessionService.CreateSession(mock.AnyContext(), mock.Any[*dto.CreateSessionReq]())).
-					ThenReturn(&dto.CreateSessionResp{SID: "created-sid", TTL: time.Second * 120}, nil)
+			setup: func(h *router.Handler) {
+				mock.WhenDouble(h.SessionService.CreateSession(mock.AnyContext(), mock.Any[*dto.CreateSessionReq]())).
+					ThenReturn(&dto.CreateSessionResp{SID: "created-sid", TTL: time.Second * mockTTL}, nil)
 			},
-			expectedStatus:    http.StatusCreated,
-			expectedSetCookie: "X-Session-Id=created-sid; HttpOnly; Path=/; Max-Age=120",
+			expectedStatus: http.StatusCreated,
+			expectedCookie: fmt.Sprintf("X-Session-Id=created-sid; HttpOnly; Path=/; Max-Age=%d", mockTTL),
 		},
 		{
 			name:   "extend existing session",
 			cookie: "a=1; X-Session-Id=existing-sid; b=2",
-			setup: func(sessionService router.SessionService) {
-				mock.WhenDouble(sessionService.CreateOrExtendSession(
+			setup: func(h *router.Handler) {
+				mock.WhenDouble(h.SessionService.CreateOrExtendSession(
 					mock.AnyContext(), mock.Equal(&dto.CreateOrExtendSessionReq{SID: "existing-sid"})),
-				).ThenReturn(&dto.CreateOrExtendSessionResp{SID: "existing-sid", MaxAgeSeconds: 90, IsCreated: false}, nil)
+				).ThenReturn(&dto.CreateOrExtendSessionResp{SID: "existing-sid", TTL: time.Second * mockTTL, IsCreated: false}, nil)
 			},
-			expectedStatus:    http.StatusOK,
-			expectedSetCookie: "X-Session-Id=existing-sid; HttpOnly; Path=/; Max-Age=90",
+			expectedStatus: http.StatusOK,
+			expectedCookie: fmt.Sprintf("X-Session-Id=existing-sid; HttpOnly; Path=/; Max-Age=%d", mockTTL),
 		},
 		{
 			name:   "create session by create-or-extend when session was recreated",
 			cookie: "X-Session-Id=expired-sid",
-			setup: func(sessionService router.SessionService) {
-				mock.WhenDouble(sessionService.CreateOrExtendSession(
+			setup: func(h *router.Handler) {
+				mock.WhenDouble(h.SessionService.CreateOrExtendSession(
 					mock.AnyContext(), mock.Equal(&dto.CreateOrExtendSessionReq{SID: "expired-sid"})),
-				).ThenReturn(&dto.CreateOrExtendSessionResp{SID: "newer-sid", MaxAgeSeconds: 60, IsCreated: true}, nil)
+				).ThenReturn(&dto.CreateOrExtendSessionResp{SID: "newer-sid", TTL: time.Second * mockTTL, IsCreated: true}, nil)
 			},
-			expectedStatus:    http.StatusCreated,
-			expectedSetCookie: "X-Session-Id=newer-sid; HttpOnly; Path=/; Max-Age=60",
+			expectedStatus: http.StatusCreated,
+			expectedCookie: fmt.Sprintf("X-Session-Id=newer-sid; HttpOnly; Path=/; Max-Age=%d", mockTTL),
 		},
 		{
 			name:   "service error returns internal server error",
 			cookie: "X-Session-Id=sid-with-error",
-			setup: func(sessionService router.SessionService) {
-				mock.WhenDouble(sessionService.CreateOrExtendSession(
+			setup: func(h *router.Handler) {
+				mock.WhenDouble(h.SessionService.CreateOrExtendSession(
 					mock.AnyContext(), mock.Equal(&dto.CreateOrExtendSessionReq{SID: "sid-with-error"})),
 				).ThenReturn(nil, errors.New("internal error"))
 			},
@@ -147,7 +150,10 @@ func TestHandler_APISession(t *testing.T) {
 			sessionService := mock.Mock[router.SessionService](ctrl)
 			userService := mock.Mock[router.UserService](ctrl)
 			eventService := mock.Mock[router.EventService](ctrl)
-			tt.setup(sessionService)
+			h := newHandler(t, sessionService, userService, eventService)
+			if tt.setup != nil {
+				tt.setup(h)
+			}
 
 			req := httptest.NewRequest(http.MethodPost, "/session", http.NoBody)
 			if tt.cookie != "" {
@@ -155,13 +161,15 @@ func TestHandler_APISession(t *testing.T) {
 			}
 			w := httptest.NewRecorder()
 
-			srv := newServer(t, sessionService, userService, eventService)
+			srv, err := oas.NewServer(h)
+			require.NoError(t, err)
+
 			srv.ServeHTTP(w, req)
 
 			resp := w.Result()
 			t.Cleanup(func() { require.NoError(t, resp.Body.Close()) })
 			require.Equal(t, tt.expectedStatus, resp.StatusCode)
-			require.Equal(t, tt.expectedSetCookie, resp.Header.Get("Set-Cookie"))
+			require.Equal(t, tt.expectedCookie, resp.Header.Get("Set-Cookie"))
 		})
 	}
 }
@@ -173,41 +181,63 @@ func TestHandler_APIRegister(t *testing.T) {
 		name           string
 		cookie         string
 		requestBody    oas.UserRegisterRequest
-		setup          func(userService router.UserService)
+		setup          func(h *router.Handler)
 		expectedStatus int
 		expectedCookie string
 		expectedBody   string
 	}{
 		{
-			name: "successful registration",
+			name: "successful registration (without cookie)",
 			requestBody: oas.UserRegisterRequest{
 				FullName: "John Doe",
 				Username: "johndoe",
 				Password: "password123",
 			},
-			setup: func(userService router.UserService) {
-				mock.WhenDouble(userService.Register(mock.AnyContext(), mock.Equal(&dto.RegisterReq{
+			setup: func(h *router.Handler) {
+				mock.WhenDouble(h.UserService.Register(mock.AnyContext(), mock.Equal(&dto.RegisterReq{
+					FullName: "John Doe",
+					Username: "johndoe",
+					Password: "password123",
+				}))).ThenReturn(&dto.RegisterResp{ID: "user-id"}, nil)
+				mock.WhenDouble(h.SessionService.CreateSession(mock.AnyContext(), mock.Equal(&dto.CreateSessionReq{
+					UserID: "user-id",
+				}))).ThenReturn(&dto.CreateSessionResp{SID: "new-sid", TTL: time.Second * mockTTL}, nil)
+			},
+			expectedStatus: http.StatusCreated,
+			expectedCookie: fmt.Sprintf("X-Session-Id=new-sid; HttpOnly; Path=/; Max-Age=%d", mockTTL),
+		},
+		{
+			name:   "successful registration (with cookie)",
+			cookie: "X-Session-Id=sid",
+			requestBody: oas.UserRegisterRequest{
+				FullName: "John Doe",
+				Username: "johndoe",
+				Password: "password123",
+			},
+			setup: func(h *router.Handler) {
+				mock.WhenDouble(h.UserService.Register(mock.AnyContext(), mock.Equal(&dto.RegisterReq{
 					FullName: "John Doe",
 					Username: "johndoe",
 					Password: "password123",
 				}))).ThenReturn(&dto.RegisterResp{ID: "user-id"}, nil)
 			},
 			expectedStatus: http.StatusCreated,
-			expectedCookie: "X-Session-Id=; HttpOnly; Path=/; Max-Age=0",
+			expectedCookie: fmt.Sprintf("X-Session-Id=sid; HttpOnly; Path=/; Max-Age=%d", mockTTL),
 		},
 		{
-			name: "user already exists",
+			name:   "user already exists",
+			cookie: "X-Session-Id=sid",
 			requestBody: oas.UserRegisterRequest{
 				FullName: "Jane Doe",
 				Username: "janedoe",
 				Password: "password123",
 			},
-			setup: func(userService router.UserService) {
-				mock.WhenDouble(userService.Register(mock.AnyContext(), mock.Any[*dto.RegisterReq]())).
+			setup: func(h *router.Handler) {
+				mock.WhenDouble(h.UserService.Register(mock.AnyContext(), mock.Any[*dto.RegisterReq]())).
 					ThenReturn(nil, service.ErrUserAlreadyExists)
 			},
 			expectedStatus: http.StatusConflict,
-			expectedCookie: "X-Session-Id=; HttpOnly; Path=/; Max-Age=0",
+			expectedCookie: fmt.Sprintf("X-Session-Id=sid; HttpOnly; Path=/; Max-Age=%d", mockTTL),
 			expectedBody:   `{"message":"user already exists"}`,
 		},
 		{
@@ -250,8 +280,8 @@ func TestHandler_APIRegister(t *testing.T) {
 				Username: "johndoe",
 				Password: "password123",
 			},
-			setup: func(userService router.UserService) {
-				mock.WhenDouble(userService.Register(mock.AnyContext(), mock.Any[*dto.RegisterReq]())).
+			setup: func(h *router.Handler) {
+				mock.WhenDouble(h.UserService.Register(mock.AnyContext(), mock.Any[*dto.RegisterReq]())).
 					ThenReturn(nil, errors.New("internal error"))
 			},
 			expectedStatus: http.StatusInternalServerError,
@@ -265,8 +295,9 @@ func TestHandler_APIRegister(t *testing.T) {
 			sessionService := mock.Mock[router.SessionService](ctrl)
 			userService := mock.Mock[router.UserService](ctrl)
 			eventService := mock.Mock[router.EventService](ctrl)
+			h := newHandler(t, sessionService, userService, eventService)
 			if tt.setup != nil {
-				tt.setup(userService)
+				tt.setup(h)
 			}
 
 			body, err := json.Marshal(tt.requestBody)
@@ -278,7 +309,9 @@ func TestHandler_APIRegister(t *testing.T) {
 			}
 			w := httptest.NewRecorder()
 
-			srv := newServer(t, sessionService, userService, eventService)
+			srv, err := oas.NewServer(h)
+			require.NoError(t, err)
+
 			srv.ServeHTTP(w, req)
 
 			resp := w.Result()
@@ -303,7 +336,7 @@ func TestHandler_APILogin(t *testing.T) {
 		name           string
 		cookie         string
 		requestBody    oas.LoginRequest
-		setup          func(sessionService router.SessionService, userService router.UserService)
+		setup          func(h *router.Handler)
 		expectedStatus int
 		expectedCookie string
 		expectedBody   string
@@ -314,14 +347,14 @@ func TestHandler_APILogin(t *testing.T) {
 				Username: "johndoe",
 				Password: "password123",
 			},
-			setup: func(sessionService router.SessionService, userService router.UserService) {
-				mock.WhenDouble(userService.Authenticate(mock.AnyContext(), mock.Equal(&dto.AuthenticateReq{
+			setup: func(h *router.Handler) {
+				mock.WhenDouble(h.UserService.Authenticate(mock.AnyContext(), mock.Equal(&dto.AuthenticateReq{
 					Username: "johndoe",
 					Password: "password123",
 				}))).ThenReturn(&dto.AuthenticateResp{ID: "user-id"}, nil)
-				mock.WhenDouble(sessionService.CreateSession(mock.AnyContext(), mock.Equal(&dto.CreateSessionReq{
+				mock.WhenDouble(h.SessionService.CreateSession(mock.AnyContext(), mock.Equal(&dto.CreateSessionReq{
 					UserID: "user-id",
-				}))).ThenReturn(&dto.CreateSessionResp{SID: "new-sid", TTL: time.Second * 100}, nil)
+				}))).ThenReturn(&dto.CreateSessionResp{SID: "new-sid", TTL: time.Second * mockTTL}, nil)
 			},
 			expectedStatus: http.StatusNoContent,
 			expectedCookie: "X-Session-Id=new-sid; HttpOnly; Path=/; Max-Age=10",
@@ -333,15 +366,15 @@ func TestHandler_APILogin(t *testing.T) {
 				Username: "johndoe",
 				Password: "password123",
 			},
-			setup: func(sessionService router.SessionService, userService router.UserService) {
-				mock.WhenDouble(userService.Authenticate(mock.AnyContext(), mock.Equal(&dto.AuthenticateReq{
+			setup: func(h *router.Handler) {
+				mock.WhenDouble(h.UserService.Authenticate(mock.AnyContext(), mock.Equal(&dto.AuthenticateReq{
 					Username: "johndoe",
 					Password: "password123",
 				}))).ThenReturn(&dto.AuthenticateResp{ID: "user-id"}, nil)
-				mock.WhenDouble(sessionService.CreateOrExtendSession(mock.AnyContext(), mock.Equal(&dto.CreateOrExtendSessionReq{
+				mock.WhenDouble(h.SessionService.CreateOrExtendSession(mock.AnyContext(), mock.Equal(&dto.CreateOrExtendSessionReq{
 					SID:    "existing-sid",
 					UserID: "user-id",
-				}))).ThenReturn(&dto.CreateOrExtendSessionResp{SID: "existing-sid", MaxAgeSeconds: 90, IsCreated: false}, nil)
+				}))).ThenReturn(&dto.CreateOrExtendSessionResp{SID: "existing-sid", TTL: time.Second * mockTTL, IsCreated: false}, nil)
 			},
 			expectedStatus: http.StatusNoContent,
 			expectedCookie: "X-Session-Id=existing-sid; HttpOnly; Path=/; Max-Age=10",
@@ -352,8 +385,8 @@ func TestHandler_APILogin(t *testing.T) {
 				Username: "johndoe",
 				Password: "wrongpassword",
 			},
-			setup: func(_ router.SessionService, userService router.UserService) {
-				mock.WhenDouble(userService.Authenticate(mock.AnyContext(), mock.Any[*dto.AuthenticateReq]())).
+			setup: func(h *router.Handler) {
+				mock.WhenDouble(h.UserService.Authenticate(mock.AnyContext(), mock.Any[*dto.AuthenticateReq]())).
 					ThenReturn(nil, service.ErrInvalidCredentials)
 			},
 			expectedStatus: http.StatusUnauthorized,
@@ -389,8 +422,9 @@ func TestHandler_APILogin(t *testing.T) {
 			sessionService := mock.Mock[router.SessionService](ctrl)
 			userService := mock.Mock[router.UserService](ctrl)
 			eventService := mock.Mock[router.EventService](ctrl)
+			h := newHandler(t, sessionService, userService, eventService)
 			if tt.setup != nil {
-				tt.setup(sessionService, userService)
+				tt.setup(h)
 			}
 
 			body, err := json.Marshal(tt.requestBody)
@@ -402,7 +436,9 @@ func TestHandler_APILogin(t *testing.T) {
 			}
 			w := httptest.NewRecorder()
 
-			srv := newServer(t, sessionService, userService, eventService)
+			srv, err := oas.NewServer(h)
+			require.NoError(t, err)
+
 			srv.ServeHTTP(w, req)
 
 			resp := w.Result()
@@ -424,7 +460,7 @@ func TestHandler_APILogout(t *testing.T) {
 	tests := []struct {
 		name           string
 		cookie         string
-		setup          func(sessionService router.SessionService)
+		setup          func(h *router.Handler)
 		expectedStatus int
 		expectedCookie string
 		expectedBody   string
@@ -432,8 +468,8 @@ func TestHandler_APILogout(t *testing.T) {
 		{
 			name:   "successful logout with session",
 			cookie: "X-Session-Id=session-to-delete",
-			setup: func(sessionService router.SessionService) {
-				mock.WhenSingle(sessionService.DeleteSession(mock.AnyContext(), mock.Equal(&dto.DeleteSessionReq{
+			setup: func(h *router.Handler) {
+				mock.WhenSingle(h.SessionService.DeleteSession(mock.AnyContext(), mock.Equal(&dto.DeleteSessionReq{
 					SID: "session-to-delete",
 				}))).ThenReturn(nil)
 			},
@@ -448,8 +484,8 @@ func TestHandler_APILogout(t *testing.T) {
 		{
 			name:   "service error on delete",
 			cookie: "X-Session-Id=session-error",
-			setup: func(sessionService router.SessionService) {
-				mock.WhenSingle(sessionService.DeleteSession(mock.AnyContext(), mock.Any[*dto.DeleteSessionReq]())).
+			setup: func(h *router.Handler) {
+				mock.WhenSingle(h.SessionService.DeleteSession(mock.AnyContext(), mock.Any[*dto.DeleteSessionReq]())).
 					ThenReturn(errors.New("delete error"))
 			},
 			expectedStatus: http.StatusInternalServerError,
@@ -464,8 +500,9 @@ func TestHandler_APILogout(t *testing.T) {
 			sessionService := mock.Mock[router.SessionService](ctrl)
 			userService := mock.Mock[router.UserService](ctrl)
 			eventService := mock.Mock[router.EventService](ctrl)
+			h := newHandler(t, sessionService, userService, eventService)
 			if tt.setup != nil {
-				tt.setup(sessionService)
+				tt.setup(h)
 			}
 
 			req := httptest.NewRequest(http.MethodPost, "/auth/logout", http.NoBody)
@@ -474,7 +511,9 @@ func TestHandler_APILogout(t *testing.T) {
 			}
 			w := httptest.NewRecorder()
 
-			srv := newServer(t, sessionService, userService, eventService)
+			srv, err := oas.NewServer(h)
+			require.NoError(t, err)
+
 			srv.ServeHTTP(w, req)
 
 			resp := w.Result()
@@ -500,7 +539,7 @@ func TestHandler_APICreateEvent(t *testing.T) {
 		name           string
 		cookie         string
 		requestBody    string
-		setup          func(sessionService router.SessionService, eventService router.EventService)
+		setup          func(h *router.Handler)
 		expectedStatus int
 		expectedCookie string
 		expectedBody   string
@@ -515,20 +554,20 @@ func TestHandler_APICreateEvent(t *testing.T) {
 				"2023-01-01T10:00:00Z",
 				"2023-01-01T12:00:00Z",
 			),
-			setup: func(sessionService router.SessionService, eventService router.EventService) {
-				mock.WhenDouble(sessionService.GetSession(mock.AnyContext(), mock.Equal(&dto.GetSessionReq{
+			setup: func(h *router.Handler) {
+				mock.WhenDouble(h.SessionService.GetSession(mock.AnyContext(), mock.Equal(&dto.GetSessionReq{
 					SID: "valid-sid",
 				}))).ThenReturn(&dto.GetSessionResp{
 					CreatedAt: time.Now(),
 					UpdatedAt: time.Now(),
 					UserID:    "user-id",
 				}, nil)
-				mock.WhenDouble(eventService.CreateEvent(mock.AnyContext(), mock.Any[*dto.CreateEventReq]())).
+				mock.WhenDouble(h.EventService.CreateEvent(mock.AnyContext(), mock.Any[*dto.CreateEventReq]())).
 					ThenReturn(&dto.CreateEventResp{ID: "event-id"}, nil)
-				mock.WhenDouble(sessionService.CreateOrExtendSession(mock.AnyContext(), mock.Equal(&dto.CreateOrExtendSessionReq{
+				mock.WhenDouble(h.SessionService.CreateOrExtendSession(mock.AnyContext(), mock.Equal(&dto.CreateOrExtendSessionReq{
 					SID:    "valid-sid",
 					UserID: "user-id",
-				}))).ThenReturn(&dto.CreateOrExtendSessionResp{SID: "valid-sid", MaxAgeSeconds: mockTTL, IsCreated: false}, nil)
+				}))).ThenReturn(&dto.CreateOrExtendSessionResp{SID: "valid-sid", TTL: time.Second * mockTTL, IsCreated: false}, nil)
 			},
 			expectedStatus: http.StatusCreated,
 			expectedCookie: fmt.Sprintf("X-Session-Id=valid-sid; HttpOnly; Path=/; Max-Age=%d", mockTTL),
@@ -545,8 +584,8 @@ func TestHandler_APICreateEvent(t *testing.T) {
 			name:        "session not found",
 			cookie:      "X-Session-Id=invalid-sid",
 			requestBody: createEventRequestBody("Test Event", "", "Test Address", "2023-01-01T10:00:00Z", "2023-01-01T12:00:00Z"),
-			setup: func(sessionService router.SessionService, _ router.EventService) {
-				mock.WhenDouble(sessionService.GetSession(mock.AnyContext(), mock.Equal(&dto.GetSessionReq{
+			setup: func(h *router.Handler) {
+				mock.WhenDouble(h.SessionService.GetSession(mock.AnyContext(), mock.Equal(&dto.GetSessionReq{
 					SID: "invalid-sid",
 				}))).ThenReturn(nil, service.ErrNotFound)
 			},
@@ -558,8 +597,8 @@ func TestHandler_APICreateEvent(t *testing.T) {
 			name:        "session without user",
 			cookie:      "X-Session-Id=anon-sid",
 			requestBody: createEventRequestBody("Test Event", "", "Test Address", "2023-01-01T10:00:00Z", "2023-01-01T12:00:00Z"),
-			setup: func(sessionService router.SessionService, _ router.EventService) {
-				mock.WhenDouble(sessionService.GetSession(mock.AnyContext(), mock.Equal(&dto.GetSessionReq{
+			setup: func(h *router.Handler) {
+				mock.WhenDouble(h.SessionService.GetSession(mock.AnyContext(), mock.Equal(&dto.GetSessionReq{
 					SID: "anon-sid",
 				}))).ThenReturn(&dto.GetSessionResp{
 					CreatedAt: time.Now(),
@@ -607,15 +646,15 @@ func TestHandler_APICreateEvent(t *testing.T) {
 			name:        "event already exists",
 			cookie:      "X-Session-Id=valid-sid",
 			requestBody: createEventRequestBody("Test Event", "", "Test Address", "2023-01-01T10:00:00Z", "2023-01-01T12:00:00Z"),
-			setup: func(sessionService router.SessionService, eventService router.EventService) {
-				mock.WhenDouble(sessionService.GetSession(mock.AnyContext(), mock.Equal(&dto.GetSessionReq{
+			setup: func(h *router.Handler) {
+				mock.WhenDouble(h.SessionService.GetSession(mock.AnyContext(), mock.Equal(&dto.GetSessionReq{
 					SID: "valid-sid",
 				}))).ThenReturn(&dto.GetSessionResp{
 					CreatedAt: time.Now(),
 					UpdatedAt: time.Now(),
 					UserID:    "user-id",
 				}, nil)
-				mock.WhenDouble(eventService.CreateEvent(mock.AnyContext(), mock.Any[*dto.CreateEventReq]())).
+				mock.WhenDouble(h.EventService.CreateEvent(mock.AnyContext(), mock.Any[*dto.CreateEventReq]())).
 					ThenReturn(nil, service.ErrAlreadyExists)
 			},
 			expectedStatus: http.StatusConflict,
@@ -626,15 +665,15 @@ func TestHandler_APICreateEvent(t *testing.T) {
 			name:        "service error",
 			cookie:      "X-Session-Id=valid-sid",
 			requestBody: createEventRequestBody("Test Event", "", "Test Address", "2023-01-01T10:00:00Z", "2023-01-01T12:00:00Z"),
-			setup: func(sessionService router.SessionService, eventService router.EventService) {
-				mock.WhenDouble(sessionService.GetSession(mock.AnyContext(), mock.Equal(&dto.GetSessionReq{
+			setup: func(h *router.Handler) {
+				mock.WhenDouble(h.SessionService.GetSession(mock.AnyContext(), mock.Equal(&dto.GetSessionReq{
 					SID: "valid-sid",
 				}))).ThenReturn(&dto.GetSessionResp{
 					CreatedAt: time.Now(),
 					UpdatedAt: time.Now(),
 					UserID:    "user-id",
 				}, nil)
-				mock.WhenDouble(eventService.CreateEvent(mock.AnyContext(), mock.Any[*dto.CreateEventReq]())).
+				mock.WhenDouble(h.EventService.CreateEvent(mock.AnyContext(), mock.Any[*dto.CreateEventReq]())).
 					ThenReturn(nil, errors.New("internal error"))
 			},
 			expectedStatus: http.StatusInternalServerError,
@@ -649,8 +688,9 @@ func TestHandler_APICreateEvent(t *testing.T) {
 			sessionService := mock.Mock[router.SessionService](ctrl)
 			userService := mock.Mock[router.UserService](ctrl)
 			eventService := mock.Mock[router.EventService](ctrl)
+			h := newHandler(t, sessionService, userService, eventService)
 			if tt.setup != nil {
-				tt.setup(sessionService, eventService)
+				tt.setup(h)
 			}
 
 			req := httptest.NewRequest(http.MethodPost, "/events", strings.NewReader(tt.requestBody))
@@ -660,7 +700,9 @@ func TestHandler_APICreateEvent(t *testing.T) {
 			}
 			w := httptest.NewRecorder()
 
-			srv := newServer(t, sessionService, userService, eventService)
+			srv, err := oas.NewServer(h)
+			require.NoError(t, err)
+
 			srv.ServeHTTP(w, req)
 
 			resp := w.Result()
@@ -685,7 +727,7 @@ func TestHandler_APIGetEvents(t *testing.T) {
 		name           string
 		cookie         string
 		queryParams    map[string]string
-		setup          func(eventService router.EventService)
+		setup          func(h *router.Handler)
 		expectedStatus int
 		expectedCookie string
 		expectedBody   string
@@ -696,8 +738,8 @@ func TestHandler_APIGetEvents(t *testing.T) {
 				"limit":  "10",
 				"offset": "0",
 			},
-			setup: func(eventService router.EventService) {
-				mock.WhenDouble(eventService.GetEvents(mock.AnyContext(), mock.Equal(&dto.GetEventsReq{
+			setup: func(h *router.Handler) {
+				mock.WhenDouble(h.EventService.GetEvents(mock.AnyContext(), mock.Equal(&dto.GetEventsReq{
 					Title:  "",
 					Limit:  10,
 					Offset: 0,
@@ -743,8 +785,8 @@ func TestHandler_APIGetEvents(t *testing.T) {
 				"limit":  "5",
 				"offset": "0",
 			},
-			setup: func(eventService router.EventService) {
-				mock.WhenDouble(eventService.GetEvents(mock.AnyContext(), mock.Equal(&dto.GetEventsReq{
+			setup: func(h *router.Handler) {
+				mock.WhenDouble(h.EventService.GetEvents(mock.AnyContext(), mock.Equal(&dto.GetEventsReq{
 					Title:  "test",
 					Limit:  5,
 					Offset: 0,
@@ -780,8 +822,8 @@ func TestHandler_APIGetEvents(t *testing.T) {
 				"limit":  "10",
 				"offset": "0",
 			},
-			setup: func(eventService router.EventService) {
-				mock.WhenDouble(eventService.GetEvents(mock.AnyContext(), mock.Any[*dto.GetEventsReq]())).
+			setup: func(h *router.Handler) {
+				mock.WhenDouble(h.EventService.GetEvents(mock.AnyContext(), mock.Any[*dto.GetEventsReq]())).
 					ThenReturn(nil, errors.New("internal error"))
 			},
 			expectedStatus: http.StatusInternalServerError,
@@ -797,8 +839,9 @@ func TestHandler_APIGetEvents(t *testing.T) {
 			sessionService := mock.Mock[router.SessionService](ctrl)
 			userService := mock.Mock[router.UserService](ctrl)
 			eventService := mock.Mock[router.EventService](ctrl)
+			h := newHandler(t, sessionService, userService, eventService)
 			if tt.setup != nil {
-				tt.setup(eventService)
+				tt.setup(h)
 			}
 
 			req := httptest.NewRequest(http.MethodGet, "/events", http.NoBody)
@@ -812,7 +855,9 @@ func TestHandler_APIGetEvents(t *testing.T) {
 			}
 			w := httptest.NewRecorder()
 
-			srv := newServer(t, sessionService, userService, eventService)
+			srv, err := oas.NewServer(h)
+			require.NoError(t, err)
+
 			srv.ServeHTTP(w, req)
 
 			resp := w.Result()
@@ -828,13 +873,15 @@ func TestHandler_APIGetEvents(t *testing.T) {
 	}
 }
 
-func newServer(t *testing.T, sessionService router.SessionService, userService router.UserService, eventService router.EventService) http.Handler {
+func newHandler(
+	t *testing.T,
+	sessionService router.SessionService,
+	userService router.UserService,
+	eventService router.EventService,
+) *router.Handler {
 	t.Helper()
 
-	srv, err := oas.NewServer(router.NewHandler(logger.NewWithOutput("debug", io.Discard), sessionService, userService, eventService, mockTTL))
-	require.NoError(t, err)
-
-	return srv
+	return router.NewHandler(logger.NewWithOutput("debug", io.Discard), sessionService, userService, eventService, mockTTL)
 }
 
 func createEventRequestBody(title string, description string, address string, startedAt string, finishedAt string) string {

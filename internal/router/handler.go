@@ -33,9 +33,9 @@ type EventService interface {
 
 type Handler struct {
 	l                 logger.Interface
-	sessionService    SessionService
-	userService       UserService
-	eventService      EventService
+	SessionService    SessionService
+	UserService       UserService
+	EventService      EventService
 	sessionTTLSeconds int
 }
 
@@ -48,9 +48,9 @@ func NewHandler(
 ) *Handler {
 	return &Handler{
 		l:                 l,
-		sessionService:    sessionService,
-		userService:       userService,
-		eventService:      eventService,
+		SessionService:    sessionService,
+		UserService:       userService,
+		EventService:      eventService,
 		sessionTTLSeconds: sessionTTLSeconds,
 	}
 }
@@ -69,7 +69,7 @@ func (h *Handler) APISession(ctx context.Context, params oas.APISessionParams) (
 	sid := extractSID(params.Cookie.Value)
 
 	if sid == "" {
-		session, err := h.sessionService.CreateSession(ctx, &dto.CreateSessionReq{UserID: ""})
+		session, err := h.SessionService.CreateSession(ctx, &dto.CreateSessionReq{UserID: ""})
 		if err != nil {
 			h.l.Errorf("failed to create session: %s", err.Error())
 			return NewInternalError(), nil
@@ -78,12 +78,12 @@ func (h *Handler) APISession(ctx context.Context, params oas.APISessionParams) (
 		return &oas.APISessionCreated{SetCookie: formSetCookie(session.SID, int(session.TTL.Seconds()))}, nil
 	}
 
-	session, err := h.sessionService.CreateOrExtendSession(ctx, &dto.CreateOrExtendSessionReq{SID: sid, UserID: ""})
+	session, err := h.SessionService.CreateOrExtendSession(ctx, &dto.CreateOrExtendSessionReq{SID: sid, UserID: ""})
 	if err != nil {
 		h.l.Errorf("failed to create or extend session: %s", err.Error())
 		return NewInternalError(), nil
 	}
-	setCookie := formSetCookie(session.SID, session.MaxAgeSeconds)
+	setCookie := formSetCookie(session.SID, int(session.TTL.Seconds()))
 
 	if session.IsCreated {
 		return &oas.APISessionCreated{SetCookie: setCookie}, nil
@@ -92,7 +92,8 @@ func (h *Handler) APISession(ctx context.Context, params oas.APISessionParams) (
 }
 
 func (h *Handler) APIRegister(ctx context.Context, req *oas.UserRegisterRequest, params oas.APIRegisterParams) (oas.APIRegisterRes, error) {
-	setCookie := formSetCookie(extractSID(params.Cookie.Value), h.sessionTTLSeconds)
+	sid := extractSID(params.Cookie.Value)
+	setCookie := formSetCookie(sid, h.sessionTTLSeconds)
 
 	if err := httpv.NotEmpty("full_name", req.FullName); err != nil {
 		return NewBadRequestError(setCookie, err), nil
@@ -104,7 +105,7 @@ func (h *Handler) APIRegister(ctx context.Context, req *oas.UserRegisterRequest,
 		return NewBadRequestError(setCookie, err), nil
 	}
 
-	_, err := h.userService.Register(ctx, &dto.RegisterReq{FullName: req.FullName, Username: req.Username, Password: req.Password})
+	resp, err := h.UserService.Register(ctx, &dto.RegisterReq{FullName: req.FullName, Username: req.Username, Password: req.Password})
 	if err != nil {
 		if errors.Is(err, service.ErrUserAlreadyExists) {
 			return NewConflictError(setCookie, ErrUserAlreadyExists), nil
@@ -112,6 +113,15 @@ func (h *Handler) APIRegister(ctx context.Context, req *oas.UserRegisterRequest,
 
 		h.l.Errorf("failed to register user: %s", err.Error())
 		return NewInternalError(), nil
+	}
+
+	if sid == "" {
+		session, err := h.SessionService.CreateSession(ctx, &dto.CreateSessionReq{UserID: resp.ID})
+		if err != nil {
+			h.l.Errorf("failed to create session: %s", err.Error())
+			return NewInternalError(), nil
+		}
+		setCookie = formSetCookie(session.SID, h.sessionTTLSeconds)
 	}
 
 	return &oas.APIRegisterCreated{SetCookie: setCookie}, nil
@@ -128,7 +138,7 @@ func (h *Handler) APILogin(ctx context.Context, req *oas.LoginRequest, params oa
 		return NewInvalidCredentialsError(setCookie), nil //nolint:nilerr // we don`t need this err
 	}
 
-	authResp, err := h.userService.Authenticate(ctx, &dto.AuthenticateReq{Username: req.Username, Password: req.Password})
+	authResp, err := h.UserService.Authenticate(ctx, &dto.AuthenticateReq{Username: req.Username, Password: req.Password})
 	if err != nil {
 		if errors.Is(err, service.ErrInvalidCredentials) {
 			return NewInvalidCredentialsError(setCookie), nil
@@ -139,7 +149,7 @@ func (h *Handler) APILogin(ctx context.Context, req *oas.LoginRequest, params oa
 	}
 
 	if sid == "" {
-		session, err := h.sessionService.CreateSession(ctx, &dto.CreateSessionReq{UserID: authResp.ID})
+		session, err := h.SessionService.CreateSession(ctx, &dto.CreateSessionReq{UserID: authResp.ID})
 		if err != nil {
 			h.l.Errorf("failed to create session: %s", err.Error())
 			return NewInternalError(), nil
@@ -148,7 +158,7 @@ func (h *Handler) APILogin(ctx context.Context, req *oas.LoginRequest, params oa
 		return &oas.APILoginNoContent{SetCookie: formSetCookie(session.SID, h.sessionTTLSeconds)}, nil
 	}
 
-	session, err := h.sessionService.CreateOrExtendSession(ctx, &dto.CreateOrExtendSessionReq{SID: sid, UserID: authResp.ID})
+	session, err := h.SessionService.CreateOrExtendSession(ctx, &dto.CreateOrExtendSessionReq{SID: sid, UserID: authResp.ID})
 	if err != nil {
 		h.l.Errorf("failed to extend session: %s", err.Error())
 		return NewInternalError(), nil
@@ -161,7 +171,7 @@ func (h *Handler) APILogout(ctx context.Context, params oas.APILogoutParams) (oa
 	sid := extractSID(params.Cookie.Value)
 
 	if sid != "" {
-		err := h.sessionService.DeleteSession(ctx, &dto.DeleteSessionReq{SID: sid})
+		err := h.SessionService.DeleteSession(ctx, &dto.DeleteSessionReq{SID: sid})
 		if err != nil {
 			h.l.Errorf("failed to delete session: %s", err.Error())
 			return NewInternalError(), nil
@@ -195,7 +205,7 @@ func (h *Handler) APICreateEvent(ctx context.Context, req *oas.CreateEventReques
 		return NewBadRequestError(setCookie, err), nil
 	}
 
-	session, err := h.sessionService.GetSession(ctx, &dto.GetSessionReq{SID: sid})
+	session, err := h.SessionService.GetSession(ctx, &dto.GetSessionReq{SID: sid})
 	if err != nil {
 		if errors.Is(err, service.ErrNotFound) {
 			return &oas.APICreateEventUnauthorized{SetCookie: setCookie}, nil
@@ -208,7 +218,7 @@ func (h *Handler) APICreateEvent(ctx context.Context, req *oas.CreateEventReques
 		return &oas.APICreateEventUnauthorized{SetCookie: setCookie}, nil
 	}
 
-	eventResp, err := h.eventService.CreateEvent(ctx, &dto.CreateEventReq{
+	eventResp, err := h.EventService.CreateEvent(ctx, &dto.CreateEventReq{
 		Title:       req.Title,
 		Description: req.Description.Or(""),
 		Address:     req.Address,
@@ -225,7 +235,7 @@ func (h *Handler) APICreateEvent(ctx context.Context, req *oas.CreateEventReques
 		return NewInternalError(), nil
 	}
 
-	if _, err := h.sessionService.CreateOrExtendSession(ctx, &dto.CreateOrExtendSessionReq{SID: sid, UserID: session.UserID}); err != nil {
+	if _, err := h.SessionService.CreateOrExtendSession(ctx, &dto.CreateOrExtendSessionReq{SID: sid, UserID: session.UserID}); err != nil {
 		h.l.Errorf("failed to extend session: %s", err.Error())
 	}
 
@@ -243,7 +253,7 @@ func (h *Handler) APIGetEvents(ctx context.Context, params oas.APIGetEventsParam
 	}
 	title := params.Title.Value
 
-	resp, err := h.eventService.GetEvents(ctx, &dto.GetEventsReq{Title: title, Limit: params.Limit, Offset: params.Offset})
+	resp, err := h.EventService.GetEvents(ctx, &dto.GetEventsReq{Title: title, Limit: params.Limit, Offset: params.Offset})
 	if err != nil {
 		h.l.Errorf("failed to get events: %s", err.Error())
 		return NewInternalError(), nil

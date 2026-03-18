@@ -27,9 +27,9 @@ type CreateOrExtendSessionReq struct {
 }
 
 type CreateOrExtendSessionResp struct {
-	SID           string
-	MaxAgeSeconds int
-	IsCreated     bool
+	SID       string
+	TTL       time.Duration
+	IsCreated bool
 }
 
 type SetUserIDReq struct {
