@@ -44,13 +44,7 @@ func (s *EventStorage) CreateIndexes(ctx context.Context) error {
 				{Key: "created_by", Value: 1},
 				{Key: "title", Value: 1},
 			},
-			Options: options.Index().
-				SetName("uniq_created_by_title_valid").
-				SetUnique(true).
-				SetPartialFilterExpression(bson.D{
-					{Key: "created_by", Value: bson.D{{Key: "$type", Value: "string"}}},
-					{Key: "title", Value: bson.D{{Key: "$type", Value: "string"}}},
-				}),
+			Options: options.Index().SetName("created_by_1_title_1"),
 		},
 	}
 
