@@ -42,9 +42,7 @@ func (s *EventStorage) CreateIndexes(ctx context.Context) error {
 		{
 			Keys: bson.D{
 				{Key: "created_by", Value: 1},
-				{Key: "title", Value: 1},
 			},
-			Options: options.Index().SetName("created_by_1_title_1"),
 		},
 	}
 
@@ -215,9 +213,14 @@ func applyEventDateFilter(filter bson.M, dateFrom *time.Time, dateTo *time.Time)
 		dateFilter["$gte"] = dateFrom.UTC().Format(time.RFC3339)
 	}
 	if dateTo != nil {
-		dateFilter["$lte"] = dateTo.UTC().Format(time.RFC3339)
+		dateFilter["$lte"] = endOfDayUTC(*dateTo).Format(time.RFC3339)
 	}
 	filter["started_at"] = dateFilter
+}
+
+func endOfDayUTC(t time.Time) time.Time {
+	year, month, day := t.UTC().Date()
+	return time.Date(year, month, day, 23, 59, 59, 999999999, time.UTC)
 }
 
 func applyEventUserIDFilter(filter bson.M, userID string) {
