@@ -229,8 +229,26 @@ services:
     image: mongo:8.0.0
     container_name: mongo-init
     depends_on:
-      mongos:
+      configsvr1:
         condition: service_healthy
+      configsvr2:
+        condition: service_healthy
+      configsvr3:
+        condition: service_healthy
+      shard1-1:
+        condition: service_healthy
+      shard1-2:
+        condition: service_healthy
+      shard1-3:
+        condition: service_healthy
+      shard2-1:
+        condition: service_healthy
+      shard2-2:
+        condition: service_healthy
+      shard2-3:
+        condition: service_healthy
+      mongos:
+        condition: service_started
     networks:
       - backend-network
     restart: "no"
@@ -282,7 +300,6 @@ services:
         wait_mongo shard2-1 27018
         wait_mongo shard2-2 27018
         wait_mongo shard2-3 27018
-        wait_mongo mongos 27017
 
         init_rs configsvr1 27019 cfgRS "[
           { _id: 0, host: 'configsvr1:27019' },
@@ -302,11 +319,13 @@ services:
           { _id: 2, host: 'shard2-3:27018' }
         ]"
 
+        wait_mongo mongos 27017
+
         mongosh --host mongos --port 27017 --quiet --eval "
-          sh.addShard('shard1RS/shard1-1:27018,shard1-2:27018,shard1-3:27018');
-          sh.addShard('shard2RS/shard2-1:27018,shard2-2:27018,shard2-3:27018');
-          sh.enableSharding('$${MONGODB_DATABASE}');
-          sh.shardCollection('$${MONGODB_DATABASE}.events', { created_by: 'hashed' });
+          try { sh.addShard('shard1RS/shard1-1:27018,shard1-2:27018,shard1-3:27018'); } catch (e) { print(e); }
+          try { sh.addShard('shard2RS/shard2-1:27018,shard2-2:27018,shard2-3:27018'); } catch (e) { print(e); }
+          try { sh.enableSharding('$${MONGODB_DATABASE}'); } catch (e) { print(e); }
+          try { sh.shardCollection('$${MONGODB_DATABASE}.events', { created_by: 'hashed' }); } catch (e) { print(e); }
         "
 
         echo "Mongo cluster initialized"

@@ -35,18 +35,12 @@ func (s *EventStorage) CreateIndexes(ctx context.Context) error {
 		},
 		{
 			Keys: bson.D{
+				{Key: "created_by", Value: 1},
 				{Key: "title", Value: 1},
-				{Key: "created_by", Value: 1},
 			},
-		},
-		{
-			Keys: bson.D{
-				{Key: "created_by", Value: 1},
-			},
+			Options: options.Index().SetUnique(true),
 		},
 	}
-
-	indexModels[0].Options = options.Index().SetUnique(true)
 
 	_, err := coll.Indexes().CreateMany(ctx, indexModels)
 	if err != nil {
