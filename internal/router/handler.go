@@ -350,6 +350,15 @@ func (h *Handler) APIGetEvent(ctx context.Context, params oas.APIGetEventParams)
 func (h *Handler) APIPatchEvent(ctx context.Context, req *oas.PatchEventRequest, params oas.APIPatchEventParams) (oas.APIPatchEventRes, error) {
 	sid := extractSID(params.Cookie.Value)
 	setCookie := formSetCookie(sid, h.sessionTTLSeconds)
+
+	if _, err := h.EventService.GetEvent(ctx, &dto.GetEventReq{ID: params.ID}); err != nil {
+		if errors.Is(err, service.ErrNotFound) {
+			return NewErrorResponse(http.StatusNotFound, setCookie, fmt.Errorf("%w. Be sure that event exists and you are the organizer", ErrNotFound)), nil
+		}
+		h.l.Errorf("failed to get event before patch: %s", err.Error())
+		return NewInternalError(), nil
+	}
+
 	if sid == "" {
 		return &oas.APIPatchEventUnauthorized{SetCookie: setCookie}, nil
 	}

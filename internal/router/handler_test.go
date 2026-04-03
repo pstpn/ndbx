@@ -994,9 +994,13 @@ func TestHandler_APIPatchEvent(t *testing.T) {
 		expectedBody   string
 	}{
 		{
-			name:           "unauthorized without session",
-			eventID:        "event-1",
-			requestBody:    `{"category":"party","price":1000,"city":"Moscow"}`,
+			name:        "unauthorized without session",
+			eventID:     "event-1",
+			requestBody: `{"category":"party","price":1000,"city":"Moscow"}`,
+			setup: func(h *router.Handler) {
+				mock.WhenDouble(h.EventService.GetEvent(mock.AnyContext(), mock.Equal(&dto.GetEventReq{ID: "event-1"}))).
+					ThenReturn(&dto.GetEventResp{Event: dto.EventData{ID: "event-1"}}, nil)
+			},
 			expectedStatus: http.StatusUnauthorized,
 			expectedCookie: "X-Session-Id=; HttpOnly; Path=/; Max-Age=0",
 		},
@@ -1006,6 +1010,8 @@ func TestHandler_APIPatchEvent(t *testing.T) {
 			eventID:     "event-1",
 			requestBody: `{"category":"party","price":1000,"city":"Moscow"}`,
 			setup: func(h *router.Handler) {
+				mock.WhenDouble(h.EventService.GetEvent(mock.AnyContext(), mock.Equal(&dto.GetEventReq{ID: "event-1"}))).
+					ThenReturn(&dto.GetEventResp{Event: dto.EventData{ID: "event-1"}}, nil)
 				mock.WhenDouble(h.SessionService.GetSession(mock.AnyContext(), mock.Equal(&dto.GetSessionReq{SID: "bad-sid"}))).
 					ThenReturn(nil, service.ErrNotFound)
 			},
@@ -1018,15 +1024,8 @@ func TestHandler_APIPatchEvent(t *testing.T) {
 			eventID:     "missing-id",
 			requestBody: `{"category":"party","price":1000,"city":"Moscow"}`,
 			setup: func(h *router.Handler) {
-				mock.WhenDouble(h.SessionService.GetSession(mock.AnyContext(), mock.Equal(&dto.GetSessionReq{SID: "sid-1"}))).
-					ThenReturn(&dto.GetSessionResp{UserID: "user-1"}, nil)
-				mock.WhenSingle(h.EventService.PatchEvent(mock.AnyContext(), mock.Equal(&dto.PatchEventReq{
-					ID:        "missing-id",
-					CreatedBy: "user-1",
-					Category:  ref("party"),
-					City:      ref("Moscow"),
-					Price:     refI64(1000),
-				}))).ThenReturn(service.ErrNotFound)
+				mock.WhenDouble(h.EventService.GetEvent(mock.AnyContext(), mock.Equal(&dto.GetEventReq{ID: "missing-id"}))).
+					ThenReturn(nil, service.ErrNotFound)
 			},
 			expectedStatus: http.StatusNotFound,
 			expectedCookie: "X-Session-Id=sid-1; HttpOnly; Path=/; Max-Age=10",
@@ -1038,6 +1037,8 @@ func TestHandler_APIPatchEvent(t *testing.T) {
 			eventID:     "event-1",
 			requestBody: `{"category":"party","price":1000,"city":"Moscow"}`,
 			setup: func(h *router.Handler) {
+				mock.WhenDouble(h.EventService.GetEvent(mock.AnyContext(), mock.Any[*dto.GetEventReq]())).
+					ThenReturn(&dto.GetEventResp{Event: dto.EventData{ID: "event-1"}}, nil)
 				mock.WhenDouble(h.SessionService.GetSession(mock.AnyContext(), mock.Equal(&dto.GetSessionReq{SID: "sid-1"}))).
 					ThenReturn(&dto.GetSessionResp{UserID: "user-1"}, nil)
 				mock.WhenSingle(h.EventService.PatchEvent(mock.AnyContext(), mock.Any[*dto.PatchEventReq]())).
@@ -1053,6 +1054,8 @@ func TestHandler_APIPatchEvent(t *testing.T) {
 			eventID:     "event-1",
 			requestBody: `{"category":"party","price":1000,"city":"Moscow","ignored":"x"}`,
 			setup: func(h *router.Handler) {
+				mock.WhenDouble(h.EventService.GetEvent(mock.AnyContext(), mock.Equal(&dto.GetEventReq{ID: "event-1"}))).
+					ThenReturn(&dto.GetEventResp{Event: dto.EventData{ID: "event-1"}}, nil)
 				mock.WhenDouble(h.SessionService.GetSession(mock.AnyContext(), mock.Equal(&dto.GetSessionReq{SID: "sid-1"}))).
 					ThenReturn(&dto.GetSessionResp{UserID: "user-1"}, nil)
 				mock.WhenSingle(h.EventService.PatchEvent(mock.AnyContext(), mock.Equal(&dto.PatchEventReq{
@@ -1076,6 +1079,8 @@ func TestHandler_APIPatchEvent(t *testing.T) {
 			eventID:     "event-1",
 			requestBody: `{"city":""}`,
 			setup: func(h *router.Handler) {
+				mock.WhenDouble(h.EventService.GetEvent(mock.AnyContext(), mock.Equal(&dto.GetEventReq{ID: "event-1"}))).
+					ThenReturn(&dto.GetEventResp{Event: dto.EventData{ID: "event-1"}}, nil)
 				mock.WhenDouble(h.SessionService.GetSession(mock.AnyContext(), mock.Equal(&dto.GetSessionReq{SID: "sid-1"}))).
 					ThenReturn(&dto.GetSessionResp{UserID: "user-1"}, nil)
 				mock.WhenSingle(h.EventService.PatchEvent(mock.AnyContext(), mock.Equal(&dto.PatchEventReq{
@@ -1095,6 +1100,8 @@ func TestHandler_APIPatchEvent(t *testing.T) {
 			eventID:     "event-1",
 			requestBody: `{"price":-1}`,
 			setup: func(h *router.Handler) {
+				mock.WhenDouble(h.EventService.GetEvent(mock.AnyContext(), mock.Equal(&dto.GetEventReq{ID: "event-1"}))).
+					ThenReturn(&dto.GetEventResp{Event: dto.EventData{ID: "event-1"}}, nil)
 				mock.WhenDouble(h.SessionService.GetSession(mock.AnyContext(), mock.Equal(&dto.GetSessionReq{SID: "sid-1"}))).
 					ThenReturn(&dto.GetSessionResp{UserID: "user-1"}, nil)
 			},
