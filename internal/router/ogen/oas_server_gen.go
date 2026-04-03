@@ -14,12 +14,36 @@ type Handler interface {
 	//
 	// POST /events
 	APICreateEvent(ctx context.Context, req *CreateEventRequest, params APICreateEventParams) (APICreateEventRes, error)
+	// APIGetEvent implements Api_getEvent operation.
+	//
+	// Get event by id.
+	//
+	// GET /events/{id}
+	APIGetEvent(ctx context.Context, params APIGetEventParams) (APIGetEventRes, error)
 	// APIGetEvents implements Api_getEvents operation.
 	//
 	// Get events with filtering and pagination.
 	//
 	// GET /events
 	APIGetEvents(ctx context.Context, params APIGetEventsParams) (APIGetEventsRes, error)
+	// APIGetUser implements Api_getUser operation.
+	//
+	// Get user by id.
+	//
+	// GET /users/{id}
+	APIGetUser(ctx context.Context, params APIGetUserParams) (APIGetUserRes, error)
+	// APIGetUserEvents implements Api_getUserEvents operation.
+	//
+	// Get user events.
+	//
+	// GET /users/{id}/events
+	APIGetUserEvents(ctx context.Context, params APIGetUserEventsParams) (APIGetUserEventsRes, error)
+	// APIGetUsers implements Api_getUsers operation.
+	//
+	// Get users.
+	//
+	// GET /users
+	APIGetUsers(ctx context.Context, params APIGetUsersParams) (APIGetUsersRes, error)
 	// APIHealth implements Api_health operation.
 	//
 	// Healthcheck with session.
@@ -38,6 +62,12 @@ type Handler interface {
 	//
 	// POST /auth/logout
 	APILogout(ctx context.Context, params APILogoutParams) (APILogoutRes, error)
+	// APIPatchEvent implements Api_patchEvent operation.
+	//
+	// Patch event by id.
+	//
+	// PATCH /events/{id}
+	APIPatchEvent(ctx context.Context, req *PatchEventRequest, params APIPatchEventParams) (APIPatchEventRes, error)
 	// APIRegister implements Api_register operation.
 	//
 	// Register a new user.

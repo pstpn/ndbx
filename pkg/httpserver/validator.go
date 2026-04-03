@@ -19,6 +19,13 @@ func NotNegative(fieldName string, val int64) error {
 	return nil
 }
 
+func NotNegativeField(fieldName string, val int64) error {
+	if val < 0 {
+		return fmt.Errorf("invalid \"%s\" field", fieldName)
+	}
+	return nil
+}
+
 func ParseRFC3339(fieldName string, value string) (time.Time, error) {
 	t, err := time.Parse(time.RFC3339, value)
 	if err != nil {

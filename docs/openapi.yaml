@@ -119,7 +119,17 @@ paths:
       summary: get events with filtering and pagination
       parameters:
         - $ref: '#/components/parameters/GetEventsRequest.cookie'
+        - $ref: '#/components/parameters/GetEventsRequest.id'
         - $ref: '#/components/parameters/GetEventsRequest.title'
+        - $ref: '#/components/parameters/GetEventsRequest.category'
+        - $ref: '#/components/parameters/GetEventsRequest.price_from'
+        - $ref: '#/components/parameters/GetEventsRequest.price_to'
+        - $ref: '#/components/parameters/GetEventsRequest.address'
+        - $ref: '#/components/parameters/GetEventsRequest.city'
+        - $ref: '#/components/parameters/GetEventsRequest.date_from'
+        - $ref: '#/components/parameters/GetEventsRequest.date_to'
+        - $ref: '#/components/parameters/GetEventsRequest.user_id'
+        - $ref: '#/components/parameters/GetEventsRequest.user'
         - $ref: '#/components/parameters/GetEventsRequest.limit'
         - $ref: '#/components/parameters/GetEventsRequest.offset'
       responses:
@@ -145,6 +155,74 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+  /events/{id}:
+    get:
+      operationId: Api_getEvent
+      summary: get event by id
+      parameters:
+        - $ref: '#/components/parameters/GetEventRequest.id'
+        - $ref: '#/components/parameters/GetEventRequest.cookie'
+      responses:
+        '200':
+          description: The request has succeeded.
+          headers:
+            Set-Cookie:
+              required: true
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventData'
+        default:
+          description: An unexpected error response.
+          headers:
+            Set-Cookie:
+              required: true
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    patch:
+      operationId: Api_patchEvent
+      summary: patch event by id
+      parameters:
+        - $ref: '#/components/parameters/PatchEventParams.id'
+        - $ref: '#/components/parameters/PatchEventParams.cookie'
+      responses:
+        '204':
+          description: 'There is no content to send for this request, but the headers may be useful. '
+          headers:
+            Set-Cookie:
+              required: true
+              schema:
+                type: string
+        '401':
+          description: Access is unauthorized.
+          headers:
+            Set-Cookie:
+              required: true
+              schema:
+                type: string
+        default:
+          description: An unexpected error response.
+          headers:
+            Set-Cookie:
+              required: true
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchEventRequest'
   /health:
     get:
       operationId: Api_health
@@ -226,6 +304,108 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/UserRegisterRequest'
+    get:
+      operationId: Api_getUsers
+      summary: get users
+      parameters:
+        - $ref: '#/components/parameters/GetUsersRequest.cookie'
+        - $ref: '#/components/parameters/GetUsersRequest.id'
+        - $ref: '#/components/parameters/GetUsersRequest.name'
+        - $ref: '#/components/parameters/GetUsersRequest.limit'
+        - $ref: '#/components/parameters/GetUsersRequest.offset'
+      responses:
+        '200':
+          description: The request has succeeded.
+          headers:
+            Set-Cookie:
+              required: true
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetUsersResponse'
+        default:
+          description: An unexpected error response.
+          headers:
+            Set-Cookie:
+              required: true
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /users/{id}:
+    get:
+      operationId: Api_getUser
+      summary: get user by id
+      parameters:
+        - $ref: '#/components/parameters/GetUserRequest.id'
+        - $ref: '#/components/parameters/GetUserRequest.cookie'
+      responses:
+        '200':
+          description: The request has succeeded.
+          headers:
+            Set-Cookie:
+              required: true
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserData'
+        default:
+          description: An unexpected error response.
+          headers:
+            Set-Cookie:
+              required: true
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /users/{id}/events:
+    get:
+      operationId: Api_getUserEvents
+      summary: get user events
+      parameters:
+        - $ref: '#/components/parameters/GetUserEventsRequest.id'
+        - $ref: '#/components/parameters/GetUserEventsRequest.cookie'
+        - $ref: '#/components/parameters/GetUserEventsRequest.title'
+        - $ref: '#/components/parameters/GetUserEventsRequest.category'
+        - $ref: '#/components/parameters/GetUserEventsRequest.price_from'
+        - $ref: '#/components/parameters/GetUserEventsRequest.price_to'
+        - $ref: '#/components/parameters/GetUserEventsRequest.address'
+        - $ref: '#/components/parameters/GetUserEventsRequest.city'
+        - $ref: '#/components/parameters/GetUserEventsRequest.date_from'
+        - $ref: '#/components/parameters/GetUserEventsRequest.date_to'
+        - $ref: '#/components/parameters/GetUserEventsRequest.limit'
+        - $ref: '#/components/parameters/GetUserEventsRequest.offset'
+      responses:
+        '200':
+          description: The request has succeeded.
+          headers:
+            Set-Cookie:
+              required: true
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetEventsResponse'
+        default:
+          description: An unexpected error response.
+          headers:
+            Set-Cookie:
+              required: true
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 components:
   parameters:
     CookieRequest:
@@ -234,12 +414,66 @@ components:
       required: false
       schema:
         type: string
+    GetEventRequest.cookie:
+      name: Cookie
+      in: header
+      required: false
+      schema:
+        type: string
+    GetEventRequest.id:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+    GetEventsRequest.address:
+      name: address
+      in: query
+      required: false
+      schema:
+        type: string
+      explode: false
+    GetEventsRequest.category:
+      name: category
+      in: query
+      required: false
+      schema:
+        $ref: '#/components/schemas/EventCategory'
+      explode: false
+    GetEventsRequest.city:
+      name: city
+      in: query
+      required: false
+      schema:
+        type: string
+      explode: false
     GetEventsRequest.cookie:
       name: Cookie
       in: header
       required: false
       schema:
         type: string
+    GetEventsRequest.date_from:
+      name: date_from
+      in: query
+      required: false
+      schema:
+        type: string
+      explode: false
+    GetEventsRequest.date_to:
+      name: date_to
+      in: query
+      required: false
+      schema:
+        type: string
+      explode: false
+    GetEventsRequest.id:
+      name: id
+      in: query
+      required: false
+      schema:
+        type: string
+      explode: false
     GetEventsRequest.limit:
       name: limit
       in: query
@@ -256,6 +490,22 @@ components:
         type: integer
         format: int64
       explode: false
+    GetEventsRequest.price_from:
+      name: price_from
+      in: query
+      required: false
+      schema:
+        type: integer
+        format: int64
+      explode: false
+    GetEventsRequest.price_to:
+      name: price_to
+      in: query
+      required: false
+      schema:
+        type: integer
+        format: int64
+      explode: false
     GetEventsRequest.title:
       name: title
       in: query
@@ -263,10 +513,170 @@ components:
       schema:
         type: string
       explode: false
+    GetEventsRequest.user:
+      name: user
+      in: query
+      required: false
+      schema:
+        type: string
+      explode: false
+    GetEventsRequest.user_id:
+      name: user_id
+      in: query
+      required: false
+      schema:
+        type: string
+      explode: false
+    GetUserEventsRequest.address:
+      name: address
+      in: query
+      required: false
+      schema:
+        type: string
+      explode: false
+    GetUserEventsRequest.category:
+      name: category
+      in: query
+      required: false
+      schema:
+        $ref: '#/components/schemas/EventCategory'
+      explode: false
+    GetUserEventsRequest.city:
+      name: city
+      in: query
+      required: false
+      schema:
+        type: string
+      explode: false
+    GetUserEventsRequest.cookie:
+      name: Cookie
+      in: header
+      required: false
+      schema:
+        type: string
+    GetUserEventsRequest.date_from:
+      name: date_from
+      in: query
+      required: false
+      schema:
+        type: string
+      explode: false
+    GetUserEventsRequest.date_to:
+      name: date_to
+      in: query
+      required: false
+      schema:
+        type: string
+      explode: false
+    GetUserEventsRequest.id:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+    GetUserEventsRequest.limit:
+      name: limit
+      in: query
+      required: false
+      schema:
+        type: integer
+        format: int64
+      explode: false
+    GetUserEventsRequest.offset:
+      name: offset
+      in: query
+      required: false
+      schema:
+        type: integer
+        format: int64
+      explode: false
+    GetUserEventsRequest.price_from:
+      name: price_from
+      in: query
+      required: false
+      schema:
+        type: integer
+        format: int64
+      explode: false
+    GetUserEventsRequest.price_to:
+      name: price_to
+      in: query
+      required: false
+      schema:
+        type: integer
+        format: int64
+      explode: false
+    GetUserEventsRequest.title:
+      name: title
+      in: query
+      required: false
+      schema:
+        type: string
+      explode: false
+    GetUserRequest.cookie:
+      name: Cookie
+      in: header
+      required: false
+      schema:
+        type: string
+    GetUserRequest.id:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+    GetUsersRequest.cookie:
+      name: Cookie
+      in: header
+      required: false
+      schema:
+        type: string
+    GetUsersRequest.id:
+      name: id
+      in: query
+      required: false
+      schema:
+        type: string
+      explode: false
+    GetUsersRequest.limit:
+      name: limit
+      in: query
+      required: false
+      schema:
+        type: integer
+        format: int64
+      explode: false
+    GetUsersRequest.name:
+      name: name
+      in: query
+      required: false
+      schema:
+        type: string
+      explode: false
+    GetUsersRequest.offset:
+      name: offset
+      in: query
+      required: false
+      schema:
+        type: integer
+        format: int64
+      explode: false
     HealthRequest:
       name: Cookie
       in: header
       required: false
+      schema:
+        type: string
+    PatchEventParams.cookie:
+      name: Cookie
+      in: header
+      required: false
+      schema:
+        type: string
+    PatchEventParams.id:
+      name: id
+      in: path
+      required: true
       schema:
         type: string
     SessionRequest:
@@ -299,6 +709,14 @@ components:
       properties:
         message:
           type: string
+    EventCategory:
+      type: string
+      enum:
+        - meetup
+        - concert
+        - exhibition
+        - party
+        - other
     EventData:
       type: object
       required:
@@ -314,6 +732,11 @@ components:
           type: string
         title:
           type: string
+        category:
+          $ref: '#/components/schemas/EventCategory'
+        price:
+          type: integer
+          format: int64
         description:
           type: string
         location:
@@ -339,6 +762,19 @@ components:
         count:
           type: integer
           format: int64
+    GetUsersResponse:
+      type: object
+      required:
+        - users
+        - count
+      properties:
+        users:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserData'
+        count:
+          type: integer
+          format: int64
     HealthResponse:
       type: object
       required:
@@ -353,6 +789,8 @@ components:
       properties:
         address:
           type: string
+        city:
+          type: string
     LoginRequest:
       type: object
       required:
@@ -362,6 +800,29 @@ components:
         username:
           type: string
         password:
+          type: string
+    PatchEventRequest:
+      type: object
+      properties:
+        category:
+          $ref: '#/components/schemas/EventCategory'
+        city:
+          type: string
+        price:
+          type: integer
+          format: int64
+    UserData:
+      type: object
+      required:
+        - id
+        - full_name
+        - username
+      properties:
+        id:
+          type: string
+        full_name:
+          type: string
+        username:
           type: string
     UserRegisterRequest:
       type: object

@@ -12,6 +12,8 @@ var (
 	ErrUserAlreadyExists  = errors.New("user already exists")
 	ErrInvalidCredentials = errors.New("invalid credentials")
 	ErrEventAlreadyExists = errors.New("event already exists")
+	ErrNotFound           = errors.New("Not found")      //nolint:staticcheck // for contract
+	ErrUserNotFound       = errors.New("User not found") //nolint:staticcheck // for contract
 )
 
 func NewErrorResponse(statusCode int, setCookie string, err error) *api.ErrorResponseStatusCodeWithHeaders {

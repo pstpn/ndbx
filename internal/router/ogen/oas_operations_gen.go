@@ -6,11 +6,16 @@ package api
 type OperationName = string
 
 const (
-	APICreateEventOperation OperationName = "APICreateEvent"
-	APIGetEventsOperation   OperationName = "APIGetEvents"
-	APIHealthOperation      OperationName = "APIHealth"
-	APILoginOperation       OperationName = "APILogin"
-	APILogoutOperation      OperationName = "APILogout"
-	APIRegisterOperation    OperationName = "APIRegister"
-	APISessionOperation     OperationName = "APISession"
+	APICreateEventOperation   OperationName = "APICreateEvent"
+	APIGetEventOperation      OperationName = "APIGetEvent"
+	APIGetEventsOperation     OperationName = "APIGetEvents"
+	APIGetUserOperation       OperationName = "APIGetUser"
+	APIGetUserEventsOperation OperationName = "APIGetUserEvents"
+	APIGetUsersOperation      OperationName = "APIGetUsers"
+	APIHealthOperation        OperationName = "APIHealth"
+	APILoginOperation         OperationName = "APILogin"
+	APILogoutOperation        OperationName = "APILogout"
+	APIPatchEventOperation    OperationName = "APIPatchEvent"
+	APIRegisterOperation      OperationName = "APIRegister"
+	APISessionOperation       OperationName = "APISession"
 )

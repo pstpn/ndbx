@@ -22,12 +22,48 @@ func (UnimplementedHandler) APICreateEvent(ctx context.Context, req *CreateEvent
 	return r, ht.ErrNotImplemented
 }
 
+// APIGetEvent implements Api_getEvent operation.
+//
+// Get event by id.
+//
+// GET /events/{id}
+func (UnimplementedHandler) APIGetEvent(ctx context.Context, params APIGetEventParams) (r APIGetEventRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // APIGetEvents implements Api_getEvents operation.
 //
 // Get events with filtering and pagination.
 //
 // GET /events
 func (UnimplementedHandler) APIGetEvents(ctx context.Context, params APIGetEventsParams) (r APIGetEventsRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// APIGetUser implements Api_getUser operation.
+//
+// Get user by id.
+//
+// GET /users/{id}
+func (UnimplementedHandler) APIGetUser(ctx context.Context, params APIGetUserParams) (r APIGetUserRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// APIGetUserEvents implements Api_getUserEvents operation.
+//
+// Get user events.
+//
+// GET /users/{id}/events
+func (UnimplementedHandler) APIGetUserEvents(ctx context.Context, params APIGetUserEventsParams) (r APIGetUserEventsRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// APIGetUsers implements Api_getUsers operation.
+//
+// Get users.
+//
+// GET /users
+func (UnimplementedHandler) APIGetUsers(ctx context.Context, params APIGetUsersParams) (r APIGetUsersRes, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -55,6 +91,15 @@ func (UnimplementedHandler) APILogin(ctx context.Context, req *LoginRequest, par
 //
 // POST /auth/logout
 func (UnimplementedHandler) APILogout(ctx context.Context, params APILogoutParams) (r APILogoutRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// APIPatchEvent implements Api_patchEvent operation.
+//
+// Patch event by id.
+//
+// PATCH /events/{id}
+func (UnimplementedHandler) APIPatchEvent(ctx context.Context, req *PatchEventRequest, params APIPatchEventParams) (r APIPatchEventRes, _ error) {
 	return r, ht.ErrNotImplemented
 }
 

@@ -85,11 +85,22 @@ model LogoutUnauthorizedResponse {
 
 model LocationInfo {
     address: string;
+    city?: string;
+}
+
+union EventCategory {
+    "meetup",
+    "concert",
+    "exhibition",
+    "party",
+    "other"
 }
 
 model EventData {
     id: string;
     title: string;
+    category?: EventCategory;
+    price?: int64;
     description?: string;
     location: LocationInfo;
     started_at: string;
@@ -126,7 +137,141 @@ model GetEventsRequest {
     @header("Cookie")
     cookie?: string;
     @query
+    id?: string;
+    @query
     title?: string;
+    @query
+    category?: EventCategory;
+    @query
+    price_from?: int64;
+    @query
+    price_to?: int64;
+    @query
+    address?: string;
+    @query
+    city?: string;
+    @query
+    date_from?: string;
+    @query
+    date_to?: string;
+    @query
+    user_id?: string;
+    @query
+    user?: string;
+    @query
+    limit?: int64;
+    @query
+    offset?: int64;
+}
+
+model GetEventRequest {
+    @path
+    id: string;
+    @header("Cookie")
+    cookie?: string;
+}
+
+model GetEventResponse {
+    @header("Set-Cookie")
+    setCookie: string;
+    @statusCode
+    statusCode: 200;
+    @body
+    body: EventData;
+}
+
+model PatchEventRequest {
+    category?: EventCategory;
+    city?: string;
+    price?: int64;
+}
+
+model PatchEventParams {
+    @path
+    id: string;
+    @header("Cookie")
+    cookie?: string;
+}
+
+model PatchEventResponse {
+    @header("Set-Cookie")
+    setCookie: string;
+    @statusCode
+    statusCode: 204;
+}
+
+model PatchEventUnauthorizedResponse {
+    @header("Set-Cookie")
+    setCookie: string;
+    @statusCode
+    statusCode: 401;
+}
+
+model UserData {
+    id: string;
+    full_name: string;
+    username: string;
+}
+
+model GetUsersRequest {
+    @header("Cookie")
+    cookie?: string;
+    @query
+    id?: string;
+    @query
+    name?: string;
+    @query
+    limit?: int64;
+    @query
+    offset?: int64;
+}
+
+model GetUsersResponse {
+    @header("Set-Cookie")
+    setCookie: string;
+    @statusCode
+    statusCode: 200;
+    users: UserData[];
+    count: int64;
+}
+
+model GetUserRequest {
+    @path
+    id: string;
+    @header("Cookie")
+    cookie?: string;
+}
+
+model GetUserResponse {
+    @header("Set-Cookie")
+    setCookie: string;
+    @statusCode
+    statusCode: 200;
+    @body
+    body: UserData;
+}
+
+model GetUserEventsRequest {
+    @path
+    id: string;
+    @header("Cookie")
+    cookie?: string;
+    @query
+    title?: string;
+    @query
+    category?: EventCategory;
+    @query
+    price_from?: int64;
+    @query
+    price_to?: int64;
+    @query
+    address?: string;
+    @query
+    city?: string;
+    @query
+    date_from?: string;
+    @query
+    date_to?: string;
     @query
     limit?: int64;
     @query
@@ -170,4 +315,24 @@ namespace Api {
     @summary("get events with filtering and pagination")
     @route("/events")
     @get op getEvents(...GetEventsRequest): GetEventsResponse | ErrorResponse;
+
+    @summary("get event by id")
+    @route("/events/{id}")
+    @get op getEvent(...GetEventRequest): GetEventResponse | ErrorResponse;
+
+    @summary("patch event by id")
+    @route("/events/{id}")
+    @patch(#{implicitOptionality: true}) op patchEvent(@body body: PatchEventRequest, ...PatchEventParams): PatchEventResponse | PatchEventUnauthorizedResponse | ErrorResponse;
+
+    @summary("get users")
+    @route("/users")
+    @get op getUsers(...GetUsersRequest): GetUsersResponse | ErrorResponse;
+
+    @summary("get user by id")
+    @route("/users/{id}")
+    @get op getUser(...GetUserRequest): GetUserResponse | ErrorResponse;
+
+    @summary("get user events")
+    @route("/users/{id}/events")
+    @get op getUserEvents(...GetUserEventsRequest): GetEventsResponse | ErrorResponse;
 }
