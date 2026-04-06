@@ -8,12 +8,42 @@ import (
 
 // Handler handles operations described by OpenAPI v3 specification.
 type Handler interface {
+	// APICreateEvent implements Api_createEvent operation.
+	//
+	// Create a new event.
+	//
+	// POST /events
+	APICreateEvent(ctx context.Context, req *CreateEventRequest, params APICreateEventParams) (APICreateEventRes, error)
+	// APIGetEvents implements Api_getEvents operation.
+	//
+	// Get events with filtering and pagination.
+	//
+	// GET /events
+	APIGetEvents(ctx context.Context, params APIGetEventsParams) (APIGetEventsRes, error)
 	// APIHealth implements Api_health operation.
 	//
 	// Healthcheck with session.
 	//
 	// GET /health
 	APIHealth(ctx context.Context, params APIHealthParams) (*HealthResponseHeaders, error)
+	// APILogin implements Api_login operation.
+	//
+	// Authenticate user.
+	//
+	// POST /auth/login
+	APILogin(ctx context.Context, req *LoginRequest, params APILoginParams) (APILoginRes, error)
+	// APILogout implements Api_logout operation.
+	//
+	// Logout user.
+	//
+	// POST /auth/logout
+	APILogout(ctx context.Context, params APILogoutParams) (APILogoutRes, error)
+	// APIRegister implements Api_register operation.
+	//
+	// Register a new user.
+	//
+	// POST /users
+	APIRegister(ctx context.Context, req *UserRegisterRequest, params APIRegisterParams) (APIRegisterRes, error)
 	// APISession implements Api_session operation.
 	//
 	// Create or extend user's session.

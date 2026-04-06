@@ -13,12 +13,57 @@ type UnimplementedHandler struct{}
 
 var _ Handler = UnimplementedHandler{}
 
+// APICreateEvent implements Api_createEvent operation.
+//
+// Create a new event.
+//
+// POST /events
+func (UnimplementedHandler) APICreateEvent(ctx context.Context, req *CreateEventRequest, params APICreateEventParams) (r APICreateEventRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// APIGetEvents implements Api_getEvents operation.
+//
+// Get events with filtering and pagination.
+//
+// GET /events
+func (UnimplementedHandler) APIGetEvents(ctx context.Context, params APIGetEventsParams) (r APIGetEventsRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // APIHealth implements Api_health operation.
 //
 // Healthcheck with session.
 //
 // GET /health
 func (UnimplementedHandler) APIHealth(ctx context.Context, params APIHealthParams) (r *HealthResponseHeaders, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// APILogin implements Api_login operation.
+//
+// Authenticate user.
+//
+// POST /auth/login
+func (UnimplementedHandler) APILogin(ctx context.Context, req *LoginRequest, params APILoginParams) (r APILoginRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// APILogout implements Api_logout operation.
+//
+// Logout user.
+//
+// POST /auth/logout
+func (UnimplementedHandler) APILogout(ctx context.Context, params APILogoutParams) (r APILogoutRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// APIRegister implements Api_register operation.
+//
+// Register a new user.
+//
+// POST /users
+func (UnimplementedHandler) APIRegister(ctx context.Context, req *UserRegisterRequest, params APIRegisterParams) (r APIRegisterRes, _ error) {
 	return r, ht.ErrNotImplemented
 }
 

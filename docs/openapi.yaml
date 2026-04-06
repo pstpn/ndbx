@@ -4,6 +4,147 @@ info:
   version: 0.0.0
 tags: []
 paths:
+  /auth/login:
+    post:
+      operationId: Api_login
+      summary: authenticate user
+      parameters:
+        - $ref: '#/components/parameters/CookieRequest'
+      responses:
+        '204':
+          description: 'There is no content to send for this request, but the headers may be useful. '
+          headers:
+            Set-Cookie:
+              required: true
+              schema:
+                type: string
+        default:
+          description: An unexpected error response.
+          headers:
+            Set-Cookie:
+              required: true
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+  /auth/logout:
+    post:
+      operationId: Api_logout
+      summary: logout user
+      parameters:
+        - $ref: '#/components/parameters/CookieRequest'
+      responses:
+        '204':
+          description: 'There is no content to send for this request, but the headers may be useful. '
+          headers:
+            Set-Cookie:
+              required: true
+              schema:
+                type: string
+        '401':
+          description: Access is unauthorized.
+          headers:
+            Set-Cookie:
+              required: true
+              schema:
+                type: string
+        default:
+          description: An unexpected error response.
+          headers:
+            Set-Cookie:
+              required: true
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /events:
+    post:
+      operationId: Api_createEvent
+      summary: create a new event
+      parameters:
+        - $ref: '#/components/parameters/CookieRequest'
+      responses:
+        '201':
+          description: The request has succeeded and a new resource has been created as a result.
+          headers:
+            Set-Cookie:
+              required: true
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                required:
+                  - id
+        '401':
+          description: Access is unauthorized.
+          headers:
+            Set-Cookie:
+              required: true
+              schema:
+                type: string
+        default:
+          description: An unexpected error response.
+          headers:
+            Set-Cookie:
+              required: true
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateEventRequest'
+    get:
+      operationId: Api_getEvents
+      summary: get events with filtering and pagination
+      parameters:
+        - $ref: '#/components/parameters/GetEventsRequest.cookie'
+        - $ref: '#/components/parameters/GetEventsRequest.title'
+        - $ref: '#/components/parameters/GetEventsRequest.limit'
+        - $ref: '#/components/parameters/GetEventsRequest.offset'
+      responses:
+        '200':
+          description: The request has succeeded.
+          headers:
+            Set-Cookie:
+              required: true
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetEventsResponse'
+        default:
+          description: An unexpected error response.
+          headers:
+            Set-Cookie:
+              required: true
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /health:
     get:
       operationId: Api_health
@@ -43,8 +184,85 @@ paths:
               required: true
               schema:
                 type: string
+        default:
+          description: An unexpected error response.
+          headers:
+            Set-Cookie:
+              required: true
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /users:
+    post:
+      operationId: Api_register
+      summary: register a new user
+      parameters:
+        - $ref: '#/components/parameters/CookieRequest'
+      responses:
+        '201':
+          description: The request has succeeded and a new resource has been created as a result.
+          headers:
+            Set-Cookie:
+              required: true
+              schema:
+                type: string
+        default:
+          description: An unexpected error response.
+          headers:
+            Set-Cookie:
+              required: true
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserRegisterRequest'
 components:
   parameters:
+    CookieRequest:
+      name: Cookie
+      in: header
+      required: false
+      schema:
+        type: string
+    GetEventsRequest.cookie:
+      name: Cookie
+      in: header
+      required: false
+      schema:
+        type: string
+    GetEventsRequest.limit:
+      name: limit
+      in: query
+      required: false
+      schema:
+        type: integer
+        format: int64
+      explode: false
+    GetEventsRequest.offset:
+      name: offset
+      in: query
+      required: false
+      schema:
+        type: integer
+        format: int64
+      explode: false
+    GetEventsRequest.title:
+      name: title
+      in: query
+      required: false
+      schema:
+        type: string
+      explode: false
     HealthRequest:
       name: Cookie
       in: header
@@ -58,12 +276,105 @@ components:
       schema:
         type: string
   schemas:
+    CreateEventRequest:
+      type: object
+      required:
+        - title
+        - address
+        - started_at
+        - finished_at
+      properties:
+        title:
+          type: string
+        address:
+          type: string
+        description:
+          type: string
+        started_at:
+          type: string
+        finished_at:
+          type: string
+    ErrorResponse:
+      type: object
+      properties:
+        message:
+          type: string
+    EventData:
+      type: object
+      required:
+        - id
+        - title
+        - location
+        - started_at
+        - finished_at
+        - created_at
+        - created_by
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        location:
+          $ref: '#/components/schemas/LocationInfo'
+        started_at:
+          type: string
+        finished_at:
+          type: string
+        created_at:
+          type: string
+        created_by:
+          type: string
+    GetEventsResponse:
+      type: object
+      required:
+        - events
+        - count
+      properties:
+        events:
+          type: array
+          items:
+            $ref: '#/components/schemas/EventData'
+        count:
+          type: integer
+          format: int64
     HealthResponse:
       type: object
       required:
         - status
       properties:
         status:
+          type: string
+    LocationInfo:
+      type: object
+      required:
+        - address
+      properties:
+        address:
+          type: string
+    LoginRequest:
+      type: object
+      required:
+        - username
+        - password
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+    UserRegisterRequest:
+      type: object
+      required:
+        - full_name
+        - username
+        - password
+      properties:
+        full_name:
+          type: string
+        username:
+          type: string
+        password:
           type: string
 servers:
   - url: http://localhost:8080

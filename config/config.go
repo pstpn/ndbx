@@ -12,6 +12,7 @@ type Config struct {
 	AppConfig
 	HTTPConfig
 	RedisConfig
+	MongoDBConfig
 }
 
 type LoggerConfig struct {
@@ -33,6 +34,14 @@ type RedisConfig struct {
 	RedisPort     int    `env:"REDIS_PORT,required"`
 	RedisPassword string `env:"REDIS_PASSWORD,required"`
 	RedisDB       int    `env:"REDIS_DB,required"`
+}
+
+type MongoDBConfig struct {
+	MongoDBHost     string `env:"MONGODB_HOST,required"`
+	MongoDBPort     int    `env:"MONGODB_PORT,required"`
+	MongoDBUser     string `env:"MONGODB_USER,required"`
+	MongoDBPassword string `env:"MONGODB_PASSWORD,required"`
+	MongoDBDatabase string `env:"MONGODB_DATABASE,required"`
 }
 
 func NewConfig() (*Config, error) {
