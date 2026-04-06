@@ -360,19 +360,19 @@ func (h *Handler) APIPatchEvent(ctx context.Context, req *oas.PatchEventRequest,
 	}
 
 	if sid == "" {
-		return NewErrorResponse(http.StatusNotFound, setCookie, fmt.Errorf("%w. Be sure that event exists and you are the organizer", ErrNotFound)), nil
+		return &oas.APIPatchEventUnauthorized{SetCookie: setCookie}, nil
 	}
 
 	session, err := h.SessionService.GetSession(ctx, &dto.GetSessionReq{SID: sid})
 	if err != nil {
 		if errors.Is(err, service.ErrNotFound) {
-			return NewErrorResponse(http.StatusNotFound, setCookie, fmt.Errorf("%w. Be sure that event exists and you are the organizer", ErrNotFound)), nil
+			return &oas.APIPatchEventUnauthorized{SetCookie: setCookie}, nil
 		}
 		h.l.Errorf("failed to get session: %s", err.Error())
 		return NewInternalError(), nil
 	}
 	if session.UserID == "" {
-		return NewErrorResponse(http.StatusNotFound, setCookie, fmt.Errorf("%w. Be sure that event exists and you are the organizer", ErrNotFound)), nil
+		return &oas.APIPatchEventUnauthorized{SetCookie: setCookie}, nil
 	}
 
 	var category *string

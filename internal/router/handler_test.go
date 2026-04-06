@@ -1002,9 +1002,9 @@ func TestHandler_APIPatchEvent(t *testing.T) {
 				mock.WhenDouble(h.EventService.GetEvent(mock.AnyContext(), mock.Equal(&dto.GetEventReq{ID: "event-1"}))).
 					ThenReturn(&dto.GetEventResp{Event: dto.EventData{ID: "event-1"}}, nil)
 			},
-			expectedStatus: http.StatusNotFound,
+			expectedStatus: http.StatusUnauthorized,
 			expectedCookie: "X-Session-Id=; HttpOnly; Path=/; Max-Age=0",
-			expectedBody:   `{"message":"Not found. Be sure that event exists and you are the organizer"}`,
+			expectedBody:   "",
 		},
 		{
 			name:        "unauthorized unknown session",
@@ -1017,9 +1017,9 @@ func TestHandler_APIPatchEvent(t *testing.T) {
 				mock.WhenDouble(h.SessionService.GetSession(mock.AnyContext(), mock.Equal(&dto.GetSessionReq{SID: "bad-sid"}))).
 					ThenReturn(nil, service.ErrNotFound)
 			},
-			expectedStatus: http.StatusNotFound,
+			expectedStatus: http.StatusUnauthorized,
 			expectedCookie: "X-Session-Id=bad-sid; HttpOnly; Path=/; Max-Age=10",
-			expectedBody:   `{"message":"Not found. Be sure that event exists and you are the organizer"}`,
+			expectedBody:   "",
 		},
 		{
 			name:        "not found for non-existent event",
