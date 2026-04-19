@@ -5,6 +5,10 @@ type APICreateEventRes interface {
 	aPICreateEventRes()
 }
 
+type APIDislikeEventRes interface {
+	aPIDislikeEventRes()
+}
+
 type APIGetEventRes interface {
 	aPIGetEventRes()
 }
@@ -23,6 +27,10 @@ type APIGetUserRes interface {
 
 type APIGetUsersRes interface {
 	aPIGetUsersRes()
+}
+
+type APILikeEventRes interface {
+	aPILikeEventRes()
 }
 
 type APILoginRes interface {

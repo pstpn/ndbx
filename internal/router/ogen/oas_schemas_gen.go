@@ -65,6 +65,50 @@ func (s *APICreateEventUnauthorized) SetSetCookie(val string) {
 
 func (*APICreateEventUnauthorized) aPICreateEventRes() {}
 
+// APIDislikeEventNoContent is response for APIDislikeEvent operation.
+type APIDislikeEventNoContent struct {
+	SetCookie string
+}
+
+// GetSetCookie returns the value of SetCookie.
+func (s *APIDislikeEventNoContent) GetSetCookie() string {
+	return s.SetCookie
+}
+
+// SetSetCookie sets the value of SetCookie.
+func (s *APIDislikeEventNoContent) SetSetCookie(val string) {
+	s.SetCookie = val
+}
+
+func (*APIDislikeEventNoContent) aPIDislikeEventRes() {}
+
+// APIDislikeEventUnauthorized is response for APIDislikeEvent operation.
+type APIDislikeEventUnauthorized struct{}
+
+func (*APIDislikeEventUnauthorized) aPIDislikeEventRes() {}
+
+// APILikeEventNoContent is response for APILikeEvent operation.
+type APILikeEventNoContent struct {
+	SetCookie string
+}
+
+// GetSetCookie returns the value of SetCookie.
+func (s *APILikeEventNoContent) GetSetCookie() string {
+	return s.SetCookie
+}
+
+// SetSetCookie sets the value of SetCookie.
+func (s *APILikeEventNoContent) SetSetCookie(val string) {
+	s.SetCookie = val
+}
+
+func (*APILikeEventNoContent) aPILikeEventRes() {}
+
+// APILikeEventUnauthorized is response for APILikeEvent operation.
+type APILikeEventUnauthorized struct{}
+
+func (*APILikeEventUnauthorized) aPILikeEventRes() {}
+
 // APILoginNoContent is response for APILogin operation.
 type APILoginNoContent struct {
 	SetCookie string
@@ -313,11 +357,13 @@ func (s *ErrorResponseStatusCodeWithHeaders) SetResponse(val ErrorResponse) {
 }
 
 func (*ErrorResponseStatusCodeWithHeaders) aPICreateEventRes()   {}
+func (*ErrorResponseStatusCodeWithHeaders) aPIDislikeEventRes()  {}
 func (*ErrorResponseStatusCodeWithHeaders) aPIGetEventRes()      {}
 func (*ErrorResponseStatusCodeWithHeaders) aPIGetEventsRes()     {}
 func (*ErrorResponseStatusCodeWithHeaders) aPIGetUserEventsRes() {}
 func (*ErrorResponseStatusCodeWithHeaders) aPIGetUserRes()       {}
 func (*ErrorResponseStatusCodeWithHeaders) aPIGetUsersRes()      {}
+func (*ErrorResponseStatusCodeWithHeaders) aPILikeEventRes()     {}
 func (*ErrorResponseStatusCodeWithHeaders) aPILoginRes()         {}
 func (*ErrorResponseStatusCodeWithHeaders) aPILogoutRes()        {}
 func (*ErrorResponseStatusCodeWithHeaders) aPIPatchEventRes()    {}
@@ -389,16 +435,17 @@ func (s *EventCategory) UnmarshalText(data []byte) error {
 
 // Ref: #/components/schemas/EventData
 type EventData struct {
-	ID          string           `json:"id"`
-	Title       string           `json:"title"`
-	Category    OptEventCategory `json:"category"`
-	Price       OptInt64         `json:"price"`
-	Description OptString        `json:"description"`
-	Location    LocationInfo     `json:"location"`
-	StartedAt   string           `json:"started_at"`
-	FinishedAt  string           `json:"finished_at"`
-	CreatedAt   string           `json:"created_at"`
-	CreatedBy   string           `json:"created_by"`
+	ID          string            `json:"id"`
+	Title       string            `json:"title"`
+	Category    OptEventCategory  `json:"category"`
+	Price       OptInt64          `json:"price"`
+	Description OptString         `json:"description"`
+	Location    LocationInfo      `json:"location"`
+	StartedAt   string            `json:"started_at"`
+	FinishedAt  string            `json:"finished_at"`
+	CreatedAt   string            `json:"created_at"`
+	CreatedBy   string            `json:"created_by"`
+	Reactions   OptEventReactions `json:"reactions"`
 }
 
 // GetID returns the value of ID.
@@ -451,6 +498,11 @@ func (s *EventData) GetCreatedBy() string {
 	return s.CreatedBy
 }
 
+// GetReactions returns the value of Reactions.
+func (s *EventData) GetReactions() OptEventReactions {
+	return s.Reactions
+}
+
 // SetID sets the value of ID.
 func (s *EventData) SetID(val string) {
 	s.ID = val
@@ -501,6 +553,11 @@ func (s *EventData) SetCreatedBy(val string) {
 	s.CreatedBy = val
 }
 
+// SetReactions sets the value of Reactions.
+func (s *EventData) SetReactions(val OptEventReactions) {
+	s.Reactions = val
+}
+
 // EventDataHeaders wraps EventData with response headers.
 type EventDataHeaders struct {
 	SetCookie string
@@ -528,6 +585,32 @@ func (s *EventDataHeaders) SetResponse(val EventData) {
 }
 
 func (*EventDataHeaders) aPIGetEventRes() {}
+
+// Ref: #/components/schemas/EventReactions
+type EventReactions struct {
+	Likes    int64 `json:"likes"`
+	Dislikes int64 `json:"dislikes"`
+}
+
+// GetLikes returns the value of Likes.
+func (s *EventReactions) GetLikes() int64 {
+	return s.Likes
+}
+
+// GetDislikes returns the value of Dislikes.
+func (s *EventReactions) GetDislikes() int64 {
+	return s.Dislikes
+}
+
+// SetLikes sets the value of Likes.
+func (s *EventReactions) SetLikes(val int64) {
+	s.Likes = val
+}
+
+// SetDislikes sets the value of Dislikes.
+func (s *EventReactions) SetDislikes(val int64) {
+	s.Dislikes = val
+}
 
 // Ref: #/components/schemas/GetEventsResponse
 type GetEventsResponse struct {
@@ -771,6 +854,52 @@ func (o OptEventCategory) Get() (v EventCategory, ok bool) {
 
 // Or returns value if set, or given parameter if does not.
 func (o OptEventCategory) Or(d EventCategory) EventCategory {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptEventReactions returns new OptEventReactions with value set to v.
+func NewOptEventReactions(v EventReactions) OptEventReactions {
+	return OptEventReactions{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptEventReactions is optional EventReactions.
+type OptEventReactions struct {
+	Value EventReactions
+	Set   bool
+}
+
+// IsSet returns true if OptEventReactions was set.
+func (o OptEventReactions) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptEventReactions) Reset() {
+	var v EventReactions
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptEventReactions) SetTo(v EventReactions) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptEventReactions) Get() (v EventReactions, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptEventReactions) Or(d EventReactions) EventReactions {
 	if v, ok := o.Get(); ok {
 		return v
 	}

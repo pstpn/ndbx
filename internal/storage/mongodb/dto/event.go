@@ -53,6 +53,10 @@ type GetEventReq struct {
 	ID string
 }
 
+type GetEventsByTitleReq struct {
+	Title string
+}
+
 type PatchEventReq struct {
 	ID        string
 	CreatedBy string

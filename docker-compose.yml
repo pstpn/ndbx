@@ -11,6 +11,8 @@ services:
     depends_on:
       redis:
         condition: service_healthy
+      cassandra:
+        condition: service_healthy
       mongos:
         condition: service_healthy
       mongo-init:
@@ -55,6 +57,28 @@ services:
       interval: 5s
       timeout: 2s
       retries: 10
+
+  cassandra:
+    image: cassandra:4.1
+    container_name: cassandra
+    environment:
+      - CASSANDRA_BROADCAST_ADDRESS=cassandra
+      - CASSANDRA_START_RPC=false
+      - MAX_HEAP_SIZE=512M
+      - HEAP_NEWSIZE=128M
+      - CASSANDRA_ENABLE_USER_DEFINED_FUNCTIONS=true
+    ports:
+      - "${CASSANDRA_PORT}:${CASSANDRA_PORT}"
+    volumes:
+      - cassandra-data:/var/lib/cassandra
+    networks:
+      - backend-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "cqlsh cassandra ${CASSANDRA_PORT} -e 'DESCRIBE KEYSPACES' && exit 0 || exit 1"]
+      interval: 5s
+      timeout: 10s
+      retries: 20
 
   configsvr1:
     image: mongo:8.0.0
@@ -336,6 +360,7 @@ networks:
 
 volumes:
   redis-data:
+  cassandra-data:
   mongo-configsvr1:
   mongo-configsvr2:
   mongo-configsvr3:

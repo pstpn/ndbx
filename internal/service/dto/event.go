@@ -7,6 +7,11 @@ type EventLocation struct {
 	City    string
 }
 
+type EventReactions struct {
+	Likes    int64
+	Dislikes int64
+}
+
 type EventData struct {
 	ID          string
 	Title       string
@@ -18,6 +23,7 @@ type EventData struct {
 	CreatedBy   string
 	StartedAt   time.Time
 	FinishedAt  time.Time
+	Reactions   EventReactions
 }
 
 type CreateEventReq struct {
@@ -34,19 +40,20 @@ type CreateEventResp struct {
 }
 
 type GetEventsReq struct {
-	ID        string
-	Title     string
-	Category  string
-	PriceFrom *int64
-	PriceTo   *int64
-	Address   string
-	City      string
-	DateFrom  *time.Time
-	DateTo    *time.Time
-	UserID    string
-	User      string
-	Limit     int64
-	Offset    int64
+	ID               string
+	Title            string
+	Category         string
+	PriceFrom        *int64
+	PriceTo          *int64
+	Address          string
+	City             string
+	DateFrom         *time.Time
+	DateTo           *time.Time
+	UserID           string
+	User             string
+	Limit            int64
+	Offset           int64
+	IncludeReactions bool
 }
 
 type GetEventsResp struct {
@@ -54,7 +61,13 @@ type GetEventsResp struct {
 }
 
 type GetEventReq struct {
-	ID string
+	ID               string
+	IncludeReactions bool
+}
+
+type ReactEventReq struct {
+	ID     string
+	UserID string
 }
 
 type GetEventResp struct {

@@ -22,6 +22,15 @@ func (UnimplementedHandler) APICreateEvent(ctx context.Context, req *CreateEvent
 	return r, ht.ErrNotImplemented
 }
 
+// APIDislikeEvent implements Api_dislikeEvent operation.
+//
+// Dislike event by id.
+//
+// POST /events/{id}/dislike
+func (UnimplementedHandler) APIDislikeEvent(ctx context.Context, params APIDislikeEventParams) (r APIDislikeEventRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // APIGetEvent implements Api_getEvent operation.
 //
 // Get event by id.
@@ -73,6 +82,15 @@ func (UnimplementedHandler) APIGetUsers(ctx context.Context, params APIGetUsersP
 //
 // GET /health
 func (UnimplementedHandler) APIHealth(ctx context.Context, params APIHealthParams) (r *HealthResponseHeaders, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// APILikeEvent implements Api_likeEvent operation.
+//
+// Like event by id.
+//
+// POST /events/{id}/like
+func (UnimplementedHandler) APILikeEvent(ctx context.Context, params APILikeEventParams) (r APILikeEventRes, _ error) {
 	return r, ht.ErrNotImplemented
 }
 

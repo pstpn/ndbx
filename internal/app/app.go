@@ -7,6 +7,7 @@ import (
 	"net/http"
 	_ "net/http/pprof" //nolint:gosec // for debug app only
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -16,8 +17,10 @@ import (
 	"ndbx/internal/router"
 	oas "ndbx/internal/router/ogen"
 	"ndbx/internal/service"
+	cstorage "ndbx/internal/storage/cassandra"
 	mstorage "ndbx/internal/storage/mongodb"
 	rstorage "ndbx/internal/storage/redis"
+	"ndbx/pkg/cassandra"
 	"ndbx/pkg/httpserver"
 	"ndbx/pkg/logger"
 	"ndbx/pkg/mongodb"
@@ -50,10 +53,26 @@ func Run(ctx context.Context, cfg *config.Config) error {
 	}
 	defer mongoDBClient.Close(ctx)
 
+	cassandraClient, err := cassandra.NewClient(
+		ctx,
+		strings.Split(cfg.CassandraHosts, ","),
+		cfg.CassandraPort,
+		cfg.CassandraUsername,
+		cfg.CassandraPassword,
+		cfg.CassandraKeyspace,
+		cfg.CassandraConsistency,
+	)
+	if err != nil {
+		return fmt.Errorf("new cassandra client: %w", err)
+	}
+	defer cassandraClient.Close()
+
 	// Storages
 	sessionStorage := rstorage.NewSessionStorage(redisClient)
+	reactionCacheStorage := rstorage.NewEventReactionStorage(redisClient)
 	userStorage := mstorage.NewUserStorage(mongoDBClient.DB())
 	eventStorage := mstorage.NewEventStorage(mongoDBClient.DB())
+	reactionStorage := cstorage.NewEventReactionStorage(cassandraClient.Session())
 
 	if err := userStorage.CreateIndex(ctx); err != nil {
 		return fmt.Errorf("create user indexes: %w", err)
@@ -61,11 +80,14 @@ func Run(ctx context.Context, cfg *config.Config) error {
 	if err := eventStorage.CreateIndexes(ctx); err != nil {
 		return fmt.Errorf("create event indexes: %w", err)
 	}
+	if err := reactionStorage.EnsureSchema(ctx); err != nil {
+		return fmt.Errorf("create reaction schema: %w", err)
+	}
 
 	// Services
 	sessionService := service.NewSessionService(l, sessionStorage, cfg.AppUserSessionTTLSeconds)
 	userService := service.NewUserService(l, userStorage)
-	eventService := service.NewEventService(l, eventStorage)
+	eventService := service.NewEventService(l, eventStorage, reactionStorage, reactionCacheStorage, cfg.AppLikeTTLSeconds)
 
 	handler := router.NewHandler(l, sessionService, userService, eventService, cfg.AppUserSessionTTLSeconds)
 

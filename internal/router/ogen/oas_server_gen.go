@@ -14,6 +14,12 @@ type Handler interface {
 	//
 	// POST /events
 	APICreateEvent(ctx context.Context, req *CreateEventRequest, params APICreateEventParams) (APICreateEventRes, error)
+	// APIDislikeEvent implements Api_dislikeEvent operation.
+	//
+	// Dislike event by id.
+	//
+	// POST /events/{id}/dislike
+	APIDislikeEvent(ctx context.Context, params APIDislikeEventParams) (APIDislikeEventRes, error)
 	// APIGetEvent implements Api_getEvent operation.
 	//
 	// Get event by id.
@@ -50,6 +56,12 @@ type Handler interface {
 	//
 	// GET /health
 	APIHealth(ctx context.Context, params APIHealthParams) (*HealthResponseHeaders, error)
+	// APILikeEvent implements Api_likeEvent operation.
+	//
+	// Like event by id.
+	//
+	// POST /events/{id}/like
+	APILikeEvent(ctx context.Context, params APILikeEventParams) (APILikeEventRes, error)
 	// APILogin implements Api_login operation.
 	//
 	// Authenticate user.

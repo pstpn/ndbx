@@ -256,6 +256,30 @@ func (s *EventStorage) GetEvent(ctx context.Context, req *dto.GetEventReq) (*dto
 	return &event, nil
 }
 
+func (s *EventStorage) GetEventsByTitle(ctx context.Context, req *dto.GetEventsByTitleReq) (*dto.GetEventsResp, error) {
+	coll := s.db.Collection(collectionEvents)
+
+	cursor, err := coll.Find(ctx, bson.M{"title": req.Title})
+	if err != nil {
+		return nil, fmt.Errorf("find events by title: %w", err)
+	}
+	defer cursor.Close(ctx)
+
+	events := make([]dto.Event, 0)
+	for cursor.Next(ctx) {
+		var eventDoc bson.M
+		if err := cursor.Decode(&eventDoc); err != nil {
+			return nil, fmt.Errorf("decode event by title: %w", err)
+		}
+		events = append(events, mapEvent(eventDoc))
+	}
+	if err := cursor.Err(); err != nil {
+		return nil, fmt.Errorf("iterate events by title: %w", err)
+	}
+
+	return &dto.GetEventsResp{Events: events}, nil
+}
+
 func (s *EventStorage) PatchEvent(ctx context.Context, req *dto.PatchEventReq) error {
 	filter := bson.M{
 		"_id":        bson.M{"$in": idAlternatives(req.ID)},
