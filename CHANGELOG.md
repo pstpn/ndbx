@@ -131,3 +131,30 @@
 - *internal/service/session.go*: сервис сессий обновлён для хранения `user_id` и корректной обработки `not found`.
 - *internal/service/user.go*: добавлены регистрация пользователя с bcrypt и аутентификация по логину/паролю.
 - *internal/storage/redis/session.go*: Redis-хранилище сессий обновлено под поле `user_id`.
+
+## [4.0.0] - 2026-04-03
+
+### Добавлено
+
+- *internal/service/dto/event.go*: расширены DTO событий для фильтров по категории, цене, городу, датам и пользователю.
+- *internal/service/dto/user.go*: добавлены DTO для поиска пользователей и просмотра событий пользователя.
+- *internal/storage/mongodb/dto/event.go*: расширены DTO документов событий для фильтрации и частичного обновления.
+- *internal/storage/mongodb/event.go*: добавлены получение события по id, частичное обновление и расширенная фильтрация событий.
+- *internal/storage/mongodb/user.go*: добавлены поиск пользователей и получение пользователя по id.
+- *internal/storage/mongodb/mongodb.go*: вынесены общие MongoDB-хелперы для работы с идентификаторами.
+- *pkg/httpserver/validator.go*: добавлены общие валидаторы полей для числовых параметров и дат.
+- *docker-compose.yml*: добавлена инициализация sharded MongoDB-кластера через отдельный одноразовый сервис.
+
+### Изменено
+
+- *README.md*: документация обновлена под лабораторную работу с пользователями, событиями и фильтрацией.
+- *docs/typespec/main.tsp*: TypeSpec-спецификация расширена методами `/users`, `/events/{id}` и `/users/{id}/events`.
+- *docs/openapi.yaml*: OpenAPI-контракт обновлён под новые операции и параметры фильтрации.
+- *internal/app/app.go*: инициализация приложения расширена новыми сервисами и MongoDB-хранилищами.
+- *internal/router/handler.go*: реализованы новые HTTP-обработчики для событий и пользователей.
+- *internal/router/handler_test.go*: добавлены и обновлены тесты для новых сценариев API.
+- *internal/router/ogen/*: ogen-код синхронизирован с расширенным контрактом API.
+- *internal/service/event.go*: сервис событий обновлён под новые операции и фильтры.
+- *internal/service/user.go*: сервис пользователей расширен поиском и выдачей профиля.
+- *internal/storage/mongodb/event.go*: хранение событий обновлено под sharding-ориентированную схему и новые запросы.
+- *internal/storage/mongodb/user.go*: хранение пользователей обновлено под новые операции поиска.

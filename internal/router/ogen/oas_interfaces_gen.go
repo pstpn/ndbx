@@ -5,8 +5,24 @@ type APICreateEventRes interface {
 	aPICreateEventRes()
 }
 
+type APIGetEventRes interface {
+	aPIGetEventRes()
+}
+
 type APIGetEventsRes interface {
 	aPIGetEventsRes()
+}
+
+type APIGetUserEventsRes interface {
+	aPIGetUserEventsRes()
+}
+
+type APIGetUserRes interface {
+	aPIGetUserRes()
+}
+
+type APIGetUsersRes interface {
+	aPIGetUsersRes()
 }
 
 type APILoginRes interface {
@@ -15,6 +31,10 @@ type APILoginRes interface {
 
 type APILogoutRes interface {
 	aPILogoutRes()
+}
+
+type APIPatchEventRes interface {
+	aPIPatchEventRes()
 }
 
 type APIRegisterRes interface {

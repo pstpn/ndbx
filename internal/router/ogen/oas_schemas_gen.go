@@ -2,6 +2,10 @@
 
 package api
 
+import (
+	"github.com/go-faster/errors"
+)
+
 type APICreateEventCreated struct {
 	ID string `json:"id"`
 }
@@ -111,6 +115,40 @@ func (s *APILogoutUnauthorized) SetSetCookie(val string) {
 }
 
 func (*APILogoutUnauthorized) aPILogoutRes() {}
+
+// APIPatchEventNoContent is response for APIPatchEvent operation.
+type APIPatchEventNoContent struct {
+	SetCookie string
+}
+
+// GetSetCookie returns the value of SetCookie.
+func (s *APIPatchEventNoContent) GetSetCookie() string {
+	return s.SetCookie
+}
+
+// SetSetCookie sets the value of SetCookie.
+func (s *APIPatchEventNoContent) SetSetCookie(val string) {
+	s.SetCookie = val
+}
+
+func (*APIPatchEventNoContent) aPIPatchEventRes() {}
+
+// APIPatchEventUnauthorized is response for APIPatchEvent operation.
+type APIPatchEventUnauthorized struct {
+	SetCookie string
+}
+
+// GetSetCookie returns the value of SetCookie.
+func (s *APIPatchEventUnauthorized) GetSetCookie() string {
+	return s.SetCookie
+}
+
+// SetSetCookie sets the value of SetCookie.
+func (s *APIPatchEventUnauthorized) SetSetCookie(val string) {
+	s.SetCookie = val
+}
+
+func (*APIPatchEventUnauthorized) aPIPatchEventRes() {}
 
 // APIRegisterCreated is response for APIRegister operation.
 type APIRegisterCreated struct {
@@ -274,23 +312,93 @@ func (s *ErrorResponseStatusCodeWithHeaders) SetResponse(val ErrorResponse) {
 	s.Response = val
 }
 
-func (*ErrorResponseStatusCodeWithHeaders) aPICreateEventRes() {}
-func (*ErrorResponseStatusCodeWithHeaders) aPIGetEventsRes()   {}
-func (*ErrorResponseStatusCodeWithHeaders) aPILoginRes()       {}
-func (*ErrorResponseStatusCodeWithHeaders) aPILogoutRes()      {}
-func (*ErrorResponseStatusCodeWithHeaders) aPIRegisterRes()    {}
-func (*ErrorResponseStatusCodeWithHeaders) aPISessionRes()     {}
+func (*ErrorResponseStatusCodeWithHeaders) aPICreateEventRes()   {}
+func (*ErrorResponseStatusCodeWithHeaders) aPIGetEventRes()      {}
+func (*ErrorResponseStatusCodeWithHeaders) aPIGetEventsRes()     {}
+func (*ErrorResponseStatusCodeWithHeaders) aPIGetUserEventsRes() {}
+func (*ErrorResponseStatusCodeWithHeaders) aPIGetUserRes()       {}
+func (*ErrorResponseStatusCodeWithHeaders) aPIGetUsersRes()      {}
+func (*ErrorResponseStatusCodeWithHeaders) aPILoginRes()         {}
+func (*ErrorResponseStatusCodeWithHeaders) aPILogoutRes()        {}
+func (*ErrorResponseStatusCodeWithHeaders) aPIPatchEventRes()    {}
+func (*ErrorResponseStatusCodeWithHeaders) aPIRegisterRes()      {}
+func (*ErrorResponseStatusCodeWithHeaders) aPISessionRes()       {}
+
+// Ref: #/components/schemas/EventCategory
+type EventCategory string
+
+const (
+	EventCategoryMeetup     EventCategory = "meetup"
+	EventCategoryConcert    EventCategory = "concert"
+	EventCategoryExhibition EventCategory = "exhibition"
+	EventCategoryParty      EventCategory = "party"
+	EventCategoryOther      EventCategory = "other"
+)
+
+// AllValues returns all EventCategory values.
+func (EventCategory) AllValues() []EventCategory {
+	return []EventCategory{
+		EventCategoryMeetup,
+		EventCategoryConcert,
+		EventCategoryExhibition,
+		EventCategoryParty,
+		EventCategoryOther,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s EventCategory) MarshalText() ([]byte, error) {
+	switch s {
+	case EventCategoryMeetup:
+		return []byte(s), nil
+	case EventCategoryConcert:
+		return []byte(s), nil
+	case EventCategoryExhibition:
+		return []byte(s), nil
+	case EventCategoryParty:
+		return []byte(s), nil
+	case EventCategoryOther:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *EventCategory) UnmarshalText(data []byte) error {
+	switch EventCategory(data) {
+	case EventCategoryMeetup:
+		*s = EventCategoryMeetup
+		return nil
+	case EventCategoryConcert:
+		*s = EventCategoryConcert
+		return nil
+	case EventCategoryExhibition:
+		*s = EventCategoryExhibition
+		return nil
+	case EventCategoryParty:
+		*s = EventCategoryParty
+		return nil
+	case EventCategoryOther:
+		*s = EventCategoryOther
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
 
 // Ref: #/components/schemas/EventData
 type EventData struct {
-	ID          string       `json:"id"`
-	Title       string       `json:"title"`
-	Description OptString    `json:"description"`
-	Location    LocationInfo `json:"location"`
-	StartedAt   string       `json:"started_at"`
-	FinishedAt  string       `json:"finished_at"`
-	CreatedAt   string       `json:"created_at"`
-	CreatedBy   string       `json:"created_by"`
+	ID          string           `json:"id"`
+	Title       string           `json:"title"`
+	Category    OptEventCategory `json:"category"`
+	Price       OptInt64         `json:"price"`
+	Description OptString        `json:"description"`
+	Location    LocationInfo     `json:"location"`
+	StartedAt   string           `json:"started_at"`
+	FinishedAt  string           `json:"finished_at"`
+	CreatedAt   string           `json:"created_at"`
+	CreatedBy   string           `json:"created_by"`
 }
 
 // GetID returns the value of ID.
@@ -301,6 +409,16 @@ func (s *EventData) GetID() string {
 // GetTitle returns the value of Title.
 func (s *EventData) GetTitle() string {
 	return s.Title
+}
+
+// GetCategory returns the value of Category.
+func (s *EventData) GetCategory() OptEventCategory {
+	return s.Category
+}
+
+// GetPrice returns the value of Price.
+func (s *EventData) GetPrice() OptInt64 {
+	return s.Price
 }
 
 // GetDescription returns the value of Description.
@@ -343,6 +461,16 @@ func (s *EventData) SetTitle(val string) {
 	s.Title = val
 }
 
+// SetCategory sets the value of Category.
+func (s *EventData) SetCategory(val OptEventCategory) {
+	s.Category = val
+}
+
+// SetPrice sets the value of Price.
+func (s *EventData) SetPrice(val OptInt64) {
+	s.Price = val
+}
+
 // SetDescription sets the value of Description.
 func (s *EventData) SetDescription(val OptString) {
 	s.Description = val
@@ -372,6 +500,34 @@ func (s *EventData) SetCreatedAt(val string) {
 func (s *EventData) SetCreatedBy(val string) {
 	s.CreatedBy = val
 }
+
+// EventDataHeaders wraps EventData with response headers.
+type EventDataHeaders struct {
+	SetCookie string
+	Response  EventData
+}
+
+// GetSetCookie returns the value of SetCookie.
+func (s *EventDataHeaders) GetSetCookie() string {
+	return s.SetCookie
+}
+
+// GetResponse returns the value of Response.
+func (s *EventDataHeaders) GetResponse() EventData {
+	return s.Response
+}
+
+// SetSetCookie sets the value of SetCookie.
+func (s *EventDataHeaders) SetSetCookie(val string) {
+	s.SetCookie = val
+}
+
+// SetResponse sets the value of Response.
+func (s *EventDataHeaders) SetResponse(val EventData) {
+	s.Response = val
+}
+
+func (*EventDataHeaders) aPIGetEventRes() {}
 
 // Ref: #/components/schemas/GetEventsResponse
 type GetEventsResponse struct {
@@ -425,7 +581,62 @@ func (s *GetEventsResponseHeaders) SetResponse(val GetEventsResponse) {
 	s.Response = val
 }
 
-func (*GetEventsResponseHeaders) aPIGetEventsRes() {}
+func (*GetEventsResponseHeaders) aPIGetEventsRes()     {}
+func (*GetEventsResponseHeaders) aPIGetUserEventsRes() {}
+
+// Ref: #/components/schemas/GetUsersResponse
+type GetUsersResponse struct {
+	Users []UserData `json:"users"`
+	Count int64      `json:"count"`
+}
+
+// GetUsers returns the value of Users.
+func (s *GetUsersResponse) GetUsers() []UserData {
+	return s.Users
+}
+
+// GetCount returns the value of Count.
+func (s *GetUsersResponse) GetCount() int64 {
+	return s.Count
+}
+
+// SetUsers sets the value of Users.
+func (s *GetUsersResponse) SetUsers(val []UserData) {
+	s.Users = val
+}
+
+// SetCount sets the value of Count.
+func (s *GetUsersResponse) SetCount(val int64) {
+	s.Count = val
+}
+
+// GetUsersResponseHeaders wraps GetUsersResponse with response headers.
+type GetUsersResponseHeaders struct {
+	SetCookie string
+	Response  GetUsersResponse
+}
+
+// GetSetCookie returns the value of SetCookie.
+func (s *GetUsersResponseHeaders) GetSetCookie() string {
+	return s.SetCookie
+}
+
+// GetResponse returns the value of Response.
+func (s *GetUsersResponseHeaders) GetResponse() GetUsersResponse {
+	return s.Response
+}
+
+// SetSetCookie sets the value of SetCookie.
+func (s *GetUsersResponseHeaders) SetSetCookie(val string) {
+	s.SetCookie = val
+}
+
+// SetResponse sets the value of Response.
+func (s *GetUsersResponseHeaders) SetResponse(val GetUsersResponse) {
+	s.Response = val
+}
+
+func (*GetUsersResponseHeaders) aPIGetUsersRes() {}
 
 // Ref: #/components/schemas/HealthResponse
 type HealthResponse struct {
@@ -470,7 +681,8 @@ func (s *HealthResponseHeaders) SetResponse(val HealthResponse) {
 
 // Ref: #/components/schemas/LocationInfo
 type LocationInfo struct {
-	Address string `json:"address"`
+	Address string    `json:"address"`
+	City    OptString `json:"city"`
 }
 
 // GetAddress returns the value of Address.
@@ -478,9 +690,19 @@ func (s *LocationInfo) GetAddress() string {
 	return s.Address
 }
 
+// GetCity returns the value of City.
+func (s *LocationInfo) GetCity() OptString {
+	return s.City
+}
+
 // SetAddress sets the value of Address.
 func (s *LocationInfo) SetAddress(val string) {
 	s.Address = val
+}
+
+// SetCity sets the value of City.
+func (s *LocationInfo) SetCity(val OptString) {
+	s.City = val
 }
 
 // Ref: #/components/schemas/LoginRequest
@@ -507,6 +729,52 @@ func (s *LoginRequest) SetUsername(val string) {
 // SetPassword sets the value of Password.
 func (s *LoginRequest) SetPassword(val string) {
 	s.Password = val
+}
+
+// NewOptEventCategory returns new OptEventCategory with value set to v.
+func NewOptEventCategory(v EventCategory) OptEventCategory {
+	return OptEventCategory{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptEventCategory is optional EventCategory.
+type OptEventCategory struct {
+	Value EventCategory
+	Set   bool
+}
+
+// IsSet returns true if OptEventCategory was set.
+func (o OptEventCategory) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptEventCategory) Reset() {
+	var v EventCategory
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptEventCategory) SetTo(v EventCategory) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptEventCategory) Get() (v EventCategory, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptEventCategory) Or(d EventCategory) EventCategory {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
 }
 
 // NewOptInt64 returns new OptInt64 with value set to v.
@@ -600,6 +868,108 @@ func (o OptString) Or(d string) string {
 	}
 	return d
 }
+
+// Ref: #/components/schemas/PatchEventRequest
+type PatchEventRequest struct {
+	Category OptEventCategory `json:"category"`
+	City     OptString        `json:"city"`
+	Price    OptInt64         `json:"price"`
+}
+
+// GetCategory returns the value of Category.
+func (s *PatchEventRequest) GetCategory() OptEventCategory {
+	return s.Category
+}
+
+// GetCity returns the value of City.
+func (s *PatchEventRequest) GetCity() OptString {
+	return s.City
+}
+
+// GetPrice returns the value of Price.
+func (s *PatchEventRequest) GetPrice() OptInt64 {
+	return s.Price
+}
+
+// SetCategory sets the value of Category.
+func (s *PatchEventRequest) SetCategory(val OptEventCategory) {
+	s.Category = val
+}
+
+// SetCity sets the value of City.
+func (s *PatchEventRequest) SetCity(val OptString) {
+	s.City = val
+}
+
+// SetPrice sets the value of Price.
+func (s *PatchEventRequest) SetPrice(val OptInt64) {
+	s.Price = val
+}
+
+// Ref: #/components/schemas/UserData
+type UserData struct {
+	ID       string `json:"id"`
+	FullName string `json:"full_name"`
+	Username string `json:"username"`
+}
+
+// GetID returns the value of ID.
+func (s *UserData) GetID() string {
+	return s.ID
+}
+
+// GetFullName returns the value of FullName.
+func (s *UserData) GetFullName() string {
+	return s.FullName
+}
+
+// GetUsername returns the value of Username.
+func (s *UserData) GetUsername() string {
+	return s.Username
+}
+
+// SetID sets the value of ID.
+func (s *UserData) SetID(val string) {
+	s.ID = val
+}
+
+// SetFullName sets the value of FullName.
+func (s *UserData) SetFullName(val string) {
+	s.FullName = val
+}
+
+// SetUsername sets the value of Username.
+func (s *UserData) SetUsername(val string) {
+	s.Username = val
+}
+
+// UserDataHeaders wraps UserData with response headers.
+type UserDataHeaders struct {
+	SetCookie string
+	Response  UserData
+}
+
+// GetSetCookie returns the value of SetCookie.
+func (s *UserDataHeaders) GetSetCookie() string {
+	return s.SetCookie
+}
+
+// GetResponse returns the value of Response.
+func (s *UserDataHeaders) GetResponse() UserData {
+	return s.Response
+}
+
+// SetSetCookie sets the value of SetCookie.
+func (s *UserDataHeaders) SetSetCookie(val string) {
+	s.SetCookie = val
+}
+
+// SetResponse sets the value of Response.
+func (s *UserDataHeaders) SetResponse(val UserData) {
+	s.Response = val
+}
+
+func (*UserDataHeaders) aPIGetUserRes() {}
 
 // Ref: #/components/schemas/UserRegisterRequest
 type UserRegisterRequest struct {

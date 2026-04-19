@@ -480,6 +480,7 @@ func TestHandler_APILogout(t *testing.T) {
 			name:           "logout without session",
 			expectedStatus: http.StatusUnauthorized,
 			expectedCookie: "X-Session-Id=; HttpOnly; Path=/; Max-Age=0",
+			expectedBody:   "",
 		},
 		{
 			name:   "service error on delete",
@@ -804,7 +805,7 @@ func TestHandler_APIGetEvents(t *testing.T) {
 			},
 			expectedStatus: http.StatusBadRequest,
 			expectedCookie: "X-Session-Id=; HttpOnly; Path=/; Max-Age=0",
-			expectedBody:   `{"message":"invalid \"limit\" parameter"}`,
+			expectedBody:   `{"message":"invalid \"limit\" field"}`,
 		},
 		{
 			name: "invalid offset",
@@ -814,7 +815,7 @@ func TestHandler_APIGetEvents(t *testing.T) {
 			},
 			expectedStatus: http.StatusBadRequest,
 			expectedCookie: "X-Session-Id=; HttpOnly; Path=/; Max-Age=0",
-			expectedBody:   `{"message":"invalid \"offset\" parameter"}`,
+			expectedBody:   `{"message":"invalid \"offset\" field"}`,
 		},
 		{
 			name: "service error",
@@ -871,6 +872,516 @@ func TestHandler_APIGetEvents(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestHandler_APIGetEvent(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name           string
+		cookie         string
+		eventID        string
+		setup          func(h *router.Handler)
+		expectedStatus int
+		expectedCookie string
+		expectedBody   string
+	}{
+		{
+			name:    "event found",
+			eventID: "event-1",
+			setup: func(h *router.Handler) {
+				mock.WhenDouble(h.EventService.GetEvent(mock.AnyContext(), mock.Equal(&dto.GetEventReq{ID: "event-1"}))).
+					ThenReturn(&dto.GetEventResp{Event: dto.EventData{
+						ID:          "event-1",
+						Title:       "Event 1",
+						Category:    "party",
+						Price:       1000,
+						Description: "Desc",
+						Location: dto.EventLocation{
+							Address: "Address",
+							City:    "Moscow",
+						},
+						CreatedAt:  time.Date(2026, 3, 14, 14, 59, 32, 0, time.UTC),
+						CreatedBy:  "user-1",
+						StartedAt:  time.Date(2026, 4, 1, 12, 0, 0, 0, time.UTC),
+						FinishedAt: time.Date(2026, 4, 1, 23, 0, 0, 0, time.UTC),
+					}}, nil)
+			},
+			expectedStatus: http.StatusOK,
+			expectedCookie: "X-Session-Id=; HttpOnly; Path=/; Max-Age=0",
+			expectedBody: `{
+				"id":"event-1",
+				"title":"Event 1",
+				"category":"party",
+				"price":1000,
+				"description":"Desc",
+				"location":{"address":"Address","city":"Moscow"},
+				"created_at":"2026-03-14T14:59:32Z",
+				"created_by":"user-1",
+				"started_at":"2026-04-01T12:00:00Z",
+				"finished_at":"2026-04-01T23:00:00Z"
+			}`,
+		},
+		{
+			name:    "event not found",
+			eventID: "missing-id",
+			setup: func(h *router.Handler) {
+				mock.WhenDouble(h.EventService.GetEvent(mock.AnyContext(), mock.Equal(&dto.GetEventReq{ID: "missing-id"}))).
+					ThenReturn(nil, service.ErrNotFound)
+			},
+			expectedStatus: http.StatusNotFound,
+			expectedCookie: "X-Session-Id=; HttpOnly; Path=/; Max-Age=0",
+			expectedBody:   `{"message":"Not found"}`,
+		},
+		{
+			name:    "event internal error",
+			eventID: "event-1",
+			setup: func(h *router.Handler) {
+				mock.WhenDouble(h.EventService.GetEvent(mock.AnyContext(), mock.Any[*dto.GetEventReq]())).
+					ThenReturn(nil, errors.New("boom"))
+			},
+			expectedStatus: http.StatusInternalServerError,
+			expectedCookie: "",
+			expectedBody:   `{"message":"internal error"}`,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			ctrl := mock.NewMockController(t, mockopts.StrictVerify())
+			sessionService := mock.Mock[router.SessionService](ctrl)
+			userService := mock.Mock[router.UserService](ctrl)
+			eventService := mock.Mock[router.EventService](ctrl)
+			h := newHandler(t, sessionService, userService, eventService)
+			if tt.setup != nil {
+				tt.setup(h)
+			}
+
+			req := httptest.NewRequest(http.MethodGet, "/events/"+tt.eventID, http.NoBody)
+			if tt.cookie != "" {
+				req.Header.Set("Cookie", tt.cookie)
+			}
+			w := httptest.NewRecorder()
+
+			srv, err := oas.NewServer(h)
+			require.NoError(t, err)
+			srv.ServeHTTP(w, req)
+
+			resp := w.Result()
+			t.Cleanup(func() { require.NoError(t, resp.Body.Close()) })
+			require.Equal(t, tt.expectedStatus, resp.StatusCode)
+			require.Equal(t, tt.expectedCookie, resp.Header.Get("Set-Cookie"))
+			if tt.expectedBody != "" {
+				body, err := io.ReadAll(resp.Body)
+				require.NoError(t, err)
+				require.JSONEq(t, tt.expectedBody, string(body))
+			}
+		})
+	}
+}
+
+func TestHandler_APIPatchEvent(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name           string
+		cookie         string
+		eventID        string
+		requestBody    string
+		setup          func(h *router.Handler)
+		expectedStatus int
+		expectedCookie string
+		expectedBody   string
+	}{
+		{
+			name:        "unauthorized without session",
+			eventID:     "event-1",
+			requestBody: `{"category":"party","price":1000,"city":"Moscow"}`,
+			setup: func(h *router.Handler) {
+				mock.WhenDouble(h.EventService.GetEvent(mock.AnyContext(), mock.Equal(&dto.GetEventReq{ID: "event-1"}))).
+					ThenReturn(&dto.GetEventResp{Event: dto.EventData{ID: "event-1"}}, nil)
+			},
+			expectedStatus: http.StatusUnauthorized,
+			expectedCookie: "X-Session-Id=; HttpOnly; Path=/; Max-Age=0",
+			expectedBody:   "",
+		},
+		{
+			name:        "unauthorized unknown session",
+			cookie:      "X-Session-Id=bad-sid",
+			eventID:     "event-1",
+			requestBody: `{"category":"party","price":1000,"city":"Moscow"}`,
+			setup: func(h *router.Handler) {
+				mock.WhenDouble(h.EventService.GetEvent(mock.AnyContext(), mock.Equal(&dto.GetEventReq{ID: "event-1"}))).
+					ThenReturn(&dto.GetEventResp{Event: dto.EventData{ID: "event-1"}}, nil)
+				mock.WhenDouble(h.SessionService.GetSession(mock.AnyContext(), mock.Equal(&dto.GetSessionReq{SID: "bad-sid"}))).
+					ThenReturn(nil, service.ErrNotFound)
+			},
+			expectedStatus: http.StatusUnauthorized,
+			expectedCookie: "X-Session-Id=bad-sid; HttpOnly; Path=/; Max-Age=10",
+			expectedBody:   "",
+		},
+		{
+			name:        "not found for non-existent event",
+			cookie:      "X-Session-Id=sid-1",
+			eventID:     "missing-id",
+			requestBody: `{"category":"party","price":1000,"city":"Moscow"}`,
+			setup: func(h *router.Handler) {
+				mock.WhenDouble(h.EventService.GetEvent(mock.AnyContext(), mock.Equal(&dto.GetEventReq{ID: "missing-id"}))).
+					ThenReturn(nil, service.ErrNotFound)
+			},
+			expectedStatus: http.StatusNotFound,
+			expectedCookie: "X-Session-Id=sid-1; HttpOnly; Path=/; Max-Age=10",
+			expectedBody:   `{"message":"Not found. Be sure that event exists and you are the organizer"}`,
+		},
+		{
+			name:        "forbidden for чужое событие mapped to not found",
+			cookie:      "X-Session-Id=sid-1",
+			eventID:     "event-1",
+			requestBody: `{"category":"party","price":1000,"city":"Moscow"}`,
+			setup: func(h *router.Handler) {
+				mock.WhenDouble(h.EventService.GetEvent(mock.AnyContext(), mock.Any[*dto.GetEventReq]())).
+					ThenReturn(&dto.GetEventResp{Event: dto.EventData{ID: "event-1"}}, nil)
+				mock.WhenDouble(h.SessionService.GetSession(mock.AnyContext(), mock.Equal(&dto.GetSessionReq{SID: "sid-1"}))).
+					ThenReturn(&dto.GetSessionResp{UserID: "user-1"}, nil)
+				mock.WhenSingle(h.EventService.PatchEvent(mock.AnyContext(), mock.Any[*dto.PatchEventReq]())).
+					ThenReturn(service.ErrNotFound)
+			},
+			expectedStatus: http.StatusNotFound,
+			expectedCookie: "X-Session-Id=sid-1; HttpOnly; Path=/; Max-Age=10",
+			expectedBody:   `{"message":"Not found. Be sure that event exists and you are the organizer"}`,
+		},
+		{
+			name:        "patch ok",
+			cookie:      "X-Session-Id=sid-1",
+			eventID:     "event-1",
+			requestBody: `{"category":"party","price":1000,"city":"Moscow","ignored":"x"}`,
+			setup: func(h *router.Handler) {
+				mock.WhenDouble(h.EventService.GetEvent(mock.AnyContext(), mock.Equal(&dto.GetEventReq{ID: "event-1"}))).
+					ThenReturn(&dto.GetEventResp{Event: dto.EventData{ID: "event-1"}}, nil)
+				mock.WhenDouble(h.SessionService.GetSession(mock.AnyContext(), mock.Equal(&dto.GetSessionReq{SID: "sid-1"}))).
+					ThenReturn(&dto.GetSessionResp{UserID: "user-1"}, nil)
+				mock.WhenSingle(h.EventService.PatchEvent(mock.AnyContext(), mock.Equal(&dto.PatchEventReq{
+					ID:        "event-1",
+					CreatedBy: "user-1",
+					Category:  ref("party"),
+					City:      ref("Moscow"),
+					Price:     refI64(1000),
+				}))).ThenReturn(nil)
+				mock.WhenDouble(h.SessionService.CreateOrExtendSession(mock.AnyContext(), mock.Equal(&dto.CreateOrExtendSessionReq{
+					SID:    "sid-1",
+					UserID: "user-1",
+				}))).ThenReturn(&dto.CreateOrExtendSessionResp{SID: "sid-1", TTL: time.Second * mockTTL, IsCreated: false}, nil)
+			},
+			expectedStatus: http.StatusNoContent,
+			expectedCookie: "X-Session-Id=sid-1; HttpOnly; Path=/; Max-Age=10",
+		},
+		{
+			name:        "patch with empty city",
+			cookie:      "X-Session-Id=sid-1",
+			eventID:     "event-1",
+			requestBody: `{"city":""}`,
+			setup: func(h *router.Handler) {
+				mock.WhenDouble(h.EventService.GetEvent(mock.AnyContext(), mock.Equal(&dto.GetEventReq{ID: "event-1"}))).
+					ThenReturn(&dto.GetEventResp{Event: dto.EventData{ID: "event-1"}}, nil)
+				mock.WhenDouble(h.SessionService.GetSession(mock.AnyContext(), mock.Equal(&dto.GetSessionReq{SID: "sid-1"}))).
+					ThenReturn(&dto.GetSessionResp{UserID: "user-1"}, nil)
+				mock.WhenSingle(h.EventService.PatchEvent(mock.AnyContext(), mock.Equal(&dto.PatchEventReq{
+					ID:        "event-1",
+					CreatedBy: "user-1",
+					City:      ref(""),
+				}))).ThenReturn(nil)
+				mock.WhenDouble(h.SessionService.CreateOrExtendSession(mock.AnyContext(), mock.Any[*dto.CreateOrExtendSessionReq]())).
+					ThenReturn(&dto.CreateOrExtendSessionResp{SID: "sid-1", TTL: time.Second * mockTTL, IsCreated: false}, nil)
+			},
+			expectedStatus: http.StatusNoContent,
+			expectedCookie: "X-Session-Id=sid-1; HttpOnly; Path=/; Max-Age=10",
+		},
+		{
+			name:        "patch invalid negative price",
+			cookie:      "X-Session-Id=sid-1",
+			eventID:     "event-1",
+			requestBody: `{"price":-1}`,
+			setup: func(h *router.Handler) {
+				mock.WhenDouble(h.EventService.GetEvent(mock.AnyContext(), mock.Equal(&dto.GetEventReq{ID: "event-1"}))).
+					ThenReturn(&dto.GetEventResp{Event: dto.EventData{ID: "event-1"}}, nil)
+				mock.WhenDouble(h.SessionService.GetSession(mock.AnyContext(), mock.Equal(&dto.GetSessionReq{SID: "sid-1"}))).
+					ThenReturn(&dto.GetSessionResp{UserID: "user-1"}, nil)
+			},
+			expectedStatus: http.StatusBadRequest,
+			expectedCookie: "X-Session-Id=sid-1; HttpOnly; Path=/; Max-Age=10",
+			expectedBody:   `{"message":"invalid \"price\" field"}`,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			ctrl := mock.NewMockController(t, mockopts.StrictVerify())
+			sessionService := mock.Mock[router.SessionService](ctrl)
+			userService := mock.Mock[router.UserService](ctrl)
+			eventService := mock.Mock[router.EventService](ctrl)
+			h := newHandler(t, sessionService, userService, eventService)
+			if tt.setup != nil {
+				tt.setup(h)
+			}
+
+			req := httptest.NewRequest(http.MethodPatch, "/events/"+tt.eventID, strings.NewReader(tt.requestBody))
+			req.Header.Set("Content-Type", "application/json")
+			if tt.cookie != "" {
+				req.Header.Set("Cookie", tt.cookie)
+			}
+			w := httptest.NewRecorder()
+
+			srv, err := oas.NewServer(h)
+			require.NoError(t, err)
+			srv.ServeHTTP(w, req)
+
+			resp := w.Result()
+			t.Cleanup(func() { require.NoError(t, resp.Body.Close()) })
+			require.Equal(t, tt.expectedStatus, resp.StatusCode)
+			require.Equal(t, tt.expectedCookie, resp.Header.Get("Set-Cookie"))
+			if tt.expectedBody != "" {
+				body, err := io.ReadAll(resp.Body)
+				require.NoError(t, err)
+				require.JSONEq(t, tt.expectedBody, string(body))
+			}
+		})
+	}
+}
+
+func TestHandler_APIGetUsers(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name           string
+		query          string
+		setup          func(h *router.Handler)
+		expectedStatus int
+		expectedBody   string
+	}{
+		{
+			name:  "users found",
+			query: "?name=John&limit=2&offset=1",
+			setup: func(h *router.Handler) {
+				mock.WhenDouble(h.UserService.GetUsers(mock.AnyContext(), mock.Equal(&dto.GetUsersReq{ID: "", Name: "John", Limit: 2, Offset: 1}))).
+					ThenReturn(&dto.GetUsersResp{Users: []dto.UserData{{ID: "u1", FullName: "John Doe", Username: "john_doe"}}}, nil)
+			},
+			expectedStatus: http.StatusOK,
+			expectedBody:   `{"users":[{"id":"u1","full_name":"John Doe","username":"john_doe"}],"count":1}`,
+		},
+		{
+			name:           "invalid limit",
+			query:          "?limit=-1",
+			expectedStatus: http.StatusBadRequest,
+			expectedBody:   `{"message":"invalid \"limit\" field"}`,
+		},
+		{
+			name:  "service error",
+			query: "",
+			setup: func(h *router.Handler) {
+				mock.WhenDouble(h.UserService.GetUsers(mock.AnyContext(), mock.Any[*dto.GetUsersReq]())).
+					ThenReturn(nil, errors.New("boom"))
+			},
+			expectedStatus: http.StatusInternalServerError,
+			expectedBody:   `{"message":"internal error"}`,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			ctrl := mock.NewMockController(t, mockopts.StrictVerify())
+			sessionService := mock.Mock[router.SessionService](ctrl)
+			userService := mock.Mock[router.UserService](ctrl)
+			eventService := mock.Mock[router.EventService](ctrl)
+			h := newHandler(t, sessionService, userService, eventService)
+			if tt.setup != nil {
+				tt.setup(h)
+			}
+
+			req := httptest.NewRequest(http.MethodGet, "/users"+tt.query, http.NoBody)
+			w := httptest.NewRecorder()
+			srv, err := oas.NewServer(h)
+			require.NoError(t, err)
+			srv.ServeHTTP(w, req)
+
+			resp := w.Result()
+			t.Cleanup(func() { require.NoError(t, resp.Body.Close()) })
+			require.Equal(t, tt.expectedStatus, resp.StatusCode)
+			if tt.expectedBody != "" {
+				body, err := io.ReadAll(resp.Body)
+				require.NoError(t, err)
+				require.JSONEq(t, tt.expectedBody, string(body))
+			}
+		})
+	}
+}
+
+func TestHandler_APIGetUser(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name           string
+		id             string
+		setup          func(h *router.Handler)
+		expectedStatus int
+		expectedBody   string
+	}{
+		{
+			name: "user found",
+			id:   "u1",
+			setup: func(h *router.Handler) {
+				mock.WhenDouble(h.UserService.GetUser(mock.AnyContext(), mock.Equal(&dto.GetUserReq{ID: "u1"}))).
+					ThenReturn(&dto.GetUserResp{User: dto.UserData{ID: "u1", FullName: "John Doe", Username: "john_doe"}}, nil)
+			},
+			expectedStatus: http.StatusOK,
+			expectedBody:   `{"id":"u1","full_name":"John Doe","username":"john_doe"}`,
+		},
+		{
+			name: "user not found",
+			id:   "missing",
+			setup: func(h *router.Handler) {
+				mock.WhenDouble(h.UserService.GetUser(mock.AnyContext(), mock.Equal(&dto.GetUserReq{ID: "missing"}))).
+					ThenReturn(nil, service.ErrNotFound)
+			},
+			expectedStatus: http.StatusNotFound,
+			expectedBody:   `{"message":"Not found"}`,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			ctrl := mock.NewMockController(t, mockopts.StrictVerify())
+			sessionService := mock.Mock[router.SessionService](ctrl)
+			userService := mock.Mock[router.UserService](ctrl)
+			eventService := mock.Mock[router.EventService](ctrl)
+			h := newHandler(t, sessionService, userService, eventService)
+			if tt.setup != nil {
+				tt.setup(h)
+			}
+
+			req := httptest.NewRequest(http.MethodGet, "/users/"+tt.id, http.NoBody)
+			w := httptest.NewRecorder()
+			srv, err := oas.NewServer(h)
+			require.NoError(t, err)
+			srv.ServeHTTP(w, req)
+
+			resp := w.Result()
+			t.Cleanup(func() { require.NoError(t, resp.Body.Close()) })
+			require.Equal(t, tt.expectedStatus, resp.StatusCode)
+			body, err := io.ReadAll(resp.Body)
+			require.NoError(t, err)
+			require.JSONEq(t, tt.expectedBody, string(body))
+		})
+	}
+}
+
+func TestHandler_APIGetUserEvents(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name           string
+		id             string
+		query          string
+		setup          func(h *router.Handler)
+		expectedStatus int
+		expectedBody   string
+	}{
+		{
+			name:  "user events found with filters",
+			id:    "u1",
+			query: "?category=party&city=Moscow&price_to=0&date_from=20260314",
+			setup: func(h *router.Handler) {
+				mock.WhenDouble(h.UserService.GetUser(mock.AnyContext(), mock.Equal(&dto.GetUserReq{ID: "u1"}))).
+					ThenReturn(&dto.GetUserResp{User: dto.UserData{ID: "u1", FullName: "John", Username: "john"}}, nil)
+				dateFrom := time.Date(2026, 3, 14, 0, 0, 0, 0, time.UTC)
+				priceTo := int64(0)
+				mock.WhenDouble(h.EventService.GetEvents(mock.AnyContext(), mock.Equal(&dto.GetEventsReq{
+					Category: "party",
+					City:     "Moscow",
+					PriceTo:  &priceTo,
+					DateFrom: &dateFrom,
+					UserID:   "u1",
+					Limit:    10,
+					Offset:   0,
+				}))).ThenReturn(&dto.GetEventsResp{Events: []dto.EventData{{
+					ID:          "e1",
+					Title:       "Party",
+					Category:    "party",
+					Price:       0,
+					Description: "Free party",
+					Location:    dto.EventLocation{Address: "A", City: "Moscow"},
+					CreatedAt:   time.Date(2026, 3, 14, 14, 59, 32, 0, time.UTC),
+					CreatedBy:   "u1",
+					StartedAt:   time.Date(2026, 4, 1, 12, 0, 0, 0, time.UTC),
+					FinishedAt:  time.Date(2026, 4, 1, 23, 0, 0, 0, time.UTC),
+				}}}, nil)
+			},
+			expectedStatus: http.StatusOK,
+			expectedBody: `{
+				"events":[{
+					"id":"e1",
+					"title":"Party",
+					"category":"party",
+					"price":0,
+					"description":"Free party",
+					"location":{"address":"A","city":"Moscow"},
+					"created_at":"2026-03-14T14:59:32Z",
+					"created_by":"u1",
+					"started_at":"2026-04-01T12:00:00Z",
+					"finished_at":"2026-04-01T23:00:00Z"
+				}],
+				"count":1
+			}`,
+		},
+		{
+			name: "user not found",
+			id:   "missing",
+			setup: func(h *router.Handler) {
+				mock.WhenDouble(h.UserService.GetUser(mock.AnyContext(), mock.Equal(&dto.GetUserReq{ID: "missing"}))).
+					ThenReturn(nil, service.ErrNotFound)
+			},
+			expectedStatus: http.StatusNotFound,
+			expectedBody:   `{"message":"User not found"}`,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			ctrl := mock.NewMockController(t, mockopts.StrictVerify())
+			sessionService := mock.Mock[router.SessionService](ctrl)
+			userService := mock.Mock[router.UserService](ctrl)
+			eventService := mock.Mock[router.EventService](ctrl)
+			h := newHandler(t, sessionService, userService, eventService)
+			if tt.setup != nil {
+				tt.setup(h)
+			}
+
+			req := httptest.NewRequest(http.MethodGet, "/users/"+tt.id+"/events"+tt.query, http.NoBody)
+			w := httptest.NewRecorder()
+			srv, err := oas.NewServer(h)
+			require.NoError(t, err)
+			srv.ServeHTTP(w, req)
+
+			resp := w.Result()
+			t.Cleanup(func() { require.NoError(t, resp.Body.Close()) })
+			require.Equal(t, tt.expectedStatus, resp.StatusCode)
+			body, err := io.ReadAll(resp.Body)
+			require.NoError(t, err)
+			require.JSONEq(t, tt.expectedBody, string(body))
+		})
+	}
+}
+
+func ref(v string) *string {
+	return &v
+}
+
+func refI64(v int64) *int64 {
+	return &v
 }
 
 func newHandler(

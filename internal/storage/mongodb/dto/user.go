@@ -23,3 +23,24 @@ type GetUserByUsernameResp struct {
 	Username     string
 	PasswordHash string
 }
+
+type GetUsersReq struct {
+	ID     string
+	Name   string
+	Limit  int64
+	Offset int64
+}
+
+type GetUsersResp struct {
+	Users []User
+}
+
+type GetUserByIDReq struct {
+	ID string
+}
+
+type GetUserByIDResp struct {
+	ID       string
+	FullName string
+	Username string
+}

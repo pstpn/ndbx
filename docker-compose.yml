@@ -11,8 +11,10 @@ services:
     depends_on:
       redis:
         condition: service_healthy
-      mongo:
+      mongos:
         condition: service_healthy
+      mongo-init:
+        condition: service_completed_successfully
     networks:
       - backend-network
     restart: no
@@ -54,25 +56,279 @@ services:
       timeout: 2s
       retries: 10
 
-  mongo:
+  configsvr1:
     image: mongo:8.0.0
-    container_name: mongo
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: ${MONGODB_USER}
-      MONGO_INITDB_ROOT_PASSWORD: ${MONGODB_PASSWORD}
-      MONGO_INITDB_DATABASE: ${MONGODB_DATABASE}
-    ports:
-      - "${MONGODB_PORT}:${MONGODB_PORT}"
+    container_name: configsvr1
+    command: ["mongod", "--configsvr", "--replSet", "cfgRS", "--bind_ip_all", "--port", "${MONGODB_PORT}"]
     networks:
       - backend-network
     restart: unless-stopped
     volumes:
-      - mongo-data:/data/db
+      - mongo-configsvr1:/data/db
     healthcheck:
-      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      test: ["CMD", "mongosh", "--port", "${MONGODB_PORT}", "--eval", "db.adminCommand('ping')"]
       interval: 5s
       timeout: 2s
       retries: 10
+
+  configsvr2:
+    image: mongo:8.0.0
+    container_name: configsvr2
+    command: ["mongod", "--configsvr", "--replSet", "cfgRS", "--bind_ip_all", "--port", "${MONGODB_PORT}"]
+    networks:
+      - backend-network
+    restart: unless-stopped
+    volumes:
+      - mongo-configsvr2:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--port", "${MONGODB_PORT}", "--eval", "db.adminCommand('ping')"]
+      interval: 5s
+      timeout: 2s
+      retries: 10
+
+  configsvr3:
+    image: mongo:8.0.0
+    container_name: configsvr3
+    command: ["mongod", "--configsvr", "--replSet", "cfgRS", "--bind_ip_all", "--port", "${MONGODB_PORT}"]
+    networks:
+      - backend-network
+    restart: unless-stopped
+    volumes:
+      - mongo-configsvr3:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--port", "${MONGODB_PORT}", "--eval", "db.adminCommand('ping')"]
+      interval: 5s
+      timeout: 2s
+      retries: 10
+
+  shard1-1:
+    image: mongo:8.0.0
+    container_name: shard1-1
+    command: ["mongod", "--shardsvr", "--replSet", "shard1RS", "--bind_ip_all", "--port", "${MONGODB_PORT}"]
+    networks:
+      - backend-network
+    restart: unless-stopped
+    volumes:
+      - mongo-shard1-1:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--port", "${MONGODB_PORT}", "--eval", "db.adminCommand('ping')"]
+      interval: 5s
+      timeout: 2s
+      retries: 10
+
+  shard1-2:
+    image: mongo:8.0.0
+    container_name: shard1-2
+    command: ["mongod", "--shardsvr", "--replSet", "shard1RS", "--bind_ip_all", "--port", "${MONGODB_PORT}"]
+    networks:
+      - backend-network
+    restart: unless-stopped
+    volumes:
+      - mongo-shard1-2:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--port", "${MONGODB_PORT}", "--eval", "db.adminCommand('ping')"]
+      interval: 5s
+      timeout: 2s
+      retries: 10
+
+  shard1-3:
+    image: mongo:8.0.0
+    container_name: shard1-3
+    command: ["mongod", "--shardsvr", "--replSet", "shard1RS", "--bind_ip_all", "--port", "${MONGODB_PORT}"]
+    networks:
+      - backend-network
+    restart: unless-stopped
+    volumes:
+      - mongo-shard1-3:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--port", "${MONGODB_PORT}", "--eval", "db.adminCommand('ping')"]
+      interval: 5s
+      timeout: 2s
+      retries: 10
+
+  shard2-1:
+    image: mongo:8.0.0
+    container_name: shard2-1
+    command: ["mongod", "--shardsvr", "--replSet", "shard2RS", "--bind_ip_all", "--port", "${MONGODB_PORT}"]
+    networks:
+      - backend-network
+    restart: unless-stopped
+    volumes:
+      - mongo-shard2-1:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--port", "${MONGODB_PORT}", "--eval", "db.adminCommand('ping')"]
+      interval: 5s
+      timeout: 2s
+      retries: 10
+
+  shard2-2:
+    image: mongo:8.0.0
+    container_name: shard2-2
+    command: ["mongod", "--shardsvr", "--replSet", "shard2RS", "--bind_ip_all", "--port", "${MONGODB_PORT}"]
+    networks:
+      - backend-network
+    restart: unless-stopped
+    volumes:
+      - mongo-shard2-2:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--port", "${MONGODB_PORT}", "--eval", "db.adminCommand('ping')"]
+      interval: 5s
+      timeout: 2s
+      retries: 10
+
+  shard2-3:
+    image: mongo:8.0.0
+    container_name: shard2-3
+    command: ["mongod", "--shardsvr", "--replSet", "shard2RS", "--bind_ip_all", "--port", "${MONGODB_PORT}"]
+    networks:
+      - backend-network
+    restart: unless-stopped
+    volumes:
+      - mongo-shard2-3:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--port", "${MONGODB_PORT}", "--eval", "db.adminCommand('ping')"]
+      interval: 5s
+      timeout: 2s
+      retries: 10
+
+  mongos:
+    image: mongo:8.0.0
+    container_name: mongos
+    command: ["mongos", "--configdb", "cfgRS/configsvr1:${MONGODB_PORT},configsvr2:${MONGODB_PORT},configsvr3:${MONGODB_PORT}", "--bind_ip_all", "--port", "${MONGODB_PORT}"]
+    ports:
+      - "${MONGODB_PORT}:${MONGODB_PORT}"
+    depends_on:
+      configsvr1:
+        condition: service_healthy
+      configsvr2:
+        condition: service_healthy
+      configsvr3:
+        condition: service_healthy
+      shard1-1:
+        condition: service_healthy
+      shard1-2:
+        condition: service_healthy
+      shard1-3:
+        condition: service_healthy
+      shard2-1:
+        condition: service_healthy
+      shard2-2:
+        condition: service_healthy
+      shard2-3:
+        condition: service_healthy
+    networks:
+      - backend-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mongosh", "--port", "${MONGODB_PORT}", "--eval", "db.adminCommand('ping')"]
+      interval: 5s
+      timeout: 2s
+      retries: 20
+
+  mongo-init:
+    image: mongo:8.0.0
+    container_name: mongo-init
+    depends_on:
+      configsvr1:
+        condition: service_healthy
+      configsvr2:
+        condition: service_healthy
+      configsvr3:
+        condition: service_healthy
+      shard1-1:
+        condition: service_healthy
+      shard1-2:
+        condition: service_healthy
+      shard1-3:
+        condition: service_healthy
+      shard2-1:
+        condition: service_healthy
+      shard2-2:
+        condition: service_healthy
+      shard2-3:
+        condition: service_healthy
+      mongos:
+        condition: service_started
+    networks:
+      - backend-network
+    restart: "no"
+    environment:
+      MONGODB_DATABASE: ${MONGODB_DATABASE}
+    command:
+      - sh
+      - -c
+      - |
+        set -eu
+
+        wait_mongo() {
+          host="$$1"
+          port="$$2"
+
+          echo "Waiting for $${host}:$${port}..."
+          until mongosh --host "$${host}" --port "$${port}" --quiet --eval 'db.adminCommand({ ping: 1 }).ok' >/dev/null 2>&1; do
+            sleep 2
+          done
+        }
+
+        init_rs() {
+          host="$$1"
+          port="$$2"
+          replset="$$3"
+          members_json="$$4"
+
+          mongosh --host "$${host}" --port "$${port}" --quiet --eval "
+            try {
+              rs.status().ok;
+              print('Replica set $${replset} already initialized');
+            } catch (e) {
+              print('Initializing replica set $${replset}');
+              rs.initiate({ _id: '$${replset}', members: $${members_json} });
+            }
+          "
+
+          until mongosh --host "$${host}" --port "$${port}" --quiet --eval "db.hello().isWritablePrimary || db.hello().secondary" | grep -q 'true'; do
+            sleep 2
+          done
+        }
+
+        wait_mongo configsvr1 ${MONGODB_PORT}
+        wait_mongo configsvr2 ${MONGODB_PORT}
+        wait_mongo configsvr3 ${MONGODB_PORT}
+        wait_mongo shard1-1 ${MONGODB_PORT}
+        wait_mongo shard1-2 ${MONGODB_PORT}
+        wait_mongo shard1-3 ${MONGODB_PORT}
+        wait_mongo shard2-1 ${MONGODB_PORT}
+        wait_mongo shard2-2 ${MONGODB_PORT}
+        wait_mongo shard2-3 ${MONGODB_PORT}
+
+        init_rs configsvr1 ${MONGODB_PORT} cfgRS "[
+          { _id: 0, host: 'configsvr1:${MONGODB_PORT}' },
+          { _id: 1, host: 'configsvr2:${MONGODB_PORT}' },
+          { _id: 2, host: 'configsvr3:${MONGODB_PORT}' }
+        ]"
+
+        init_rs shard1-1 ${MONGODB_PORT} shard1RS "[
+          { _id: 0, host: 'shard1-1:${MONGODB_PORT}' },
+          { _id: 1, host: 'shard1-2:${MONGODB_PORT}' },
+          { _id: 2, host: 'shard1-3:${MONGODB_PORT}' }
+        ]"
+
+        init_rs shard2-1 ${MONGODB_PORT} shard2RS "[
+          { _id: 0, host: 'shard2-1:${MONGODB_PORT}' },
+          { _id: 1, host: 'shard2-2:${MONGODB_PORT}' },
+          { _id: 2, host: 'shard2-3:${MONGODB_PORT}' }
+        ]"
+
+        wait_mongo mongos ${MONGODB_PORT}
+
+        mongosh --host mongos --port ${MONGODB_PORT} --quiet --eval "
+          try { sh.addShard('shard1RS/shard1-1:${MONGODB_PORT},shard1-2:${MONGODB_PORT},shard1-3:${MONGODB_PORT}'); } catch (e) { print(e); }
+          try { sh.addShard('shard2RS/shard2-1:${MONGODB_PORT},shard2-2:${MONGODB_PORT},shard2-3:${MONGODB_PORT}'); } catch (e) { print(e); }
+          try { sh.enableSharding('$${MONGODB_DATABASE}'); } catch (e) { print(e); }
+          try { sh.shardCollection('$${MONGODB_DATABASE}.events', { created_by: 'hashed' }); } catch (e) { print(e); }
+        "
+
+        echo "Mongo cluster initialized"
 networks:
   backend-network:
     name: backend-network
@@ -80,4 +336,12 @@ networks:
 
 volumes:
   redis-data:
-  mongo-data:
+  mongo-configsvr1:
+  mongo-configsvr2:
+  mongo-configsvr3:
+  mongo-shard1-1:
+  mongo-shard1-2:
+  mongo-shard1-3:
+  mongo-shard2-1:
+  mongo-shard2-2:
+  mongo-shard2-3:
