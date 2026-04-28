@@ -7,12 +7,14 @@ type OperationName = string
 
 const (
 	APICreateEventOperation   OperationName = "APICreateEvent"
+	APIDislikeEventOperation  OperationName = "APIDislikeEvent"
 	APIGetEventOperation      OperationName = "APIGetEvent"
 	APIGetEventsOperation     OperationName = "APIGetEvents"
 	APIGetUserOperation       OperationName = "APIGetUser"
 	APIGetUserEventsOperation OperationName = "APIGetUserEvents"
 	APIGetUsersOperation      OperationName = "APIGetUsers"
 	APIHealthOperation        OperationName = "APIHealth"
+	APILikeEventOperation     OperationName = "APILikeEvent"
 	APILoginOperation         OperationName = "APILogin"
 	APILogoutOperation        OperationName = "APILogout"
 	APIPatchEventOperation    OperationName = "APIPatchEvent"

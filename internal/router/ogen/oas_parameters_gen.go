@@ -76,13 +76,13 @@ func decodeAPICreateEventParams(args [0]string, argsEscaped bool, r *http.Reques
 	return params, nil
 }
 
-// APIGetEventParams is parameters of Api_getEvent operation.
-type APIGetEventParams struct {
+// APIDislikeEventParams is parameters of Api_dislikeEvent operation.
+type APIDislikeEventParams struct {
 	ID     string
 	Cookie OptString `json:",omitempty,omitzero"`
 }
 
-func unpackAPIGetEventParams(packed middleware.Parameters) (params APIGetEventParams) {
+func unpackAPIDislikeEventParams(packed middleware.Parameters) (params APIDislikeEventParams) {
 	{
 		key := middleware.ParameterKey{
 			Name: "id",
@@ -102,7 +102,7 @@ func unpackAPIGetEventParams(packed middleware.Parameters) (params APIGetEventPa
 	return params
 }
 
-func decodeAPIGetEventParams(args [1]string, argsEscaped bool, r *http.Request) (params APIGetEventParams, _ error) {
+func decodeAPIDislikeEventParams(args [1]string, argsEscaped bool, r *http.Request) (params APIDislikeEventParams, _ error) {
 	h := uri.NewHeaderDecoder(r.Header)
 	// Decode path: id.
 	if err := func() error {
@@ -191,6 +191,173 @@ func decodeAPIGetEventParams(args [1]string, argsEscaped bool, r *http.Request) 
 	return params, nil
 }
 
+// APIGetEventParams is parameters of Api_getEvent operation.
+type APIGetEventParams struct {
+	ID      string
+	Cookie  OptString `json:",omitempty,omitzero"`
+	Include OptString `json:",omitempty,omitzero"`
+}
+
+func unpackAPIGetEventParams(packed middleware.Parameters) (params APIGetEventParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "id",
+			In:   "path",
+		}
+		params.ID = packed[key].(string)
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "Cookie",
+			In:   "header",
+		}
+		if v, ok := packed[key]; ok {
+			params.Cookie = v.(OptString)
+		}
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "include",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.Include = v.(OptString)
+		}
+	}
+	return params
+}
+
+func decodeAPIGetEventParams(args [1]string, argsEscaped bool, r *http.Request) (params APIGetEventParams, _ error) {
+	q := uri.NewQueryDecoder(r.URL.Query())
+	h := uri.NewHeaderDecoder(r.Header)
+	// Decode path: id.
+	if err := func() error {
+		param := args[0]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[0])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "id",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToString(val)
+				if err != nil {
+					return err
+				}
+
+				params.ID = c
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "id",
+			In:   "path",
+			Err:  err,
+		}
+	}
+	// Decode header: Cookie.
+	if err := func() error {
+		cfg := uri.HeaderParameterDecodingConfig{
+			Name:    "Cookie",
+			Explode: false,
+		}
+		if err := h.HasParam(cfg); err == nil {
+			if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotCookieVal string
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotCookieVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.Cookie.SetTo(paramsDotCookieVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "Cookie",
+			In:   "header",
+			Err:  err,
+		}
+	}
+	// Decode query: include.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "include",
+			Style:   uri.QueryStyleForm,
+			Explode: false,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotIncludeVal string
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotIncludeVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.Include.SetTo(paramsDotIncludeVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "include",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
 // APIGetEventsParams is parameters of Api_getEvents operation.
 type APIGetEventsParams struct {
 	Cookie    OptString        `json:",omitempty,omitzero"`
@@ -205,6 +372,7 @@ type APIGetEventsParams struct {
 	DateTo    OptString        `json:",omitempty,omitzero"`
 	UserID    OptString        `json:",omitempty,omitzero"`
 	User      OptString        `json:",omitempty,omitzero"`
+	Include   OptString        `json:",omitempty,omitzero"`
 	Limit     OptInt64         `json:",omitempty,omitzero"`
 	Offset    OptInt64         `json:",omitempty,omitzero"`
 }
@@ -316,6 +484,15 @@ func unpackAPIGetEventsParams(packed middleware.Parameters) (params APIGetEvents
 		}
 		if v, ok := packed[key]; ok {
 			params.User = v.(OptString)
+		}
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "include",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.Include = v.(OptString)
 		}
 	}
 	{
@@ -847,6 +1024,47 @@ func decodeAPIGetEventsParams(args [0]string, argsEscaped bool, r *http.Request)
 			Err:  err,
 		}
 	}
+	// Decode query: include.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "include",
+			Style:   uri.QueryStyleForm,
+			Explode: false,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotIncludeVal string
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotIncludeVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.Include.SetTo(paramsDotIncludeVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "include",
+			In:   "query",
+			Err:  err,
+		}
+	}
 	// Decode query: limit.
 	if err := func() error {
 		cfg := uri.QueryParameterDecodingConfig{
@@ -1059,6 +1277,7 @@ type APIGetUserEventsParams struct {
 	City      OptString        `json:",omitempty,omitzero"`
 	DateFrom  OptString        `json:",omitempty,omitzero"`
 	DateTo    OptString        `json:",omitempty,omitzero"`
+	Include   OptString        `json:",omitempty,omitzero"`
 	Limit     OptInt64         `json:",omitempty,omitzero"`
 	Offset    OptInt64         `json:",omitempty,omitzero"`
 }
@@ -1150,6 +1369,15 @@ func unpackAPIGetUserEventsParams(packed middleware.Parameters) (params APIGetUs
 		}
 		if v, ok := packed[key]; ok {
 			params.DateTo = v.(OptString)
+		}
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "include",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.Include = v.(OptString)
 		}
 	}
 	{
@@ -1603,6 +1831,47 @@ func decodeAPIGetUserEventsParams(args [1]string, argsEscaped bool, r *http.Requ
 			Err:  err,
 		}
 	}
+	// Decode query: include.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "include",
+			Style:   uri.QueryStyleForm,
+			Explode: false,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotIncludeVal string
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotIncludeVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.Include.SetTo(paramsDotIncludeVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "include",
+			In:   "query",
+			Err:  err,
+		}
+	}
 	// Decode query: limit.
 	if err := func() error {
 		cfg := uri.QueryParameterDecodingConfig{
@@ -1975,6 +2244,121 @@ func unpackAPIHealthParams(packed middleware.Parameters) (params APIHealthParams
 
 func decodeAPIHealthParams(args [0]string, argsEscaped bool, r *http.Request) (params APIHealthParams, _ error) {
 	h := uri.NewHeaderDecoder(r.Header)
+	// Decode header: Cookie.
+	if err := func() error {
+		cfg := uri.HeaderParameterDecodingConfig{
+			Name:    "Cookie",
+			Explode: false,
+		}
+		if err := h.HasParam(cfg); err == nil {
+			if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotCookieVal string
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotCookieVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.Cookie.SetTo(paramsDotCookieVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "Cookie",
+			In:   "header",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
+// APILikeEventParams is parameters of Api_likeEvent operation.
+type APILikeEventParams struct {
+	ID     string
+	Cookie OptString `json:",omitempty,omitzero"`
+}
+
+func unpackAPILikeEventParams(packed middleware.Parameters) (params APILikeEventParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "id",
+			In:   "path",
+		}
+		params.ID = packed[key].(string)
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "Cookie",
+			In:   "header",
+		}
+		if v, ok := packed[key]; ok {
+			params.Cookie = v.(OptString)
+		}
+	}
+	return params
+}
+
+func decodeAPILikeEventParams(args [1]string, argsEscaped bool, r *http.Request) (params APILikeEventParams, _ error) {
+	h := uri.NewHeaderDecoder(r.Header)
+	// Decode path: id.
+	if err := func() error {
+		param := args[0]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[0])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "id",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToString(val)
+				if err != nil {
+					return err
+				}
+
+				params.ID = c
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "id",
+			In:   "path",
+			Err:  err,
+		}
+	}
 	// Decode header: Cookie.
 	if err := func() error {
 		cfg := uri.HeaderParameterDecodingConfig{

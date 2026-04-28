@@ -13,6 +13,7 @@ type Config struct {
 	HTTPConfig
 	RedisConfig
 	MongoDBConfig
+	CassandraConfig
 }
 
 type LoggerConfig struct {
@@ -21,6 +22,7 @@ type LoggerConfig struct {
 
 type AppConfig struct {
 	AppUserSessionTTLSeconds int `env:"APP_USER_SESSION_TTL,required"`
+	AppLikeTTLSeconds        int `env:"APP_LIKE_TTL,required"`
 }
 
 type HTTPConfig struct {
@@ -42,6 +44,15 @@ type MongoDBConfig struct {
 	MongoDBUser     string `env:"MONGODB_USER,required"`
 	MongoDBPassword string `env:"MONGODB_PASSWORD,required"`
 	MongoDBDatabase string `env:"MONGODB_DATABASE,required"`
+}
+
+type CassandraConfig struct {
+	CassandraHosts       string `env:"CASSANDRA_HOSTS,required"`
+	CassandraPort        int    `env:"CASSANDRA_PORT,required"`
+	CassandraUsername    string `env:"CASSANDRA_USERNAME,required"`
+	CassandraPassword    string `env:"CASSANDRA_PASSWORD,required"`
+	CassandraKeyspace    string `env:"CASSANDRA_KEYSPACE,required"`
+	CassandraConsistency string `env:"CASSANDRA_CONSISTENCY,required"`
 }
 
 func NewConfig() (*Config, error) {

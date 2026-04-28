@@ -130,6 +130,7 @@ paths:
         - $ref: '#/components/parameters/GetEventsRequest.date_to'
         - $ref: '#/components/parameters/GetEventsRequest.user_id'
         - $ref: '#/components/parameters/GetEventsRequest.user'
+        - $ref: '#/components/parameters/GetEventsRequest.include'
         - $ref: '#/components/parameters/GetEventsRequest.limit'
         - $ref: '#/components/parameters/GetEventsRequest.offset'
       responses:
@@ -162,6 +163,7 @@ paths:
       parameters:
         - $ref: '#/components/parameters/GetEventRequest.id'
         - $ref: '#/components/parameters/GetEventRequest.cookie'
+        - $ref: '#/components/parameters/GetEventRequest.include'
       responses:
         '200':
           description: The request has succeeded.
@@ -223,6 +225,62 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/PatchEventRequest'
+  /events/{id}/dislike:
+    post:
+      operationId: Api_dislikeEvent
+      summary: dislike event by id
+      parameters:
+        - $ref: '#/components/parameters/EventReactionParams.id'
+        - $ref: '#/components/parameters/EventReactionParams.cookie'
+      responses:
+        '204':
+          description: 'There is no content to send for this request, but the headers may be useful. '
+          headers:
+            Set-Cookie:
+              required: true
+              schema:
+                type: string
+        '401':
+          description: Access is unauthorized.
+        default:
+          description: An unexpected error response.
+          headers:
+            Set-Cookie:
+              required: true
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /events/{id}/like:
+    post:
+      operationId: Api_likeEvent
+      summary: like event by id
+      parameters:
+        - $ref: '#/components/parameters/EventReactionParams.id'
+        - $ref: '#/components/parameters/EventReactionParams.cookie'
+      responses:
+        '204':
+          description: 'There is no content to send for this request, but the headers may be useful. '
+          headers:
+            Set-Cookie:
+              required: true
+              schema:
+                type: string
+        '401':
+          description: Access is unauthorized.
+        default:
+          description: An unexpected error response.
+          headers:
+            Set-Cookie:
+              required: true
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /health:
     get:
       operationId: Api_health
@@ -381,6 +439,7 @@ paths:
         - $ref: '#/components/parameters/GetUserEventsRequest.city'
         - $ref: '#/components/parameters/GetUserEventsRequest.date_from'
         - $ref: '#/components/parameters/GetUserEventsRequest.date_to'
+        - $ref: '#/components/parameters/GetUserEventsRequest.include'
         - $ref: '#/components/parameters/GetUserEventsRequest.limit'
         - $ref: '#/components/parameters/GetUserEventsRequest.offset'
       responses:
@@ -414,6 +473,18 @@ components:
       required: false
       schema:
         type: string
+    EventReactionParams.cookie:
+      name: Cookie
+      in: header
+      required: false
+      schema:
+        type: string
+    EventReactionParams.id:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
     GetEventRequest.cookie:
       name: Cookie
       in: header
@@ -426,6 +497,13 @@ components:
       required: true
       schema:
         type: string
+    GetEventRequest.include:
+      name: include
+      in: query
+      required: false
+      schema:
+        type: string
+      explode: false
     GetEventsRequest.address:
       name: address
       in: query
@@ -469,6 +547,13 @@ components:
       explode: false
     GetEventsRequest.id:
       name: id
+      in: query
+      required: false
+      schema:
+        type: string
+      explode: false
+    GetEventsRequest.include:
+      name: include
       in: query
       required: false
       schema:
@@ -574,6 +659,13 @@ components:
       required: true
       schema:
         type: string
+    GetUserEventsRequest.include:
+      name: include
+      in: query
+      required: false
+      schema:
+        type: string
+      explode: false
     GetUserEventsRequest.limit:
       name: limit
       in: query
@@ -749,6 +841,20 @@ components:
           type: string
         created_by:
           type: string
+        reactions:
+          $ref: '#/components/schemas/EventReactions'
+    EventReactions:
+      type: object
+      required:
+        - likes
+        - dislikes
+      properties:
+        likes:
+          type: integer
+          format: int64
+        dislikes:
+          type: integer
+          format: int64
     GetEventsResponse:
       type: object
       required:

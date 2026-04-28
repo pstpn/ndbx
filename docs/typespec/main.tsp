@@ -107,6 +107,12 @@ model EventData {
     finished_at: string;
     created_at: string;
     created_by: string;
+    reactions?: EventReactions;
+}
+
+model EventReactions {
+    likes: int64;
+    dislikes: int64;
 }
 
 model CreateEventRequest {
@@ -159,6 +165,8 @@ model GetEventsRequest {
     @query
     user?: string;
     @query
+    include?: string;
+    @query
     limit?: int64;
     @query
     offset?: int64;
@@ -169,6 +177,8 @@ model GetEventRequest {
     id: string;
     @header("Cookie")
     cookie?: string;
+    @query
+    include?: string;
 }
 
 model GetEventResponse {
@@ -273,6 +283,8 @@ model GetUserEventsRequest {
     @query
     date_to?: string;
     @query
+    include?: string;
+    @query
     limit?: int64;
     @query
     offset?: int64;
@@ -285,6 +297,25 @@ model GetEventsResponse {
     statusCode: 200;
     events: EventData[];
     count: int64;
+}
+
+model EventReactionParams {
+    @path
+    id: string;
+    @header("Cookie")
+    cookie?: string;
+}
+
+model EventReactionResponse {
+    @header("Set-Cookie")
+    setCookie: string;
+    @statusCode
+    statusCode: 204;
+}
+
+model EventReactionUnauthorizedResponse {
+    @statusCode
+    statusCode: 401;
 }
 
 namespace Api {
@@ -323,6 +354,14 @@ namespace Api {
     @summary("patch event by id")
     @route("/events/{id}")
     @patch(#{implicitOptionality: true}) op patchEvent(@body body: PatchEventRequest, ...PatchEventParams): PatchEventResponse | PatchEventUnauthorizedResponse | ErrorResponse;
+
+    @summary("like event by id")
+    @route("/events/{id}/like")
+    @post op likeEvent(...EventReactionParams): EventReactionResponse | EventReactionUnauthorizedResponse | ErrorResponse;
+
+    @summary("dislike event by id")
+    @route("/events/{id}/dislike")
+    @post op dislikeEvent(...EventReactionParams): EventReactionResponse | EventReactionUnauthorizedResponse | ErrorResponse;
 
     @summary("get users")
     @route("/users")

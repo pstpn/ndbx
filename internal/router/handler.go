@@ -39,6 +39,8 @@ type EventService interface {
 	GetEvents(ctx context.Context, req *dto.GetEventsReq) (*dto.GetEventsResp, error)
 	GetEvent(ctx context.Context, req *dto.GetEventReq) (*dto.GetEventResp, error)
 	PatchEvent(ctx context.Context, req *dto.PatchEventReq) error
+	LikeEvent(ctx context.Context, req *dto.ReactEventReq) error
+	DislikeEvent(ctx context.Context, req *dto.ReactEventReq) error
 }
 
 type Handler struct {
@@ -299,19 +301,20 @@ func (h *Handler) APIGetEvents(ctx context.Context, params oas.APIGetEventsParam
 	}
 
 	resp, err := h.EventService.GetEvents(ctx, &dto.GetEventsReq{
-		ID:        params.ID.Value,
-		Title:     params.Title.Value,
-		Category:  string(params.Category.Value),
-		PriceFrom: priceFrom,
-		PriceTo:   priceTo,
-		Address:   params.Address.Value,
-		City:      params.City.Value,
-		DateFrom:  dateFrom,
-		DateTo:    dateTo,
-		UserID:    params.UserID.Value,
-		User:      params.User.Value,
-		Limit:     limit,
-		Offset:    offset,
+		ID:               params.ID.Value,
+		Title:            params.Title.Value,
+		Category:         string(params.Category.Value),
+		PriceFrom:        priceFrom,
+		PriceTo:          priceTo,
+		Address:          params.Address.Value,
+		City:             params.City.Value,
+		DateFrom:         dateFrom,
+		DateTo:           dateTo,
+		UserID:           params.UserID.Value,
+		User:             params.User.Value,
+		Limit:            limit,
+		Offset:           offset,
+		IncludeReactions: includeReactions(params.Include.Value),
 	})
 	if err != nil {
 		h.l.Errorf("failed to get events: %s", err.Error())
@@ -320,7 +323,7 @@ func (h *Handler) APIGetEvents(ctx context.Context, params oas.APIGetEventsParam
 
 	events := make([]oas.EventData, len(resp.Events))
 	for i, event := range resp.Events {
-		events[i] = toOASEventData(&event)
+		events[i] = toOASEventData(&event, includeReactions(params.Include.Value))
 	}
 
 	return &oas.GetEventsResponseHeaders{
@@ -335,7 +338,7 @@ func (h *Handler) APIGetEvents(ctx context.Context, params oas.APIGetEventsParam
 func (h *Handler) APIGetEvent(ctx context.Context, params oas.APIGetEventParams) (oas.APIGetEventRes, error) {
 	setCookie := formSetCookie(extractSID(params.Cookie.Value), h.sessionTTLSeconds)
 
-	resp, err := h.EventService.GetEvent(ctx, &dto.GetEventReq{ID: params.ID})
+	resp, err := h.EventService.GetEvent(ctx, &dto.GetEventReq{ID: params.ID, IncludeReactions: includeReactions(params.Include.Value)})
 	if err != nil {
 		if errors.Is(err, service.ErrNotFound) {
 			return NewErrorResponse(http.StatusNotFound, setCookie, ErrNotFound), nil
@@ -344,7 +347,7 @@ func (h *Handler) APIGetEvent(ctx context.Context, params oas.APIGetEventParams)
 		return NewInternalError(), nil
 	}
 
-	return &oas.EventDataHeaders{SetCookie: setCookie, Response: toOASEventData(&resp.Event)}, nil
+	return &oas.EventDataHeaders{SetCookie: setCookie, Response: toOASEventData(&resp.Event, includeReactions(params.Include.Value))}, nil
 }
 
 func (h *Handler) APIPatchEvent(ctx context.Context, req *oas.PatchEventRequest, params oas.APIPatchEventParams) (oas.APIPatchEventRes, error) {
@@ -513,17 +516,18 @@ func (h *Handler) APIGetUserEvents(ctx context.Context, params oas.APIGetUserEve
 	}
 
 	resp, err := h.EventService.GetEvents(ctx, &dto.GetEventsReq{
-		Title:     params.Title.Value,
-		Category:  string(params.Category.Value),
-		PriceFrom: priceFrom,
-		PriceTo:   priceTo,
-		Address:   params.Address.Value,
-		City:      params.City.Value,
-		DateFrom:  dateFrom,
-		DateTo:    dateTo,
-		UserID:    params.ID,
-		Limit:     limit,
-		Offset:    offset,
+		Title:            params.Title.Value,
+		Category:         string(params.Category.Value),
+		PriceFrom:        priceFrom,
+		PriceTo:          priceTo,
+		Address:          params.Address.Value,
+		City:             params.City.Value,
+		DateFrom:         dateFrom,
+		DateTo:           dateTo,
+		UserID:           params.ID,
+		Limit:            limit,
+		Offset:           offset,
+		IncludeReactions: includeReactions(params.Include.Value),
 	})
 	if err != nil {
 		h.l.Errorf("failed to get user events: %s", err.Error())
@@ -532,13 +536,91 @@ func (h *Handler) APIGetUserEvents(ctx context.Context, params oas.APIGetUserEve
 
 	events := make([]oas.EventData, len(resp.Events))
 	for i, event := range resp.Events {
-		events[i] = toOASEventData(&event)
+		events[i] = toOASEventData(&event, includeReactions(params.Include.Value))
 	}
 
 	return &oas.GetEventsResponseHeaders{SetCookie: setCookie, Response: oas.GetEventsResponse{Events: events, Count: int64(len(events))}}, nil
 }
 
-func toOASEventData(event *dto.EventData) oas.EventData {
+func (h *Handler) APILikeEvent(ctx context.Context, params oas.APILikeEventParams) (oas.APILikeEventRes, error) {
+	sessionState, internalErr := h.validateReactionSession(ctx, extractSID(params.Cookie.Value))
+	if internalErr != nil {
+		return internalErr, nil
+	}
+	if !sessionState.authorized {
+		return &oas.APILikeEventUnauthorized{}, nil
+	}
+
+	if err := h.EventService.LikeEvent(ctx, &dto.ReactEventReq{ID: params.ID, UserID: sessionState.userID}); err != nil {
+		if errors.Is(err, service.ErrNotFound) {
+			return NewErrorResponse(http.StatusNotFound, sessionState.setCookie, errors.New("event not found")), nil
+		}
+		h.l.Errorf("failed to like event: %s", err.Error())
+		return NewInternalError(), nil
+	}
+
+	h.extendSession(ctx, sessionState.sid, sessionState.userID, "like")
+
+	return &oas.APILikeEventNoContent{SetCookie: sessionState.setCookie}, nil
+}
+
+func (h *Handler) APIDislikeEvent(ctx context.Context, params oas.APIDislikeEventParams) (oas.APIDislikeEventRes, error) {
+	sessionState, internalErr := h.validateReactionSession(ctx, extractSID(params.Cookie.Value))
+	if internalErr != nil {
+		return internalErr, nil
+	}
+	if !sessionState.authorized {
+		return &oas.APIDislikeEventUnauthorized{}, nil
+	}
+
+	if err := h.EventService.DislikeEvent(ctx, &dto.ReactEventReq{ID: params.ID, UserID: sessionState.userID}); err != nil {
+		if errors.Is(err, service.ErrNotFound) {
+			return NewErrorResponse(http.StatusNotFound, sessionState.setCookie, errors.New("event not found")), nil
+		}
+		h.l.Errorf("failed to dislike event: %s", err.Error())
+		return NewInternalError(), nil
+	}
+
+	h.extendSession(ctx, sessionState.sid, sessionState.userID, "dislike")
+
+	return &oas.APIDislikeEventNoContent{SetCookie: sessionState.setCookie}, nil
+}
+
+type reactionSessionState struct {
+	sid        string
+	userID     string
+	setCookie  string
+	authorized bool
+}
+
+func (h *Handler) validateReactionSession(ctx context.Context, sid string) (reactionSessionState, *oas.ErrorResponseStatusCodeWithHeaders) {
+	setCookie := formSetCookie(sid, h.sessionTTLSeconds)
+	if sid == "" {
+		return reactionSessionState{sid: sid, setCookie: setCookie, authorized: false}, nil
+	}
+
+	session, err := h.SessionService.GetSession(ctx, &dto.GetSessionReq{SID: sid})
+	if err != nil {
+		if errors.Is(err, service.ErrNotFound) {
+			return reactionSessionState{sid: sid, setCookie: setCookie, authorized: false}, nil
+		}
+		h.l.Errorf("failed to get session before reaction: %s", err.Error())
+		return reactionSessionState{}, NewInternalError()
+	}
+	if session.UserID == "" {
+		return reactionSessionState{sid: sid, setCookie: setCookie, authorized: false}, nil
+	}
+
+	return reactionSessionState{sid: sid, userID: session.UserID, setCookie: setCookie, authorized: true}, nil
+}
+
+func (h *Handler) extendSession(ctx context.Context, sid string, userID string, action string) {
+	if _, err := h.SessionService.CreateOrExtendSession(ctx, &dto.CreateOrExtendSessionReq{SID: sid, UserID: userID}); err != nil {
+		h.l.Errorf("failed to extend session after %s: %s", action, err.Error())
+	}
+}
+
+func toOASEventData(event *dto.EventData, withReactions bool) oas.EventData {
 	location := oas.LocationInfo{Address: event.Location.Address}
 	if event.Location.City != "" {
 		location.City = oas.NewOptString(event.Location.City)
@@ -560,8 +642,25 @@ func toOASEventData(event *dto.EventData) oas.EventData {
 	if event.Category != "" || event.Price != 0 {
 		data.Price = oas.NewOptInt64(event.Price)
 	}
+	if withReactions {
+		data.Reactions = oas.NewOptEventReactions(oas.EventReactions{
+			Likes:    event.Reactions.Likes,
+			Dislikes: event.Reactions.Dislikes,
+		})
+	}
 
 	return data
+}
+
+func includeReactions(include string) bool {
+	parts := strings.Split(include, ",")
+	for _, part := range parts {
+		if strings.EqualFold(strings.TrimSpace(part), "reactions") {
+			return true
+		}
+	}
+
+	return false
 }
 
 func parseDateFilter(field string, value oas.OptString) (*time.Time, error) {
