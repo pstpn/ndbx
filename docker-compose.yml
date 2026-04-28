@@ -95,6 +95,7 @@ services:
     environment:
       - CASSANDRA_HOST=cassandra
       - CASSANDRA_PORT=${CASSANDRA_PORT}
+      - CASSANDRA_KEYSPACE=${CASSANDRA_KEYSPACE}
     command: /scripts/cassandra/init.sh
 
   configsvr1:

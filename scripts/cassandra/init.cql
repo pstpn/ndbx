@@ -1,6 +1,6 @@
-CREATE KEYSPACE IF NOT EXISTS ndbx WITH REPLICATION = {'class':'SimpleStrategy','replication_factor':1};
+CREATE KEYSPACE IF NOT EXISTS {{CASSANDRA_KEYSPACE}} WITH REPLICATION = {'class':'SimpleStrategy','replication_factor':1};
 
-USE ndbx;
+USE {{CASSANDRA_KEYSPACE}};
 
 CREATE TABLE IF NOT EXISTS event_reactions (
     event_id text,
