@@ -25,23 +25,6 @@ func NewEventReactionStorage(session *gocql.Session) *EventReactionStorage {
 	return &EventReactionStorage{session: session}
 }
 
-func (s *EventReactionStorage) EnsureSchema(ctx context.Context) error {
-	queries := []string{
-		"CREATE TABLE IF NOT EXISTS event_reactions " +
-			"(event_id text, created_by text, like_value tinyint, created_at timestamp, PRIMARY KEY ((event_id), created_by))",
-		"CREATE INDEX IF NOT EXISTS event_reactions_like_value_idx ON event_reactions (like_value)",
-		"CREATE INDEX IF NOT EXISTS event_reactions_created_by_idx ON event_reactions (created_by)",
-	}
-
-	for _, q := range queries {
-		if err := s.session.Query(q).WithContext(ctx).Exec(); err != nil {
-			return fmt.Errorf("execute cassandra schema query: %w", err)
-		}
-	}
-
-	return nil
-}
-
 func (s *EventReactionStorage) UpsertReaction(ctx context.Context, eventID string, userID string, likeValue int8, createdAt time.Time) error {
 	if err := s.session.Query(
 		"INSERT INTO "+reactionsTable+" (event_id, created_by, like_value, created_at) VALUES (?, ?, ?, ?)",

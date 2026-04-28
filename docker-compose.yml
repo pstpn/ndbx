@@ -11,8 +11,8 @@ services:
     depends_on:
       redis:
         condition: service_healthy
-      cassandra:
-        condition: service_healthy
+      cassandra-init:
+        condition: service_completed_successfully
       mongos:
         condition: service_healthy
       mongo-init:
@@ -71,6 +71,7 @@ services:
       - "${CASSANDRA_PORT}:${CASSANDRA_PORT}"
     volumes:
       - cassandra-data:/var/lib/cassandra
+      - ./scripts/cassandra:/scripts/cassandra:ro
     networks:
       - backend-network
     restart: unless-stopped
@@ -79,6 +80,22 @@ services:
       interval: 5s
       timeout: 10s
       retries: 20
+
+  cassandra-init:
+    image: cassandra:4.1
+    container_name: cassandra-init
+    depends_on:
+      cassandra:
+        condition: service_healthy
+    networks:
+      - backend-network
+    restart: "no"
+    volumes:
+      - ./scripts/cassandra:/scripts/cassandra:ro
+    environment:
+      - CASSANDRA_HOST=cassandra
+      - CASSANDRA_PORT=${CASSANDRA_PORT}
+    command: /scripts/cassandra/init.sh
 
   configsvr1:
     image: mongo:8.0.0

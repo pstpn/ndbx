@@ -80,9 +80,6 @@ func Run(ctx context.Context, cfg *config.Config) error {
 	if err := eventStorage.CreateIndexes(ctx); err != nil {
 		return fmt.Errorf("create event indexes: %w", err)
 	}
-	if err := reactionStorage.EnsureSchema(ctx); err != nil {
-		return fmt.Errorf("create reaction schema: %w", err)
-	}
 
 	// Services
 	sessionService := service.NewSessionService(l, sessionStorage, cfg.AppUserSessionTTLSeconds)

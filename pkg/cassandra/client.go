@@ -33,22 +33,6 @@ func NewClient(
 		return nil, errors.New("empty cassandra keyspace")
 	}
 
-	sysCluster := newCluster(hosts, port, username, password, consistency)
-	sysSession, err := sysCluster.CreateSession()
-	if err != nil {
-		return nil, fmt.Errorf("create cassandra system session: %w", err)
-	}
-
-	createKeyspaceQuery := fmt.Sprintf(
-		"CREATE KEYSPACE IF NOT EXISTS %s WITH replication = {'class':'SimpleStrategy','replication_factor':1}",
-		cleanKeyspace,
-	)
-	if err := sysSession.Query(createKeyspaceQuery).WithContext(ctx).Exec(); err != nil {
-		sysSession.Close()
-		return nil, fmt.Errorf("create cassandra keyspace: %w", err)
-	}
-	sysSession.Close()
-
 	cluster := newCluster(hosts, port, username, password, consistency)
 	cluster.Keyspace = cleanKeyspace
 	session, err := cluster.CreateSession()
