@@ -992,9 +992,6 @@ components:
           type: string
     CreateReviewRequest:
       type: object
-      required:
-        - comment
-        - rating
       properties:
         comment:
           type: string

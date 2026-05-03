@@ -335,8 +335,8 @@ model ReviewData {
 }
 
 model CreateReviewRequest {
-    comment: string;
-    rating: int32;
+    comment?: string;
+    rating?: int32;
 }
 
 model UpdateReviewRequest {

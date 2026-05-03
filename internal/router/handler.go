@@ -718,6 +718,13 @@ func (h *Handler) APICreateEventReview(
 	sid := extractSID(params.Cookie.Value)
 	setCookie := formSetCookie(sid, h.sessionTTLSeconds)
 
+	if !req.Comment.IsSet() || req.Comment.Value == "" {
+		return NewBadRequestError(setCookie, errors.New("field \"comment\" is required")), nil
+	}
+	if !req.Rating.IsSet() {
+		return NewBadRequestError(setCookie, errors.New("field \"rating\" is required")), nil
+	}
+
 	if sid == "" {
 		return &oas.APICreateEventReviewUnauthorized{}, nil
 	}
@@ -737,8 +744,8 @@ func (h *Handler) APICreateEventReview(
 	resp, err := h.ReviewService.CreateReview(ctx, &dto.CreateReviewReq{
 		EventID: params.EventID,
 		UserID:  session.UserID,
-		Comment: req.Comment,
-		Rating:  int8(req.Rating), //nolint:gosec // rating is validated by ogen schema (1-5)
+		Comment: req.Comment.Value,
+		Rating:  int8(req.Rating.Value), //nolint:gosec // rating is validated by handler
 	})
 	if err != nil {
 		if errors.Is(err, service.ErrAlreadyExists) {

@@ -418,27 +418,27 @@ func (*CreateEventReviewConflictResponseHeaders) aPICreateEventReviewRes() {}
 
 // Ref: #/components/schemas/CreateReviewRequest
 type CreateReviewRequest struct {
-	Comment string `json:"comment"`
-	Rating  int32  `json:"rating"`
+	Comment OptString `json:"comment"`
+	Rating  OptInt32  `json:"rating"`
 }
 
 // GetComment returns the value of Comment.
-func (s *CreateReviewRequest) GetComment() string {
+func (s *CreateReviewRequest) GetComment() OptString {
 	return s.Comment
 }
 
 // GetRating returns the value of Rating.
-func (s *CreateReviewRequest) GetRating() int32 {
+func (s *CreateReviewRequest) GetRating() OptInt32 {
 	return s.Rating
 }
 
 // SetComment sets the value of Comment.
-func (s *CreateReviewRequest) SetComment(val string) {
+func (s *CreateReviewRequest) SetComment(val OptString) {
 	s.Comment = val
 }
 
 // SetRating sets the value of Rating.
-func (s *CreateReviewRequest) SetRating(val int32) {
+func (s *CreateReviewRequest) SetRating(val OptInt32) {
 	s.Rating = val
 }
 
