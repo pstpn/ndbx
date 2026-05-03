@@ -43,11 +43,18 @@ type EventService interface {
 	DislikeEvent(ctx context.Context, req *dto.ReactEventReq) error
 }
 
+type ReviewService interface {
+	CreateReview(ctx context.Context, req *dto.CreateReviewReq) (*dto.CreateReviewResp, error)
+	GetReviews(ctx context.Context, req *dto.GetReviewsReq) (*dto.GetReviewsResp, error)
+	UpdateReview(ctx context.Context, req *dto.UpdateReviewReq) error
+}
+
 type Handler struct {
 	l                 logger.Interface
 	SessionService    SessionService
 	UserService       UserService
 	EventService      EventService
+	ReviewService     ReviewService
 	sessionTTLSeconds int
 }
 
@@ -56,6 +63,7 @@ func NewHandler(
 	sessionService SessionService,
 	userService UserService,
 	eventService EventService,
+	reviewService ReviewService,
 	sessionTTLSeconds int,
 ) *Handler {
 	return &Handler{
@@ -63,6 +71,7 @@ func NewHandler(
 		SessionService:    sessionService,
 		UserService:       userService,
 		EventService:      eventService,
+		ReviewService:     reviewService,
 		sessionTTLSeconds: sessionTTLSeconds,
 	}
 }
@@ -315,15 +324,18 @@ func (h *Handler) APIGetEvents(ctx context.Context, params oas.APIGetEventsParam
 		Limit:            limit,
 		Offset:           offset,
 		IncludeReactions: includeReactions(params.Include.Value),
+		IncludeReviews:   includeReviews(params.Include.Value),
 	})
 	if err != nil {
 		h.l.Errorf("failed to get events: %s", err.Error())
 		return NewInternalError(), nil
 	}
 
+	withReactions := includeReactions(params.Include.Value)
+	withReviews := includeReviews(params.Include.Value)
 	events := make([]oas.EventData, len(resp.Events))
 	for i, event := range resp.Events {
-		events[i] = toOASEventData(&event, includeReactions(params.Include.Value))
+		events[i] = toOASEventData(&event, withReactions, withReviews)
 	}
 
 	return &oas.GetEventsResponseHeaders{
@@ -338,7 +350,9 @@ func (h *Handler) APIGetEvents(ctx context.Context, params oas.APIGetEventsParam
 func (h *Handler) APIGetEvent(ctx context.Context, params oas.APIGetEventParams) (oas.APIGetEventRes, error) {
 	setCookie := formSetCookie(extractSID(params.Cookie.Value), h.sessionTTLSeconds)
 
-	resp, err := h.EventService.GetEvent(ctx, &dto.GetEventReq{ID: params.ID, IncludeReactions: includeReactions(params.Include.Value)})
+	withReactions := includeReactions(params.Include.Value)
+	withReviews := includeReviews(params.Include.Value)
+	resp, err := h.EventService.GetEvent(ctx, &dto.GetEventReq{ID: params.ID, IncludeReactions: withReactions, IncludeReviews: withReviews})
 	if err != nil {
 		if errors.Is(err, service.ErrNotFound) {
 			return NewErrorResponse(http.StatusNotFound, setCookie, ErrNotFound), nil
@@ -347,7 +361,10 @@ func (h *Handler) APIGetEvent(ctx context.Context, params oas.APIGetEventParams)
 		return NewInternalError(), nil
 	}
 
-	return &oas.EventDataHeaders{SetCookie: setCookie, Response: toOASEventData(&resp.Event, includeReactions(params.Include.Value))}, nil
+	return &oas.EventDataHeaders{
+		SetCookie: setCookie,
+		Response:  toOASEventData(&resp.Event, withReactions, withReviews),
+	}, nil
 }
 
 func (h *Handler) APIPatchEvent(ctx context.Context, req *oas.PatchEventRequest, params oas.APIPatchEventParams) (oas.APIPatchEventRes, error) {
@@ -528,15 +545,18 @@ func (h *Handler) APIGetUserEvents(ctx context.Context, params oas.APIGetUserEve
 		Limit:            limit,
 		Offset:           offset,
 		IncludeReactions: includeReactions(params.Include.Value),
+		IncludeReviews:   includeReviews(params.Include.Value),
 	})
 	if err != nil {
 		h.l.Errorf("failed to get user events: %s", err.Error())
 		return NewInternalError(), nil
 	}
 
+	withReactions := includeReactions(params.Include.Value)
+	withReviews := includeReviews(params.Include.Value)
 	events := make([]oas.EventData, len(resp.Events))
 	for i, event := range resp.Events {
-		events[i] = toOASEventData(&event, includeReactions(params.Include.Value))
+		events[i] = toOASEventData(&event, withReactions, withReviews)
 	}
 
 	return &oas.GetEventsResponseHeaders{SetCookie: setCookie, Response: oas.GetEventsResponse{Events: events, Count: int64(len(events))}}, nil
@@ -620,7 +640,7 @@ func (h *Handler) extendSession(ctx context.Context, sid string, userID string, 
 	}
 }
 
-func toOASEventData(event *dto.EventData, withReactions bool) oas.EventData {
+func toOASEventData(event *dto.EventData, withReactions bool, withReviews bool) oas.EventData {
 	location := oas.LocationInfo{Address: event.Location.Address}
 	if event.Location.City != "" {
 		location.City = oas.NewOptString(event.Location.City)
@@ -648,6 +668,12 @@ func toOASEventData(event *dto.EventData, withReactions bool) oas.EventData {
 			Dislikes: event.Reactions.Dislikes,
 		})
 	}
+	if withReviews {
+		data.Reviews = oas.NewOptEventReviews(oas.EventReviews{
+			Count:  event.Reviews.Count,
+			Rating: event.Reviews.Rating,
+		})
+	}
 
 	return data
 }
@@ -656,6 +682,17 @@ func includeReactions(include string) bool {
 	parts := strings.Split(include, ",")
 	for _, part := range parts {
 		if strings.EqualFold(strings.TrimSpace(part), "reactions") {
+			return true
+		}
+	}
+
+	return false
+}
+
+func includeReviews(include string) bool {
+	parts := strings.Split(include, ",")
+	for _, part := range parts {
+		if strings.EqualFold(strings.TrimSpace(part), "reviews") {
 			return true
 		}
 	}
@@ -673,6 +710,169 @@ func parseDateFilter(field string, value oas.OptString) (*time.Time, error) {
 		return nil, fmt.Errorf("invalid \"%s\" field", field)
 	}
 	return &t, nil
+}
+
+func (h *Handler) APICreateEventReview(
+	ctx context.Context, req *oas.CreateReviewRequest, params oas.APICreateEventReviewParams,
+) (oas.APICreateEventReviewRes, error) {
+	sid := extractSID(params.Cookie.Value)
+	setCookie := formSetCookie(sid, h.sessionTTLSeconds)
+
+	if sid == "" {
+		return &oas.APICreateEventReviewUnauthorized{}, nil
+	}
+
+	session, err := h.SessionService.GetSession(ctx, &dto.GetSessionReq{SID: sid})
+	if err != nil {
+		if errors.Is(err, service.ErrNotFound) {
+			return &oas.APICreateEventReviewUnauthorized{}, nil
+		}
+		h.l.Errorf("failed to get session: %s", err.Error())
+		return NewInternalError(), nil
+	}
+	if session.UserID == "" {
+		return &oas.APICreateEventReviewUnauthorized{}, nil
+	}
+
+	resp, err := h.ReviewService.CreateReview(ctx, &dto.CreateReviewReq{
+		EventID: params.EventID,
+		UserID:  session.UserID,
+		Comment: req.Comment,
+		Rating:  int8(req.Rating), //nolint:gosec // rating is validated by ogen schema (1-5)
+	})
+	if err != nil {
+		if errors.Is(err, service.ErrAlreadyExists) {
+			return &oas.CreateEventReviewConflictResponseHeaders{
+				SetCookie: setCookie,
+				Response:  oas.CreateEventReviewConflictResponse{Message: oas.NewOptString("review already exists")},
+			}, nil
+		}
+		if errors.Is(err, service.ErrNotFound) {
+			return NewErrorResponse(http.StatusNotFound, setCookie, ErrNotFound), nil
+		}
+		h.l.Errorf("failed to create review: %s", err.Error())
+		return NewInternalError(), nil
+	}
+
+	h.extendSession(ctx, sid, session.UserID, "create review")
+
+	return &oas.APICreateEventReviewCreatedHeaders{
+		SetCookie: setCookie,
+		Response:  oas.APICreateEventReviewCreated{ID: resp.ID},
+	}, nil
+}
+
+func (h *Handler) APIGetEventReviews(ctx context.Context, params oas.APIGetEventReviewsParams) (oas.APIGetEventReviewsRes, error) {
+	setCookie := formSetCookie(extractSID(params.Cookie.Value), h.sessionTTLSeconds)
+
+	limit, offset := int64(defaultLimit), int64(defaultOffset)
+	if params.Limit.IsSet() {
+		if err := httpv.NotNegativeField("limit", params.Limit.Value); err != nil {
+			return NewBadRequestError(setCookie, err), nil
+		}
+		limit = params.Limit.Value
+	}
+	if params.Offset.IsSet() {
+		if err := httpv.NotNegativeField("offset", params.Offset.Value); err != nil {
+			return NewBadRequestError(setCookie, err), nil
+		}
+		offset = params.Offset.Value
+	}
+
+	resp, err := h.ReviewService.GetReviews(ctx, &dto.GetReviewsReq{
+		EventID: params.EventID,
+		Limit:   limit,
+		Offset:  offset,
+	})
+	if err != nil {
+		if errors.Is(err, service.ErrNotFound) {
+			return NewErrorResponse(http.StatusNotFound, setCookie, ErrNotFound), nil
+		}
+		h.l.Errorf("failed to get reviews: %s", err.Error())
+		return NewInternalError(), nil
+	}
+
+	reviews := make([]oas.ReviewData, len(resp.Reviews))
+	for i, r := range resp.Reviews {
+		reviews[i] = oas.ReviewData{
+			ID:        r.ID,
+			EventID:   r.EventID,
+			Comment:   r.Comment,
+			CreatedAt: r.CreatedAt.Format(time.RFC3339),
+			CreatedBy: r.CreatedBy,
+			Rating:    int32(r.Rating),
+			UpdatedAt: r.UpdatedAt.Format(time.RFC3339),
+		}
+	}
+
+	return &oas.GetReviewsResponseHeaders{
+		SetCookie: setCookie,
+		Response: oas.GetReviewsResponse{
+			Reviews: reviews,
+			Count:   resp.Count,
+		},
+	}, nil
+}
+
+func (h *Handler) APIUpdateEventReview(
+	ctx context.Context, req *oas.UpdateReviewRequest, params oas.APIUpdateEventReviewParams,
+) (oas.APIUpdateEventReviewRes, error) {
+	sid := extractSID(params.Cookie.Value)
+	setCookie := formSetCookie(sid, h.sessionTTLSeconds)
+
+	if sid == "" {
+		return &oas.APIUpdateEventReviewUnauthorized{}, nil
+	}
+
+	session, err := h.SessionService.GetSession(ctx, &dto.GetSessionReq{SID: sid})
+	if err != nil {
+		if errors.Is(err, service.ErrNotFound) {
+			return &oas.APIUpdateEventReviewUnauthorized{}, nil
+		}
+		h.l.Errorf("failed to get session: %s", err.Error())
+		return NewInternalError(), nil
+	}
+	if session.UserID == "" {
+		return &oas.APIUpdateEventReviewUnauthorized{}, nil
+	}
+
+	var rating *int8
+	if req.Rating.IsSet() {
+		v := int8(req.Rating.Value) //nolint:gosec // rating is validated by ogen schema (1-5)
+		rating = &v
+	}
+	var comment *string
+	if req.Comment.IsSet() {
+		comment = &req.Comment.Value
+	}
+
+	err = h.ReviewService.UpdateReview(ctx, &dto.UpdateReviewReq{
+		EventID:  params.EventID,
+		ReviewID: params.ReviewID,
+		UserID:   session.UserID,
+		Rating:   rating,
+		Comment:  comment,
+	})
+	if err != nil {
+		if errors.Is(err, service.ErrNotFound) {
+			return &oas.UpdateEventReviewNotFoundResponseHeaders{
+				SetCookie: setCookie,
+				Response:  oas.UpdateEventReviewNotFoundResponse{Message: oas.NewOptString("review not found")},
+			}, nil
+		}
+		if errors.Is(err, service.ErrForbidden) {
+			return &oas.UpdateEventReviewNotFoundResponseHeaders{
+				SetCookie: setCookie,
+				Response:  oas.UpdateEventReviewNotFoundResponse{Message: oas.NewOptString("review not found")},
+			}, nil
+		}
+		h.l.Errorf("failed to update review: %s", err.Error())
+		return NewInternalError(), nil
+	}
+
+	h.extendSession(ctx, sid, session.UserID, "update review")
+
+	return &oas.APIUpdateEventReviewNoContent{SetCookie: setCookie}, nil
 }
 
 // extractSID parses Cookie header to find X-Session-Id cookie value

@@ -24,6 +24,20 @@ func encodeAPICreateEventRequest(
 	return nil
 }
 
+func encodeAPICreateEventReviewRequest(
+	req *CreateReviewRequest,
+	r *http.Request,
+) error {
+	const contentType = "application/json"
+	e := new(jx.Encoder)
+	{
+		req.Encode(e)
+	}
+	encoded := e.Bytes()
+	ht.SetBody(r, bytes.NewReader(encoded), contentType)
+	return nil
+}
+
 func encodeAPILoginRequest(
 	req *LoginRequest,
 	r *http.Request,
@@ -54,6 +68,20 @@ func encodeAPIPatchEventRequest(
 
 func encodeAPIRegisterRequest(
 	req *UserRegisterRequest,
+	r *http.Request,
+) error {
+	const contentType = "application/json"
+	e := new(jx.Encoder)
+	{
+		req.Encode(e)
+	}
+	encoded := e.Bytes()
+	ht.SetBody(r, bytes.NewReader(encoded), contentType)
+	return nil
+}
+
+func encodeAPIUpdateEventReviewRequest(
+	req *UpdateReviewRequest,
 	r *http.Request,
 ) error {
 	const contentType = "application/json"

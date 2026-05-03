@@ -21,8 +21,9 @@ type LoggerConfig struct {
 }
 
 type AppConfig struct {
-	AppUserSessionTTLSeconds int `env:"APP_USER_SESSION_TTL,required"`
-	AppLikeTTLSeconds        int `env:"APP_LIKE_TTL,required"`
+	AppUserSessionTTLSeconds  int `env:"APP_USER_SESSION_TTL,required"`
+	AppLikeTTLSeconds         int `env:"APP_LIKE_TTL,required"`
+	AppEventReviewsTTLSeconds int `env:"APP_EVENT_REVIEWS_TTL,required"`
 }
 
 type HTTPConfig struct {

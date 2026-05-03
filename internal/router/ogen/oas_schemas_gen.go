@@ -48,6 +48,53 @@ func (s *APICreateEventCreatedHeaders) SetResponse(val APICreateEventCreated) {
 
 func (*APICreateEventCreatedHeaders) aPICreateEventRes() {}
 
+type APICreateEventReviewCreated struct {
+	ID string `json:"id"`
+}
+
+// GetID returns the value of ID.
+func (s *APICreateEventReviewCreated) GetID() string {
+	return s.ID
+}
+
+// SetID sets the value of ID.
+func (s *APICreateEventReviewCreated) SetID(val string) {
+	s.ID = val
+}
+
+// APICreateEventReviewCreatedHeaders wraps APICreateEventReviewCreated with response headers.
+type APICreateEventReviewCreatedHeaders struct {
+	SetCookie string
+	Response  APICreateEventReviewCreated
+}
+
+// GetSetCookie returns the value of SetCookie.
+func (s *APICreateEventReviewCreatedHeaders) GetSetCookie() string {
+	return s.SetCookie
+}
+
+// GetResponse returns the value of Response.
+func (s *APICreateEventReviewCreatedHeaders) GetResponse() APICreateEventReviewCreated {
+	return s.Response
+}
+
+// SetSetCookie sets the value of SetCookie.
+func (s *APICreateEventReviewCreatedHeaders) SetSetCookie(val string) {
+	s.SetCookie = val
+}
+
+// SetResponse sets the value of Response.
+func (s *APICreateEventReviewCreatedHeaders) SetResponse(val APICreateEventReviewCreated) {
+	s.Response = val
+}
+
+func (*APICreateEventReviewCreatedHeaders) aPICreateEventReviewRes() {}
+
+// APICreateEventReviewUnauthorized is response for APICreateEventReview operation.
+type APICreateEventReviewUnauthorized struct{}
+
+func (*APICreateEventReviewUnauthorized) aPICreateEventReviewRes() {}
+
 // APICreateEventUnauthorized is response for APICreateEvent operation.
 type APICreateEventUnauthorized struct {
 	SetCookie string
@@ -245,6 +292,28 @@ func (s *APISessionOK) SetSetCookie(val string) {
 
 func (*APISessionOK) aPISessionRes() {}
 
+// APIUpdateEventReviewNoContent is response for APIUpdateEventReview operation.
+type APIUpdateEventReviewNoContent struct {
+	SetCookie string
+}
+
+// GetSetCookie returns the value of SetCookie.
+func (s *APIUpdateEventReviewNoContent) GetSetCookie() string {
+	return s.SetCookie
+}
+
+// SetSetCookie sets the value of SetCookie.
+func (s *APIUpdateEventReviewNoContent) SetSetCookie(val string) {
+	s.SetCookie = val
+}
+
+func (*APIUpdateEventReviewNoContent) aPIUpdateEventReviewRes() {}
+
+// APIUpdateEventReviewUnauthorized is response for APIUpdateEventReview operation.
+type APIUpdateEventReviewUnauthorized struct{}
+
+func (*APIUpdateEventReviewUnauthorized) aPIUpdateEventReviewRes() {}
+
 // Ref: #/components/schemas/CreateEventRequest
 type CreateEventRequest struct {
 	Title       string    `json:"title"`
@@ -304,6 +373,75 @@ func (s *CreateEventRequest) SetFinishedAt(val string) {
 	s.FinishedAt = val
 }
 
+// Ref: #/components/schemas/CreateEventReviewConflictResponse
+type CreateEventReviewConflictResponse struct {
+	Message OptString `json:"message"`
+}
+
+// GetMessage returns the value of Message.
+func (s *CreateEventReviewConflictResponse) GetMessage() OptString {
+	return s.Message
+}
+
+// SetMessage sets the value of Message.
+func (s *CreateEventReviewConflictResponse) SetMessage(val OptString) {
+	s.Message = val
+}
+
+// CreateEventReviewConflictResponseHeaders wraps CreateEventReviewConflictResponse with response headers.
+type CreateEventReviewConflictResponseHeaders struct {
+	SetCookie string
+	Response  CreateEventReviewConflictResponse
+}
+
+// GetSetCookie returns the value of SetCookie.
+func (s *CreateEventReviewConflictResponseHeaders) GetSetCookie() string {
+	return s.SetCookie
+}
+
+// GetResponse returns the value of Response.
+func (s *CreateEventReviewConflictResponseHeaders) GetResponse() CreateEventReviewConflictResponse {
+	return s.Response
+}
+
+// SetSetCookie sets the value of SetCookie.
+func (s *CreateEventReviewConflictResponseHeaders) SetSetCookie(val string) {
+	s.SetCookie = val
+}
+
+// SetResponse sets the value of Response.
+func (s *CreateEventReviewConflictResponseHeaders) SetResponse(val CreateEventReviewConflictResponse) {
+	s.Response = val
+}
+
+func (*CreateEventReviewConflictResponseHeaders) aPICreateEventReviewRes() {}
+
+// Ref: #/components/schemas/CreateReviewRequest
+type CreateReviewRequest struct {
+	Comment string `json:"comment"`
+	Rating  int32  `json:"rating"`
+}
+
+// GetComment returns the value of Comment.
+func (s *CreateReviewRequest) GetComment() string {
+	return s.Comment
+}
+
+// GetRating returns the value of Rating.
+func (s *CreateReviewRequest) GetRating() int32 {
+	return s.Rating
+}
+
+// SetComment sets the value of Comment.
+func (s *CreateReviewRequest) SetComment(val string) {
+	s.Comment = val
+}
+
+// SetRating sets the value of Rating.
+func (s *CreateReviewRequest) SetRating(val int32) {
+	s.Rating = val
+}
+
 // Ref: #/components/schemas/ErrorResponse
 type ErrorResponse struct {
 	Message OptString `json:"message"`
@@ -356,19 +494,22 @@ func (s *ErrorResponseStatusCodeWithHeaders) SetResponse(val ErrorResponse) {
 	s.Response = val
 }
 
-func (*ErrorResponseStatusCodeWithHeaders) aPICreateEventRes()   {}
-func (*ErrorResponseStatusCodeWithHeaders) aPIDislikeEventRes()  {}
-func (*ErrorResponseStatusCodeWithHeaders) aPIGetEventRes()      {}
-func (*ErrorResponseStatusCodeWithHeaders) aPIGetEventsRes()     {}
-func (*ErrorResponseStatusCodeWithHeaders) aPIGetUserEventsRes() {}
-func (*ErrorResponseStatusCodeWithHeaders) aPIGetUserRes()       {}
-func (*ErrorResponseStatusCodeWithHeaders) aPIGetUsersRes()      {}
-func (*ErrorResponseStatusCodeWithHeaders) aPILikeEventRes()     {}
-func (*ErrorResponseStatusCodeWithHeaders) aPILoginRes()         {}
-func (*ErrorResponseStatusCodeWithHeaders) aPILogoutRes()        {}
-func (*ErrorResponseStatusCodeWithHeaders) aPIPatchEventRes()    {}
-func (*ErrorResponseStatusCodeWithHeaders) aPIRegisterRes()      {}
-func (*ErrorResponseStatusCodeWithHeaders) aPISessionRes()       {}
+func (*ErrorResponseStatusCodeWithHeaders) aPICreateEventRes()       {}
+func (*ErrorResponseStatusCodeWithHeaders) aPICreateEventReviewRes() {}
+func (*ErrorResponseStatusCodeWithHeaders) aPIDislikeEventRes()      {}
+func (*ErrorResponseStatusCodeWithHeaders) aPIGetEventRes()          {}
+func (*ErrorResponseStatusCodeWithHeaders) aPIGetEventReviewsRes()   {}
+func (*ErrorResponseStatusCodeWithHeaders) aPIGetEventsRes()         {}
+func (*ErrorResponseStatusCodeWithHeaders) aPIGetUserEventsRes()     {}
+func (*ErrorResponseStatusCodeWithHeaders) aPIGetUserRes()           {}
+func (*ErrorResponseStatusCodeWithHeaders) aPIGetUsersRes()          {}
+func (*ErrorResponseStatusCodeWithHeaders) aPILikeEventRes()         {}
+func (*ErrorResponseStatusCodeWithHeaders) aPILoginRes()             {}
+func (*ErrorResponseStatusCodeWithHeaders) aPILogoutRes()            {}
+func (*ErrorResponseStatusCodeWithHeaders) aPIPatchEventRes()        {}
+func (*ErrorResponseStatusCodeWithHeaders) aPIRegisterRes()          {}
+func (*ErrorResponseStatusCodeWithHeaders) aPISessionRes()           {}
+func (*ErrorResponseStatusCodeWithHeaders) aPIUpdateEventReviewRes() {}
 
 // Ref: #/components/schemas/EventCategory
 type EventCategory string
@@ -446,6 +587,7 @@ type EventData struct {
 	CreatedAt   string            `json:"created_at"`
 	CreatedBy   string            `json:"created_by"`
 	Reactions   OptEventReactions `json:"reactions"`
+	Reviews     OptEventReviews   `json:"reviews"`
 }
 
 // GetID returns the value of ID.
@@ -503,6 +645,11 @@ func (s *EventData) GetReactions() OptEventReactions {
 	return s.Reactions
 }
 
+// GetReviews returns the value of Reviews.
+func (s *EventData) GetReviews() OptEventReviews {
+	return s.Reviews
+}
+
 // SetID sets the value of ID.
 func (s *EventData) SetID(val string) {
 	s.ID = val
@@ -556,6 +703,11 @@ func (s *EventData) SetCreatedBy(val string) {
 // SetReactions sets the value of Reactions.
 func (s *EventData) SetReactions(val OptEventReactions) {
 	s.Reactions = val
+}
+
+// SetReviews sets the value of Reviews.
+func (s *EventData) SetReviews(val OptEventReviews) {
+	s.Reviews = val
 }
 
 // EventDataHeaders wraps EventData with response headers.
@@ -612,6 +764,32 @@ func (s *EventReactions) SetDislikes(val int64) {
 	s.Dislikes = val
 }
 
+// Ref: #/components/schemas/EventReviews
+type EventReviews struct {
+	Count  int64   `json:"count"`
+	Rating float64 `json:"rating"`
+}
+
+// GetCount returns the value of Count.
+func (s *EventReviews) GetCount() int64 {
+	return s.Count
+}
+
+// GetRating returns the value of Rating.
+func (s *EventReviews) GetRating() float64 {
+	return s.Rating
+}
+
+// SetCount sets the value of Count.
+func (s *EventReviews) SetCount(val int64) {
+	s.Count = val
+}
+
+// SetRating sets the value of Rating.
+func (s *EventReviews) SetRating(val float64) {
+	s.Rating = val
+}
+
 // Ref: #/components/schemas/GetEventsResponse
 type GetEventsResponse struct {
 	Events []EventData `json:"events"`
@@ -666,6 +844,60 @@ func (s *GetEventsResponseHeaders) SetResponse(val GetEventsResponse) {
 
 func (*GetEventsResponseHeaders) aPIGetEventsRes()     {}
 func (*GetEventsResponseHeaders) aPIGetUserEventsRes() {}
+
+// Ref: #/components/schemas/GetReviewsResponse
+type GetReviewsResponse struct {
+	Reviews []ReviewData `json:"reviews"`
+	Count   int64        `json:"count"`
+}
+
+// GetReviews returns the value of Reviews.
+func (s *GetReviewsResponse) GetReviews() []ReviewData {
+	return s.Reviews
+}
+
+// GetCount returns the value of Count.
+func (s *GetReviewsResponse) GetCount() int64 {
+	return s.Count
+}
+
+// SetReviews sets the value of Reviews.
+func (s *GetReviewsResponse) SetReviews(val []ReviewData) {
+	s.Reviews = val
+}
+
+// SetCount sets the value of Count.
+func (s *GetReviewsResponse) SetCount(val int64) {
+	s.Count = val
+}
+
+// GetReviewsResponseHeaders wraps GetReviewsResponse with response headers.
+type GetReviewsResponseHeaders struct {
+	SetCookie string
+	Response  GetReviewsResponse
+}
+
+// GetSetCookie returns the value of SetCookie.
+func (s *GetReviewsResponseHeaders) GetSetCookie() string {
+	return s.SetCookie
+}
+
+// GetResponse returns the value of Response.
+func (s *GetReviewsResponseHeaders) GetResponse() GetReviewsResponse {
+	return s.Response
+}
+
+// SetSetCookie sets the value of SetCookie.
+func (s *GetReviewsResponseHeaders) SetSetCookie(val string) {
+	s.SetCookie = val
+}
+
+// SetResponse sets the value of Response.
+func (s *GetReviewsResponseHeaders) SetResponse(val GetReviewsResponse) {
+	s.Response = val
+}
+
+func (*GetReviewsResponseHeaders) aPIGetEventReviewsRes() {}
 
 // Ref: #/components/schemas/GetUsersResponse
 type GetUsersResponse struct {
@@ -906,6 +1138,98 @@ func (o OptEventReactions) Or(d EventReactions) EventReactions {
 	return d
 }
 
+// NewOptEventReviews returns new OptEventReviews with value set to v.
+func NewOptEventReviews(v EventReviews) OptEventReviews {
+	return OptEventReviews{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptEventReviews is optional EventReviews.
+type OptEventReviews struct {
+	Value EventReviews
+	Set   bool
+}
+
+// IsSet returns true if OptEventReviews was set.
+func (o OptEventReviews) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptEventReviews) Reset() {
+	var v EventReviews
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptEventReviews) SetTo(v EventReviews) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptEventReviews) Get() (v EventReviews, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptEventReviews) Or(d EventReviews) EventReviews {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptInt32 returns new OptInt32 with value set to v.
+func NewOptInt32(v int32) OptInt32 {
+	return OptInt32{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptInt32 is optional int32.
+type OptInt32 struct {
+	Value int32
+	Set   bool
+}
+
+// IsSet returns true if OptInt32 was set.
+func (o OptInt32) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptInt32) Reset() {
+	var v int32
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptInt32) SetTo(v int32) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptInt32) Get() (v int32, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptInt32) Or(d int32) int32 {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
 // NewOptInt64 returns new OptInt64 with value set to v.
 func NewOptInt64(v int64) OptInt64 {
 	return OptInt64{
@@ -1033,6 +1357,156 @@ func (s *PatchEventRequest) SetCity(val OptString) {
 // SetPrice sets the value of Price.
 func (s *PatchEventRequest) SetPrice(val OptInt64) {
 	s.Price = val
+}
+
+// Ref: #/components/schemas/ReviewData
+type ReviewData struct {
+	ID        string `json:"id"`
+	EventID   string `json:"event_id"`
+	Comment   string `json:"comment"`
+	CreatedAt string `json:"created_at"`
+	CreatedBy string `json:"created_by"`
+	Rating    int32  `json:"rating"`
+	UpdatedAt string `json:"updated_at"`
+}
+
+// GetID returns the value of ID.
+func (s *ReviewData) GetID() string {
+	return s.ID
+}
+
+// GetEventID returns the value of EventID.
+func (s *ReviewData) GetEventID() string {
+	return s.EventID
+}
+
+// GetComment returns the value of Comment.
+func (s *ReviewData) GetComment() string {
+	return s.Comment
+}
+
+// GetCreatedAt returns the value of CreatedAt.
+func (s *ReviewData) GetCreatedAt() string {
+	return s.CreatedAt
+}
+
+// GetCreatedBy returns the value of CreatedBy.
+func (s *ReviewData) GetCreatedBy() string {
+	return s.CreatedBy
+}
+
+// GetRating returns the value of Rating.
+func (s *ReviewData) GetRating() int32 {
+	return s.Rating
+}
+
+// GetUpdatedAt returns the value of UpdatedAt.
+func (s *ReviewData) GetUpdatedAt() string {
+	return s.UpdatedAt
+}
+
+// SetID sets the value of ID.
+func (s *ReviewData) SetID(val string) {
+	s.ID = val
+}
+
+// SetEventID sets the value of EventID.
+func (s *ReviewData) SetEventID(val string) {
+	s.EventID = val
+}
+
+// SetComment sets the value of Comment.
+func (s *ReviewData) SetComment(val string) {
+	s.Comment = val
+}
+
+// SetCreatedAt sets the value of CreatedAt.
+func (s *ReviewData) SetCreatedAt(val string) {
+	s.CreatedAt = val
+}
+
+// SetCreatedBy sets the value of CreatedBy.
+func (s *ReviewData) SetCreatedBy(val string) {
+	s.CreatedBy = val
+}
+
+// SetRating sets the value of Rating.
+func (s *ReviewData) SetRating(val int32) {
+	s.Rating = val
+}
+
+// SetUpdatedAt sets the value of UpdatedAt.
+func (s *ReviewData) SetUpdatedAt(val string) {
+	s.UpdatedAt = val
+}
+
+// Ref: #/components/schemas/UpdateEventReviewNotFoundResponse
+type UpdateEventReviewNotFoundResponse struct {
+	Message OptString `json:"message"`
+}
+
+// GetMessage returns the value of Message.
+func (s *UpdateEventReviewNotFoundResponse) GetMessage() OptString {
+	return s.Message
+}
+
+// SetMessage sets the value of Message.
+func (s *UpdateEventReviewNotFoundResponse) SetMessage(val OptString) {
+	s.Message = val
+}
+
+// UpdateEventReviewNotFoundResponseHeaders wraps UpdateEventReviewNotFoundResponse with response headers.
+type UpdateEventReviewNotFoundResponseHeaders struct {
+	SetCookie string
+	Response  UpdateEventReviewNotFoundResponse
+}
+
+// GetSetCookie returns the value of SetCookie.
+func (s *UpdateEventReviewNotFoundResponseHeaders) GetSetCookie() string {
+	return s.SetCookie
+}
+
+// GetResponse returns the value of Response.
+func (s *UpdateEventReviewNotFoundResponseHeaders) GetResponse() UpdateEventReviewNotFoundResponse {
+	return s.Response
+}
+
+// SetSetCookie sets the value of SetCookie.
+func (s *UpdateEventReviewNotFoundResponseHeaders) SetSetCookie(val string) {
+	s.SetCookie = val
+}
+
+// SetResponse sets the value of Response.
+func (s *UpdateEventReviewNotFoundResponseHeaders) SetResponse(val UpdateEventReviewNotFoundResponse) {
+	s.Response = val
+}
+
+func (*UpdateEventReviewNotFoundResponseHeaders) aPIUpdateEventReviewRes() {}
+
+// Ref: #/components/schemas/UpdateReviewRequest
+type UpdateReviewRequest struct {
+	Comment OptString `json:"comment"`
+	Rating  OptInt32  `json:"rating"`
+}
+
+// GetComment returns the value of Comment.
+func (s *UpdateReviewRequest) GetComment() OptString {
+	return s.Comment
+}
+
+// GetRating returns the value of Rating.
+func (s *UpdateReviewRequest) GetRating() OptInt32 {
+	return s.Rating
+}
+
+// SetComment sets the value of Comment.
+func (s *UpdateReviewRequest) SetComment(val OptString) {
+	s.Comment = val
+}
+
+// SetRating sets the value of Rating.
+func (s *UpdateReviewRequest) SetRating(val OptInt32) {
+	s.Rating = val
 }
 
 // Ref: #/components/schemas/UserData

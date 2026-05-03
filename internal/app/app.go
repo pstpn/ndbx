@@ -70,9 +70,11 @@ func Run(ctx context.Context, cfg *config.Config) error {
 	// Storages
 	sessionStorage := rstorage.NewSessionStorage(redisClient)
 	reactionCacheStorage := rstorage.NewEventReactionStorage(redisClient)
+	reviewCacheStorage := rstorage.NewEventReviewCacheStorage(redisClient)
 	userStorage := mstorage.NewUserStorage(mongoDBClient.DB())
 	eventStorage := mstorage.NewEventStorage(mongoDBClient.DB())
 	reactionStorage := cstorage.NewEventReactionStorage(cassandraClient.Session())
+	reviewStorage := cstorage.NewEventReviewStorage(cassandraClient.Session())
 
 	if err := userStorage.CreateIndex(ctx); err != nil {
 		return fmt.Errorf("create user indexes: %w", err)
@@ -84,9 +86,10 @@ func Run(ctx context.Context, cfg *config.Config) error {
 	// Services
 	sessionService := service.NewSessionService(l, sessionStorage, cfg.AppUserSessionTTLSeconds)
 	userService := service.NewUserService(l, userStorage)
-	eventService := service.NewEventService(l, eventStorage, reactionStorage, reactionCacheStorage, cfg.AppLikeTTLSeconds)
+	reviewService := service.NewReviewService(l, eventStorage, reviewStorage, reviewCacheStorage, cfg.AppEventReviewsTTLSeconds)
+	eventService := service.NewEventService(l, eventStorage, reactionStorage, reactionCacheStorage, reviewService, cfg.AppLikeTTLSeconds)
 
-	handler := router.NewHandler(l, sessionService, userService, eventService, cfg.AppUserSessionTTLSeconds)
+	handler := router.NewHandler(l, sessionService, userService, eventService, reviewService, cfg.AppUserSessionTTLSeconds)
 
 	oasHandler, err := oas.NewServer(handler)
 	if err != nil {

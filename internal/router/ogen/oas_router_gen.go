@@ -11,10 +11,10 @@ import (
 )
 
 var (
-	rn13AllowedHeaders = map[string]string{
+	rn14AllowedHeaders = map[string]string{
 		"POST": "Content-Type,Cookie",
 	}
-	rn15AllowedHeaders = map[string]string{
+	rn16AllowedHeaders = map[string]string{
 		"POST": "Cookie",
 	}
 	rn1AllowedHeaders = map[string]string{
@@ -25,26 +25,33 @@ var (
 		"GET":   "Cookie",
 		"PATCH": "Content-Type,Cookie",
 	}
+	rn6AllowedHeaders = map[string]string{
+		"POST": "Cookie",
+	}
+	rn13AllowedHeaders = map[string]string{
+		"POST": "Cookie",
+	}
 	rn4AllowedHeaders = map[string]string{
-		"POST": "Cookie",
-	}
-	rn12AllowedHeaders = map[string]string{
-		"POST": "Cookie",
-	}
-	rn10AllowedHeaders = map[string]string{
-		"GET": "Cookie",
-	}
-	rn16AllowedHeaders = map[string]string{
-		"POST": "Cookie",
-	}
-	rn9AllowedHeaders = map[string]string{
 		"GET":  "Cookie",
 		"POST": "Content-Type,Cookie",
 	}
-	rn7AllowedHeaders = map[string]string{
+	rn19AllowedHeaders = map[string]string{
+		"PATCH": "Content-Type,Cookie",
+	}
+	rn12AllowedHeaders = map[string]string{
 		"GET": "Cookie",
 	}
-	rn8AllowedHeaders = map[string]string{
+	rn17AllowedHeaders = map[string]string{
+		"POST": "Cookie",
+	}
+	rn11AllowedHeaders = map[string]string{
+		"GET":  "Cookie",
+		"POST": "Content-Type,Cookie",
+	}
+	rn9AllowedHeaders = map[string]string{
+		"GET": "Cookie",
+	}
+	rn10AllowedHeaders = map[string]string{
 		"GET": "Cookie",
 	}
 )
@@ -79,7 +86,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		s.notFound(w, r)
 		return
 	}
-	args := [1]string{}
+	args := [2]string{}
 
 	// Static code generated router with unwrapped path search.
 	switch {
@@ -128,7 +135,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 						default:
 							s.notAllowed(w, r, notAllowedParams{
 								allowedMethods: "POST",
-								allowedHeaders: rn13AllowedHeaders,
+								allowedHeaders: rn14AllowedHeaders,
 								acceptPost:     "application/json",
 								acceptPatch:    "",
 							})
@@ -153,7 +160,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 						default:
 							s.notAllowed(w, r, notAllowedParams{
 								allowedMethods: "POST",
-								allowedHeaders: rn15AllowedHeaders,
+								allowedHeaders: rn16AllowedHeaders,
 								acceptPost:     "",
 								acceptPatch:    "",
 							})
@@ -198,7 +205,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 						break
 					}
 
-					// Param: "id"
+					// Param: "event_id"
 					// Match until "/"
 					idx := strings.IndexByte(elem, '/')
 					if idx < 0 {
@@ -259,7 +266,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 								default:
 									s.notAllowed(w, r, notAllowedParams{
 										allowedMethods: "POST",
-										allowedHeaders: rn4AllowedHeaders,
+										allowedHeaders: rn6AllowedHeaders,
 										acceptPost:     "",
 										acceptPatch:    "",
 									})
@@ -286,13 +293,82 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 								default:
 									s.notAllowed(w, r, notAllowedParams{
 										allowedMethods: "POST",
-										allowedHeaders: rn12AllowedHeaders,
+										allowedHeaders: rn13AllowedHeaders,
 										acceptPost:     "",
 										acceptPatch:    "",
 									})
 								}
 
 								return
+							}
+
+						case 'r': // Prefix: "reviews"
+
+							if l := len("reviews"); len(elem) >= l && elem[0:l] == "reviews" {
+								elem = elem[l:]
+							} else {
+								break
+							}
+
+							if len(elem) == 0 {
+								switch r.Method {
+								case "GET":
+									s.handleAPIGetEventReviewsRequest([1]string{
+										args[0],
+									}, elemIsEscaped, w, r)
+								case "POST":
+									s.handleAPICreateEventReviewRequest([1]string{
+										args[0],
+									}, elemIsEscaped, w, r)
+								default:
+									s.notAllowed(w, r, notAllowedParams{
+										allowedMethods: "GET,POST",
+										allowedHeaders: rn4AllowedHeaders,
+										acceptPost:     "application/json",
+										acceptPatch:    "",
+									})
+								}
+
+								return
+							}
+							switch elem[0] {
+							case '/': // Prefix: "/"
+
+								if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
+									elem = elem[l:]
+								} else {
+									break
+								}
+
+								// Param: "review_id"
+								// Leaf parameter, slashes are prohibited
+								idx := strings.IndexByte(elem, '/')
+								if idx >= 0 {
+									break
+								}
+								args[1] = elem
+								elem = ""
+
+								if len(elem) == 0 {
+									// Leaf node.
+									switch r.Method {
+									case "PATCH":
+										s.handleAPIUpdateEventReviewRequest([2]string{
+											args[0],
+											args[1],
+										}, elemIsEscaped, w, r)
+									default:
+										s.notAllowed(w, r, notAllowedParams{
+											allowedMethods: "PATCH",
+											allowedHeaders: rn19AllowedHeaders,
+											acceptPost:     "",
+											acceptPatch:    "application/json",
+										})
+									}
+
+									return
+								}
+
 							}
 
 						}
@@ -317,7 +393,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 					default:
 						s.notAllowed(w, r, notAllowedParams{
 							allowedMethods: "GET",
-							allowedHeaders: rn10AllowedHeaders,
+							allowedHeaders: rn12AllowedHeaders,
 							acceptPost:     "",
 							acceptPatch:    "",
 						})
@@ -342,7 +418,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 					default:
 						s.notAllowed(w, r, notAllowedParams{
 							allowedMethods: "POST",
-							allowedHeaders: rn16AllowedHeaders,
+							allowedHeaders: rn17AllowedHeaders,
 							acceptPost:     "",
 							acceptPatch:    "",
 						})
@@ -368,7 +444,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 					default:
 						s.notAllowed(w, r, notAllowedParams{
 							allowedMethods: "GET,POST",
-							allowedHeaders: rn9AllowedHeaders,
+							allowedHeaders: rn11AllowedHeaders,
 							acceptPost:     "application/json",
 							acceptPatch:    "",
 						})
@@ -403,7 +479,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 						default:
 							s.notAllowed(w, r, notAllowedParams{
 								allowedMethods: "GET",
-								allowedHeaders: rn7AllowedHeaders,
+								allowedHeaders: rn9AllowedHeaders,
 								acceptPost:     "",
 								acceptPatch:    "",
 							})
@@ -430,7 +506,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 							default:
 								s.notAllowed(w, r, notAllowedParams{
 									allowedMethods: "GET",
-									allowedHeaders: rn8AllowedHeaders,
+									allowedHeaders: rn10AllowedHeaders,
 									acceptPost:     "",
 									acceptPatch:    "",
 								})
@@ -458,7 +534,7 @@ type Route struct {
 	operationGroup string
 	pathPattern    string
 	count          int
-	args           [1]string
+	args           [2]string
 }
 
 // Name returns ogen operation name.
@@ -648,7 +724,7 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 						break
 					}
 
-					// Param: "id"
+					// Param: "event_id"
 					// Match until "/"
 					idx := strings.IndexByte(elem, '/')
 					if idx < 0 {
@@ -742,6 +818,75 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 								default:
 									return
 								}
+							}
+
+						case 'r': // Prefix: "reviews"
+
+							if l := len("reviews"); len(elem) >= l && elem[0:l] == "reviews" {
+								elem = elem[l:]
+							} else {
+								break
+							}
+
+							if len(elem) == 0 {
+								switch method {
+								case "GET":
+									r.name = APIGetEventReviewsOperation
+									r.summary = "get reviews for an event"
+									r.operationID = "Api_getEventReviews"
+									r.operationGroup = ""
+									r.pathPattern = "/events/{event_id}/reviews"
+									r.args = args
+									r.count = 1
+									return r, true
+								case "POST":
+									r.name = APICreateEventReviewOperation
+									r.summary = "create a review for an event"
+									r.operationID = "Api_createEventReview"
+									r.operationGroup = ""
+									r.pathPattern = "/events/{event_id}/reviews"
+									r.args = args
+									r.count = 1
+									return r, true
+								default:
+									return
+								}
+							}
+							switch elem[0] {
+							case '/': // Prefix: "/"
+
+								if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
+									elem = elem[l:]
+								} else {
+									break
+								}
+
+								// Param: "review_id"
+								// Leaf parameter, slashes are prohibited
+								idx := strings.IndexByte(elem, '/')
+								if idx >= 0 {
+									break
+								}
+								args[1] = elem
+								elem = ""
+
+								if len(elem) == 0 {
+									// Leaf node.
+									switch method {
+									case "PATCH":
+										r.name = APIUpdateEventReviewOperation
+										r.summary = "update a review for an event"
+										r.operationID = "Api_updateEventReview"
+										r.operationGroup = ""
+										r.pathPattern = "/events/{event_id}/reviews/{review_id}"
+										r.args = args
+										r.count = 2
+										return r, true
+									default:
+										return
+									}
+								}
+
 							}
 
 						}

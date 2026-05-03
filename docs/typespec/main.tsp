@@ -96,6 +96,11 @@ union EventCategory {
     "other"
 }
 
+model EventReviews {
+    count: int64;
+    rating: float64;
+}
+
 model EventData {
     id: string;
     title: string;
@@ -108,6 +113,7 @@ model EventData {
     created_at: string;
     created_by: string;
     reactions?: EventReactions;
+    reviews?: EventReviews;
 }
 
 model EventReactions {
@@ -318,6 +324,104 @@ model EventReactionUnauthorizedResponse {
     statusCode: 401;
 }
 
+model ReviewData {
+    id: string;
+    event_id: string;
+    comment: string;
+    created_at: string;
+    created_by: string;
+    rating: int32;
+    updated_at: string;
+}
+
+model CreateReviewRequest {
+    comment: string;
+    rating: int32;
+}
+
+model UpdateReviewRequest {
+    comment?: string;
+    rating?: int32;
+}
+
+model CreateEventReviewParams {
+    @path
+    event_id: string;
+    @header("Cookie")
+    cookie?: string;
+}
+
+model CreateEventReviewResponse {
+    @header("Set-Cookie")
+    setCookie: string;
+    @statusCode
+    statusCode: 201;
+    @body
+    body: {id: string}
+}
+
+model CreateEventReviewUnauthorizedResponse {
+    @statusCode
+    statusCode: 401;
+}
+
+model CreateEventReviewConflictResponse {
+    @header("Set-Cookie")
+    setCookie: string;
+    @statusCode
+    statusCode: 409;
+    message?: string;
+}
+
+model GetEventReviewsParams {
+    @path
+    event_id: string;
+    @header("Cookie")
+    cookie?: string;
+    @query
+    limit?: int64;
+    @query
+    offset?: int64;
+}
+
+model GetReviewsResponse {
+    @header("Set-Cookie")
+    setCookie: string;
+    @statusCode
+    statusCode: 200;
+    reviews: ReviewData[];
+    count: int64;
+}
+
+model UpdateEventReviewParams {
+    @path
+    event_id: string;
+    @path
+    review_id: string;
+    @header("Cookie")
+    cookie?: string;
+}
+
+model UpdateEventReviewResponse {
+    @header("Set-Cookie")
+    setCookie: string;
+    @statusCode
+    statusCode: 204;
+}
+
+model UpdateEventReviewUnauthorizedResponse {
+    @statusCode
+    statusCode: 401;
+}
+
+model UpdateEventReviewNotFoundResponse {
+    @header("Set-Cookie")
+    setCookie: string;
+    @statusCode
+    statusCode: 404;
+    message?: string;
+}
+
 namespace Api {
     @summary("healthcheck with session")
     @route("/health")
@@ -362,6 +466,18 @@ namespace Api {
     @summary("dislike event by id")
     @route("/events/{id}/dislike")
     @post op dislikeEvent(...EventReactionParams): EventReactionResponse | EventReactionUnauthorizedResponse | ErrorResponse;
+
+    @summary("create a review for an event")
+    @route("/events/{event_id}/reviews")
+    @post op createEventReview(@body body: CreateReviewRequest, ...CreateEventReviewParams): CreateEventReviewResponse | CreateEventReviewUnauthorizedResponse | CreateEventReviewConflictResponse | ErrorResponse;
+
+    @summary("get reviews for an event")
+    @route("/events/{event_id}/reviews")
+    @get op getEventReviews(...GetEventReviewsParams): GetReviewsResponse | ErrorResponse;
+
+    @summary("update a review for an event")
+    @route("/events/{event_id}/reviews/{review_id}")
+    @patch(#{implicitOptionality: true}) op updateEventReview(@body body: UpdateReviewRequest, ...UpdateEventReviewParams): UpdateEventReviewResponse | UpdateEventReviewUnauthorizedResponse | UpdateEventReviewNotFoundResponse | ErrorResponse;
 
     @summary("get users")
     @route("/users")

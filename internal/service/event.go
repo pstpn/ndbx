@@ -40,11 +40,16 @@ type EventReactionCacheInterface interface {
 	Set(ctx context.Context, req *rdto.SetReactionsReq) error
 }
 
+type ReviewServiceInterface interface {
+	GetReviewsByTitle(ctx context.Context, title string) (sdto.EventReviewsSummary, error)
+}
+
 type EventService struct {
 	l               logger.Interface
 	eventStorage    EventStorageInterface
 	reactionStorage EventReactionStorageInterface
 	reactionCache   EventReactionCacheInterface
+	reviewService   ReviewServiceInterface
 	reactionTTL     time.Duration
 }
 
@@ -53,6 +58,7 @@ func NewEventService(
 	eventStorage EventStorageInterface,
 	reactionStorage EventReactionStorageInterface,
 	reactionCache EventReactionCacheInterface,
+	reviewService ReviewServiceInterface,
 	reactionTTLSeconds int,
 ) *EventService {
 	return &EventService{
@@ -60,6 +66,7 @@ func NewEventService(
 		eventStorage:    eventStorage,
 		reactionStorage: reactionStorage,
 		reactionCache:   reactionCache,
+		reviewService:   reviewService,
 		reactionTTL:     time.Duration(reactionTTLSeconds) * time.Second,
 	}
 }
@@ -120,6 +127,17 @@ func (s *EventService) GetEvents(ctx context.Context, req *sdto.GetEventsReq) (*
 		}
 	}
 
+	if req.IncludeReviews {
+		reviewsByTitle, err := s.reviewsByTitles(ctx, events)
+		if err != nil {
+			return nil, fmt.Errorf("get reviews by titles: %w", err)
+		}
+
+		for i := range events {
+			events[i].Reviews = reviewsByTitle[events[i].Title]
+		}
+	}
+
 	return &sdto.GetEventsResp{Events: events}, nil
 }
 
@@ -139,6 +157,14 @@ func (s *EventService) GetEvent(ctx context.Context, req *sdto.GetEventReq) (*sd
 			return nil, fmt.Errorf("get reactions by title: %w", err)
 		}
 		resp.Event.Reactions = reactions
+	}
+
+	if req.IncludeReviews {
+		reviews, err := s.reviewService.GetReviewsByTitle(ctx, event.Title)
+		if err != nil {
+			return nil, fmt.Errorf("get reviews by title: %w", err)
+		}
+		resp.Event.Reviews = reviews
 	}
 
 	return resp, nil
@@ -214,6 +240,23 @@ func (s *EventService) reactionsByTitles(ctx context.Context, events []sdto.Even
 	}
 
 	return reactionsByTitle, nil
+}
+
+func (s *EventService) reviewsByTitles(ctx context.Context, events []sdto.EventData) (map[string]sdto.EventReviewsSummary, error) {
+	reviewsByTitle := make(map[string]sdto.EventReviewsSummary, len(events))
+	for _, event := range events {
+		if _, ok := reviewsByTitle[event.Title]; ok {
+			continue
+		}
+
+		reviews, err := s.reviewService.GetReviewsByTitle(ctx, event.Title)
+		if err != nil {
+			return nil, err
+		}
+		reviewsByTitle[event.Title] = reviews
+	}
+
+	return reviewsByTitle, nil
 }
 
 func (s *EventService) reactionsByTitle(ctx context.Context, title string) (sdto.EventReactions, error) {
