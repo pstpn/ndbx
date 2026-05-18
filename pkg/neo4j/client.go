@@ -12,7 +12,14 @@ type Client struct {
 }
 
 func NewClient(ctx context.Context, url string, user string, password string) (*Client, error) {
-	driver, err := neo4j.NewDriverWithContext(url, neo4j.BasicAuth(user, password, ""))
+	var auth neo4j.AuthToken
+	if user == "" && password == "" {
+		auth = neo4j.NoAuth()
+	} else {
+		auth = neo4j.BasicAuth(user, password, "")
+	}
+
+	driver, err := neo4j.NewDriverWithContext(url, auth)
 	if err != nil {
 		return nil, fmt.Errorf("create neo4j driver: %w", err)
 	}
