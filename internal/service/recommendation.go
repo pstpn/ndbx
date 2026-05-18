@@ -113,7 +113,7 @@ func (s *RecommendationService) GetRecommendations(ctx context.Context, req *sdt
 	events = deduplicateByTitle(events)
 	titleScore := make(map[string]int64, len(recommended))
 	for _, rec := range recommended {
-		titleScore[rec.Title] = rec.Score
+		titleScore[rec.Title] += rec.Score
 	}
 	sort.SliceStable(events, func(i, j int) bool {
 		return titleScore[events[i].Title] > titleScore[events[j].Title]
