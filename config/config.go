@@ -60,7 +60,7 @@ type CassandraConfig struct {
 
 type Neo4jConfig struct {
 	Neo4jURL      string `env:"NEO4J_URL,required"`
-	Neo4jUser     string `env:"NEO4J_USER,required"`
+	Neo4jUser     string `env:"NEO4J_USERNAME,required"`
 	Neo4jPassword string `env:"NEO4J_PASSWORD,required"`
 }
 

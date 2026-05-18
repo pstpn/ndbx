@@ -29,37 +29,27 @@ func (s *RecommendationCacheStorage) Get(ctx context.Context, req *dto.GetRecomm
 		return nil, redis.Nil
 	}
 
-	events := make([]dto.RecommendationEvent, 0, len(result))
-	for _, value := range result {
-		var event dto.RecommendationEvent
-		if err := json.Unmarshal([]byte(value), &event); err != nil {
-			return nil, fmt.Errorf("unmarshal recommendation event: %w", err)
-		}
-		events = append(events, event)
+	eventsJSON, ok := result["events"]
+	if !ok {
+		return nil, redis.Nil
+	}
+
+	var events []dto.RecommendationEvent
+	if err := json.Unmarshal([]byte(eventsJSON), &events); err != nil {
+		return nil, fmt.Errorf("unmarshal recommendation events: %w", err)
 	}
 
 	return &dto.GetRecommendationResp{Events: events}, nil
 }
 
 func (s *RecommendationCacheStorage) Set(ctx context.Context, req *dto.SetRecommendationReq) error {
-	if len(req.Events) == 0 {
-		if err := s.client.Del(ctx, recommendationKey(req.UserID)).Err(); err != nil {
-			return fmt.Errorf("del recommendations cache: %w", err)
-		}
-		return nil
-	}
-
-	fields := make(map[string]any, len(req.Events))
-	for _, event := range req.Events {
-		data, err := json.Marshal(event)
-		if err != nil {
-			return fmt.Errorf("marshal recommendation event: %w", err)
-		}
-		fields[event.ID] = string(data)
+	eventsJSON, err := json.Marshal(req.Events)
+	if err != nil {
+		return fmt.Errorf("marshal recommendation events: %w", err)
 	}
 
 	pipe := s.client.TxPipeline()
-	pipe.HSet(ctx, recommendationKey(req.UserID), fields)
+	pipe.HSet(ctx, recommendationKey(req.UserID), "events", string(eventsJSON))
 	pipe.Expire(ctx, recommendationKey(req.UserID), req.TTL)
 
 	if _, err := pipe.Exec(ctx); err != nil {

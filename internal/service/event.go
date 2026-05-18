@@ -217,7 +217,7 @@ func (s *EventService) reactToEvent(ctx context.Context, req *sdto.ReactEventReq
 	}
 
 	if value == likeValue {
-		if err := s.graphStorage.AddLike(ctx, req.UserID, req.ID); err != nil {
+		if err := s.graphStorage.AddLike(ctx, req.UserID, req.ID, event.Title); err != nil {
 			s.l.Errorf("failed to add like in neo4j: %s", err.Error())
 		}
 	}

@@ -57,14 +57,14 @@ func (s *GraphStorage) CreateEvent(ctx context.Context, eventID string, title st
 	return nil
 }
 
-func (s *GraphStorage) AddLike(ctx context.Context, userID string, eventID string) error {
+func (s *GraphStorage) AddLike(ctx context.Context, userID string, eventID string, title string) error {
 	session := s.driver.NewSession(ctx, neo4j.SessionConfig{AccessMode: neo4j.AccessModeWrite})
 	defer session.Close(ctx)
 
 	_, err := session.ExecuteWrite(ctx, func(tx neo4j.ManagedTransaction) (any, error) {
 		_, err := tx.Run(ctx,
-			"MATCH (u:User {id: $userId}) MATCH (e:Event {id: $eventId}) MERGE (u)-[:LIKED]->(e)",
-			map[string]any{"userId": userID, "eventId": eventID},
+			"MERGE (u:User {id: $userId}) MERGE (e:Event {id: $eventId}) SET e.title = $title MERGE (u)-[:LIKED]->(e)",
+			map[string]any{"userId": userID, "eventId": eventID, "title": title},
 		)
 		return nil, err
 	})

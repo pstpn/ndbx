@@ -17,7 +17,7 @@ import (
 type GraphStorageInterface interface {
 	CreateUser(ctx context.Context, userID string) error
 	CreateEvent(ctx context.Context, eventID string, title string) error
-	AddLike(ctx context.Context, userID string, eventID string) error
+	AddLike(ctx context.Context, userID string, eventID string, title string) error
 	GetRecommendedEventIDs(ctx context.Context, userID string) ([]nstorage.RecommendedEvent, error)
 }
 
