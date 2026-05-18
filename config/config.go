@@ -14,6 +14,7 @@ type Config struct {
 	RedisConfig
 	MongoDBConfig
 	CassandraConfig
+	Neo4jConfig
 }
 
 type LoggerConfig struct {
@@ -21,9 +22,10 @@ type LoggerConfig struct {
 }
 
 type AppConfig struct {
-	AppUserSessionTTLSeconds  int `env:"APP_USER_SESSION_TTL,required"`
-	AppLikeTTLSeconds         int `env:"APP_LIKE_TTL,required"`
-	AppEventReviewsTTLSeconds int `env:"APP_EVENT_REVIEWS_TTL,required"`
+	AppUserSessionTTLSeconds     int `env:"APP_USER_SESSION_TTL,required"`
+	AppLikeTTLSeconds            int `env:"APP_LIKE_TTL,required"`
+	AppEventReviewsTTLSeconds    int `env:"APP_EVENT_REVIEWS_TTL,required"`
+	AppRecommendationsTTLSeconds int `env:"APP_RECOMMENDATIONS_TTL,required"`
 }
 
 type HTTPConfig struct {
@@ -54,6 +56,12 @@ type CassandraConfig struct {
 	CassandraPassword    string `env:"CASSANDRA_PASSWORD,required"`
 	CassandraKeyspace    string `env:"CASSANDRA_KEYSPACE,required"`
 	CassandraConsistency string `env:"CASSANDRA_CONSISTENCY,required"`
+}
+
+type Neo4jConfig struct {
+	Neo4jURL      string `env:"NEO4J_URL,required"`
+	Neo4jUser     string `env:"NEO4J_USER,required"`
+	Neo4jPassword string `env:"NEO4J_PASSWORD,required"`
 }
 
 func NewConfig() (*Config, error) {

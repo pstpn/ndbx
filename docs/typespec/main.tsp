@@ -422,6 +422,24 @@ model UpdateEventReviewNotFoundResponse {
     message?: string;
 }
 
+model GetRecommendationsRequest {
+    @header("Cookie")
+    cookie?: string;
+}
+
+model GetRecommendationsResponse {
+    @header("Set-Cookie")
+    setCookie: string;
+    @statusCode
+    statusCode: 200;
+    events: EventData[];
+}
+
+model GetRecommendationsUnauthorizedResponse {
+    @statusCode
+    statusCode: 401;
+}
+
 namespace Api {
     @summary("healthcheck with session")
     @route("/health")
@@ -490,4 +508,8 @@ namespace Api {
     @summary("get user events")
     @route("/users/{id}/events")
     @get op getUserEvents(...GetUserEventsRequest): GetEventsResponse | ErrorResponse;
+
+    @summary("get recommended events for user")
+    @route("/recommendations")
+    @get op getRecommendations(...GetRecommendationsRequest): GetRecommendationsResponse | GetRecommendationsUnauthorizedResponse | ErrorResponse;
 }

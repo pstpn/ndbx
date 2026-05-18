@@ -63,6 +63,12 @@ type Invoker interface {
 	//
 	// GET /events
 	APIGetEvents(ctx context.Context, params APIGetEventsParams) (APIGetEventsRes, error)
+	// APIGetRecommendations invokes Api_getRecommendations operation.
+	//
+	// Get recommended events for user.
+	//
+	// GET /recommendations
+	APIGetRecommendations(ctx context.Context, params APIGetRecommendationsParams) (APIGetRecommendationsRes, error)
 	// APIGetUser invokes Api_getUser operation.
 	//
 	// Get user by id.
@@ -1091,6 +1097,97 @@ func (c *Client) sendAPIGetEvents(ctx context.Context, params APIGetEventsParams
 
 	stage = "DecodeResponse"
 	result, err := decodeAPIGetEventsResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// APIGetRecommendations invokes Api_getRecommendations operation.
+//
+// Get recommended events for user.
+//
+// GET /recommendations
+func (c *Client) APIGetRecommendations(ctx context.Context, params APIGetRecommendationsParams) (APIGetRecommendationsRes, error) {
+	res, err := c.sendAPIGetRecommendations(ctx, params)
+	return res, err
+}
+
+func (c *Client) sendAPIGetRecommendations(ctx context.Context, params APIGetRecommendationsParams) (res APIGetRecommendationsRes, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("Api_getRecommendations"),
+		semconv.HTTPRequestMethodKey.String("GET"),
+		semconv.URLTemplateKey.String("/recommendations"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, APIGetRecommendationsOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	stage = "BuildURL"
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [1]string
+	pathParts[0] = "/recommendations"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "GET", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+
+	stage = "EncodeHeaderParams"
+	h := uri.NewHeaderEncoder(r.Header)
+	{
+		cfg := uri.HeaderParameterEncodingConfig{
+			Name:    "Cookie",
+			Explode: false,
+		}
+		if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.Cookie.Get(); ok {
+				return e.EncodeValue(conv.StringToString(val))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode header")
+		}
+	}
+
+	stage = "SendRequest"
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	body := resp.Body
+	defer body.Close()
+
+	stage = "DecodeResponse"
+	result, err := decodeAPIGetRecommendationsResponse(resp)
 	if err != nil {
 		return res, errors.Wrap(err, "decode response")
 	}

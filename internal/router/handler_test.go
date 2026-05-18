@@ -62,7 +62,7 @@ func TestHandler_APIHealth(t *testing.T) {
 			}
 			w := httptest.NewRecorder()
 
-			h := newHandler(t, sessionService, userService, eventService, mock.Mock[router.ReviewService](ctrl))
+			h := newHandler(t, sessionService, userService, eventService, mock.Mock[router.ReviewService](ctrl), mock.Mock[router.RecommendationService](ctrl))
 			srv, err := oas.NewServer(h)
 			require.NoError(t, err)
 
@@ -150,7 +150,7 @@ func TestHandler_APISession(t *testing.T) {
 			sessionService := mock.Mock[router.SessionService](ctrl)
 			userService := mock.Mock[router.UserService](ctrl)
 			eventService := mock.Mock[router.EventService](ctrl)
-			h := newHandler(t, sessionService, userService, eventService, mock.Mock[router.ReviewService](ctrl))
+			h := newHandler(t, sessionService, userService, eventService, mock.Mock[router.ReviewService](ctrl), mock.Mock[router.RecommendationService](ctrl))
 			if tt.setup != nil {
 				tt.setup(h)
 			}
@@ -295,7 +295,7 @@ func TestHandler_APIRegister(t *testing.T) {
 			sessionService := mock.Mock[router.SessionService](ctrl)
 			userService := mock.Mock[router.UserService](ctrl)
 			eventService := mock.Mock[router.EventService](ctrl)
-			h := newHandler(t, sessionService, userService, eventService, mock.Mock[router.ReviewService](ctrl))
+			h := newHandler(t, sessionService, userService, eventService, mock.Mock[router.ReviewService](ctrl), mock.Mock[router.RecommendationService](ctrl))
 			if tt.setup != nil {
 				tt.setup(h)
 			}
@@ -422,7 +422,7 @@ func TestHandler_APILogin(t *testing.T) {
 			sessionService := mock.Mock[router.SessionService](ctrl)
 			userService := mock.Mock[router.UserService](ctrl)
 			eventService := mock.Mock[router.EventService](ctrl)
-			h := newHandler(t, sessionService, userService, eventService, mock.Mock[router.ReviewService](ctrl))
+			h := newHandler(t, sessionService, userService, eventService, mock.Mock[router.ReviewService](ctrl), mock.Mock[router.RecommendationService](ctrl))
 			if tt.setup != nil {
 				tt.setup(h)
 			}
@@ -501,7 +501,7 @@ func TestHandler_APILogout(t *testing.T) {
 			sessionService := mock.Mock[router.SessionService](ctrl)
 			userService := mock.Mock[router.UserService](ctrl)
 			eventService := mock.Mock[router.EventService](ctrl)
-			h := newHandler(t, sessionService, userService, eventService, mock.Mock[router.ReviewService](ctrl))
+			h := newHandler(t, sessionService, userService, eventService, mock.Mock[router.ReviewService](ctrl), mock.Mock[router.RecommendationService](ctrl))
 			if tt.setup != nil {
 				tt.setup(h)
 			}
@@ -689,7 +689,7 @@ func TestHandler_APICreateEvent(t *testing.T) {
 			sessionService := mock.Mock[router.SessionService](ctrl)
 			userService := mock.Mock[router.UserService](ctrl)
 			eventService := mock.Mock[router.EventService](ctrl)
-			h := newHandler(t, sessionService, userService, eventService, mock.Mock[router.ReviewService](ctrl))
+			h := newHandler(t, sessionService, userService, eventService, mock.Mock[router.ReviewService](ctrl), mock.Mock[router.RecommendationService](ctrl))
 			if tt.setup != nil {
 				tt.setup(h)
 			}
@@ -840,7 +840,7 @@ func TestHandler_APIGetEvents(t *testing.T) {
 			sessionService := mock.Mock[router.SessionService](ctrl)
 			userService := mock.Mock[router.UserService](ctrl)
 			eventService := mock.Mock[router.EventService](ctrl)
-			h := newHandler(t, sessionService, userService, eventService, mock.Mock[router.ReviewService](ctrl))
+			h := newHandler(t, sessionService, userService, eventService, mock.Mock[router.ReviewService](ctrl), mock.Mock[router.RecommendationService](ctrl))
 			if tt.setup != nil {
 				tt.setup(h)
 			}
@@ -953,7 +953,7 @@ func TestHandler_APIGetEvent(t *testing.T) {
 			sessionService := mock.Mock[router.SessionService](ctrl)
 			userService := mock.Mock[router.UserService](ctrl)
 			eventService := mock.Mock[router.EventService](ctrl)
-			h := newHandler(t, sessionService, userService, eventService, mock.Mock[router.ReviewService](ctrl))
+			h := newHandler(t, sessionService, userService, eventService, mock.Mock[router.ReviewService](ctrl), mock.Mock[router.RecommendationService](ctrl))
 			if tt.setup != nil {
 				tt.setup(h)
 			}
@@ -1121,7 +1121,7 @@ func TestHandler_APIPatchEvent(t *testing.T) {
 			sessionService := mock.Mock[router.SessionService](ctrl)
 			userService := mock.Mock[router.UserService](ctrl)
 			eventService := mock.Mock[router.EventService](ctrl)
-			h := newHandler(t, sessionService, userService, eventService, mock.Mock[router.ReviewService](ctrl))
+			h := newHandler(t, sessionService, userService, eventService, mock.Mock[router.ReviewService](ctrl), mock.Mock[router.RecommendationService](ctrl))
 			if tt.setup != nil {
 				tt.setup(h)
 			}
@@ -1195,7 +1195,7 @@ func TestHandler_APIGetUsers(t *testing.T) {
 			sessionService := mock.Mock[router.SessionService](ctrl)
 			userService := mock.Mock[router.UserService](ctrl)
 			eventService := mock.Mock[router.EventService](ctrl)
-			h := newHandler(t, sessionService, userService, eventService, mock.Mock[router.ReviewService](ctrl))
+			h := newHandler(t, sessionService, userService, eventService, mock.Mock[router.ReviewService](ctrl), mock.Mock[router.RecommendationService](ctrl))
 			if tt.setup != nil {
 				tt.setup(h)
 			}
@@ -1257,7 +1257,7 @@ func TestHandler_APIGetUser(t *testing.T) {
 			sessionService := mock.Mock[router.SessionService](ctrl)
 			userService := mock.Mock[router.UserService](ctrl)
 			eventService := mock.Mock[router.EventService](ctrl)
-			h := newHandler(t, sessionService, userService, eventService, mock.Mock[router.ReviewService](ctrl))
+			h := newHandler(t, sessionService, userService, eventService, mock.Mock[router.ReviewService](ctrl), mock.Mock[router.RecommendationService](ctrl))
 			if tt.setup != nil {
 				tt.setup(h)
 			}
@@ -1355,7 +1355,7 @@ func TestHandler_APIGetUserEvents(t *testing.T) {
 			sessionService := mock.Mock[router.SessionService](ctrl)
 			userService := mock.Mock[router.UserService](ctrl)
 			eventService := mock.Mock[router.EventService](ctrl)
-			h := newHandler(t, sessionService, userService, eventService, mock.Mock[router.ReviewService](ctrl))
+			h := newHandler(t, sessionService, userService, eventService, mock.Mock[router.ReviewService](ctrl), mock.Mock[router.RecommendationService](ctrl))
 			if tt.setup != nil {
 				tt.setup(h)
 			}
@@ -1376,6 +1376,128 @@ func TestHandler_APIGetUserEvents(t *testing.T) {
 	}
 }
 
+func TestHandler_APIGetRecommendations(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name           string
+		cookie         string
+		setup          func(h *router.Handler)
+		expectedStatus int
+		expectedBody   string
+	}{
+		{
+			name:           "unauthorized when no cookie",
+			cookie:         "",
+			expectedStatus: http.StatusUnauthorized,
+		},
+		{
+			name:   "unauthorized when session not found",
+			cookie: "X-Session-Id=invalid-sid",
+			setup: func(h *router.Handler) {
+				mock.WhenDouble(h.SessionService.GetSession(mock.AnyContext(), mock.Equal(&dto.GetSessionReq{SID: "invalid-sid"}))).
+					ThenReturn(nil, service.ErrNotFound)
+			},
+			expectedStatus: http.StatusUnauthorized,
+		},
+		{
+			name:   "unauthorized when session has no user",
+			cookie: "X-Session-Id=anon-sid",
+			setup: func(h *router.Handler) {
+				mock.WhenDouble(h.SessionService.GetSession(mock.AnyContext(), mock.Equal(&dto.GetSessionReq{SID: "anon-sid"}))).
+					ThenReturn(&dto.GetSessionResp{UserID: ""}, nil)
+			},
+			expectedStatus: http.StatusUnauthorized,
+		},
+		{
+			name:   "successful empty recommendations",
+			cookie: "X-Session-Id=user-sid",
+			setup: func(h *router.Handler) {
+				mock.WhenDouble(h.SessionService.GetSession(mock.AnyContext(), mock.Equal(&dto.GetSessionReq{SID: "user-sid"}))).
+					ThenReturn(&dto.GetSessionResp{UserID: "user-1"}, nil)
+				mock.WhenDouble(h.RecommendationService.GetRecommendations(mock.AnyContext(), mock.Equal(&dto.GetRecommendationsReq{UserID: "user-1"}))).
+					ThenReturn(&dto.GetRecommendationsResp{Events: []dto.EventData{}}, nil)
+			},
+			expectedStatus: http.StatusOK,
+			expectedBody:   `{"events":[]}`,
+		},
+		{
+			name:   "successful recommendations with events",
+			cookie: "X-Session-Id=user-sid-2",
+			setup: func(h *router.Handler) {
+				mock.WhenDouble(h.SessionService.GetSession(mock.AnyContext(), mock.Equal(&dto.GetSessionReq{SID: "user-sid-2"}))).
+					ThenReturn(&dto.GetSessionResp{UserID: "user-2"}, nil)
+				mock.WhenDouble(h.RecommendationService.GetRecommendations(mock.AnyContext(), mock.Equal(&dto.GetRecommendationsReq{UserID: "user-2"}))).
+					ThenReturn(&dto.GetRecommendationsResp{Events: []dto.EventData{
+						{
+							ID:          "event-1",
+							Title:       "Test Event",
+							Category:    "meetup",
+							Price:       100,
+							Description: "desc",
+							Location:    dto.EventLocation{Address: "addr", City: "city"},
+							CreatedAt:   time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC),
+							CreatedBy:   "creator-1",
+							StartedAt:   time.Date(2026, 2, 1, 12, 0, 0, 0, time.UTC),
+							FinishedAt:  time.Date(2026, 2, 1, 23, 0, 0, 0, time.UTC),
+						},
+					}}, nil)
+			},
+			expectedStatus: http.StatusOK,
+			expectedBody: `{"events":[{"id":"event-1","title":"Test Event",` +
+				`"category":"meetup","price":100,"description":"desc",` +
+				`"location":{"address":"addr","city":"city"},` +
+				`"started_at":"2026-02-01T12:00:00Z","finished_at":"2026-02-01T23:00:00Z",` +
+				`"created_at":"2026-01-01T00:00:00Z","created_by":"creator-1"}]}`,
+		},
+		{
+			name:   "internal error when recommendation service fails",
+			cookie: "X-Session-Id=err-sid",
+			setup: func(h *router.Handler) {
+				mock.WhenDouble(h.SessionService.GetSession(mock.AnyContext(), mock.Equal(&dto.GetSessionReq{SID: "err-sid"}))).
+					ThenReturn(&dto.GetSessionResp{UserID: "user-err"}, nil)
+				mock.WhenDouble(h.RecommendationService.GetRecommendations(mock.AnyContext(), mock.Any[*dto.GetRecommendationsReq]())).
+					ThenReturn(nil, errors.New("internal error"))
+			},
+			expectedStatus: http.StatusInternalServerError,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			ctrl := mock.NewMockController(t, mockopts.StrictVerify())
+			sessionService := mock.Mock[router.SessionService](ctrl)
+			userService := mock.Mock[router.UserService](ctrl)
+			eventService := mock.Mock[router.EventService](ctrl)
+			recommendationService := mock.Mock[router.RecommendationService](ctrl)
+			h := newHandler(t, sessionService, userService, eventService, mock.Mock[router.ReviewService](ctrl), recommendationService)
+			if tt.setup != nil {
+				tt.setup(h)
+			}
+
+			req := httptest.NewRequest(http.MethodGet, "/recommendations", http.NoBody)
+			if tt.cookie != "" {
+				req.Header.Set("Cookie", tt.cookie)
+			}
+			w := httptest.NewRecorder()
+
+			srv, err := oas.NewServer(h)
+			require.NoError(t, err)
+			srv.ServeHTTP(w, req)
+
+			resp := w.Result()
+			t.Cleanup(func() { require.NoError(t, resp.Body.Close()) })
+			require.Equal(t, tt.expectedStatus, resp.StatusCode)
+			if tt.expectedBody != "" {
+				body, err := io.ReadAll(resp.Body)
+				require.NoError(t, err)
+				require.JSONEq(t, tt.expectedBody, string(body))
+			}
+		})
+	}
+}
+
 func ref(v string) *string {
 	return &v
 }
@@ -1390,10 +1512,15 @@ func newHandler(
 	userService router.UserService,
 	eventService router.EventService,
 	reviewService router.ReviewService,
+	recommendationService router.RecommendationService,
 ) *router.Handler {
 	t.Helper()
 
-	return router.NewHandler(logger.NewWithOutput("debug", io.Discard), sessionService, userService, eventService, reviewService, mockTTL)
+	return router.NewHandler(
+		logger.NewWithOutput("debug", io.Discard),
+		sessionService, userService, eventService,
+		reviewService, recommendationService, mockTTL,
+	)
 }
 
 func createEventRequestBody(title string, description string, address string, startedAt string, finishedAt string) string {

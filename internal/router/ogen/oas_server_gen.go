@@ -44,6 +44,12 @@ type Handler interface {
 	//
 	// GET /events
 	APIGetEvents(ctx context.Context, params APIGetEventsParams) (APIGetEventsRes, error)
+	// APIGetRecommendations implements Api_getRecommendations operation.
+	//
+	// Get recommended events for user.
+	//
+	// GET /recommendations
+	APIGetRecommendations(ctx context.Context, params APIGetRecommendationsParams) (APIGetRecommendationsRes, error)
 	// APIGetUser implements Api_getUser operation.
 	//
 	// Get user by id.

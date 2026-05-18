@@ -19,11 +19,13 @@ import (
 	"ndbx/internal/service"
 	cstorage "ndbx/internal/storage/cassandra"
 	mstorage "ndbx/internal/storage/mongodb"
+	nstorage "ndbx/internal/storage/neo4j"
 	rstorage "ndbx/internal/storage/redis"
 	"ndbx/pkg/cassandra"
 	"ndbx/pkg/httpserver"
 	"ndbx/pkg/logger"
 	"ndbx/pkg/mongodb"
+	neo4jpkg "ndbx/pkg/neo4j"
 	"ndbx/pkg/redis"
 )
 
@@ -67,14 +69,22 @@ func Run(ctx context.Context, cfg *config.Config) error {
 	}
 	defer cassandraClient.Close()
 
+	neo4jClient, err := neo4jpkg.NewClient(ctx, cfg.Neo4jURL, cfg.Neo4jUser, cfg.Neo4jPassword)
+	if err != nil {
+		return fmt.Errorf("new neo4j client: %w", err)
+	}
+	defer neo4jClient.Close(ctx)
+
 	// Storages
 	sessionStorage := rstorage.NewSessionStorage(redisClient)
 	reactionCacheStorage := rstorage.NewEventReactionStorage(redisClient)
 	reviewCacheStorage := rstorage.NewEventReviewCacheStorage(redisClient)
+	recommendationCacheStorage := rstorage.NewRecommendationCacheStorage(redisClient)
 	userStorage := mstorage.NewUserStorage(mongoDBClient.DB())
 	eventStorage := mstorage.NewEventStorage(mongoDBClient.DB())
 	reactionStorage := cstorage.NewEventReactionStorage(cassandraClient.Session())
 	reviewStorage := cstorage.NewEventReviewStorage(cassandraClient.Session())
+	graphStorage := nstorage.NewGraphStorage(neo4jClient.Driver())
 
 	if err := userStorage.CreateIndex(ctx); err != nil {
 		return fmt.Errorf("create user indexes: %w", err)
@@ -85,11 +95,12 @@ func Run(ctx context.Context, cfg *config.Config) error {
 
 	// Services
 	sessionService := service.NewSessionService(l, sessionStorage, cfg.AppUserSessionTTLSeconds)
-	userService := service.NewUserService(l, userStorage)
+	userService := service.NewUserService(l, userStorage, graphStorage)
 	reviewService := service.NewReviewService(l, eventStorage, reviewStorage, reviewCacheStorage, cfg.AppEventReviewsTTLSeconds)
-	eventService := service.NewEventService(l, eventStorage, reactionStorage, reactionCacheStorage, reviewService, cfg.AppLikeTTLSeconds)
+	eventService := service.NewEventService(l, eventStorage, reactionStorage, reactionCacheStorage, reviewService, graphStorage, cfg.AppLikeTTLSeconds)
+	recommendationService := service.NewRecommendationService(l, graphStorage, eventStorage, recommendationCacheStorage, cfg.AppRecommendationsTTLSeconds)
 
-	handler := router.NewHandler(l, sessionService, userService, eventService, reviewService, cfg.AppUserSessionTTLSeconds)
+	handler := router.NewHandler(l, sessionService, userService, eventService, reviewService, recommendationService, cfg.AppUserSessionTTLSeconds)
 
 	oasHandler, err := oas.NewServer(handler)
 	if err != nil {
