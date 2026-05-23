@@ -156,6 +156,137 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+  /events/{event_id}/reviews:
+    post:
+      operationId: Api_createEventReview
+      summary: create a review for an event
+      parameters:
+        - $ref: '#/components/parameters/CreateEventReviewParams.event_id'
+        - $ref: '#/components/parameters/CreateEventReviewParams.cookie'
+      responses:
+        '201':
+          description: The request has succeeded and a new resource has been created as a result.
+          headers:
+            Set-Cookie:
+              required: true
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                required:
+                  - id
+        '401':
+          description: Access is unauthorized.
+        '409':
+          description: The request conflicts with the current state of the server.
+          headers:
+            Set-Cookie:
+              required: true
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateEventReviewConflictResponse'
+        default:
+          description: An unexpected error response.
+          headers:
+            Set-Cookie:
+              required: true
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateReviewRequest'
+    get:
+      operationId: Api_getEventReviews
+      summary: get reviews for an event
+      parameters:
+        - $ref: '#/components/parameters/GetEventReviewsParams.event_id'
+        - $ref: '#/components/parameters/GetEventReviewsParams.cookie'
+        - $ref: '#/components/parameters/GetEventReviewsParams.limit'
+        - $ref: '#/components/parameters/GetEventReviewsParams.offset'
+      responses:
+        '200':
+          description: The request has succeeded.
+          headers:
+            Set-Cookie:
+              required: true
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetReviewsResponse'
+        default:
+          description: An unexpected error response.
+          headers:
+            Set-Cookie:
+              required: true
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /events/{event_id}/reviews/{review_id}:
+    patch:
+      operationId: Api_updateEventReview
+      summary: update a review for an event
+      parameters:
+        - $ref: '#/components/parameters/UpdateEventReviewParams.event_id'
+        - $ref: '#/components/parameters/UpdateEventReviewParams.review_id'
+        - $ref: '#/components/parameters/UpdateEventReviewParams.cookie'
+      responses:
+        '204':
+          description: 'There is no content to send for this request, but the headers may be useful. '
+          headers:
+            Set-Cookie:
+              required: true
+              schema:
+                type: string
+        '401':
+          description: Access is unauthorized.
+        '404':
+          description: The server cannot find the requested resource.
+          headers:
+            Set-Cookie:
+              required: true
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateEventReviewNotFoundResponse'
+        default:
+          description: An unexpected error response.
+          headers:
+            Set-Cookie:
+              required: true
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateReviewRequest'
   /events/{id}:
     get:
       operationId: Api_getEvent
@@ -473,6 +604,18 @@ components:
       required: false
       schema:
         type: string
+    CreateEventReviewParams.cookie:
+      name: Cookie
+      in: header
+      required: false
+      schema:
+        type: string
+    CreateEventReviewParams.event_id:
+      name: event_id
+      in: path
+      required: true
+      schema:
+        type: string
     EventReactionParams.cookie:
       name: Cookie
       in: header
@@ -503,6 +646,34 @@ components:
       required: false
       schema:
         type: string
+      explode: false
+    GetEventReviewsParams.cookie:
+      name: Cookie
+      in: header
+      required: false
+      schema:
+        type: string
+    GetEventReviewsParams.event_id:
+      name: event_id
+      in: path
+      required: true
+      schema:
+        type: string
+    GetEventReviewsParams.limit:
+      name: limit
+      in: query
+      required: false
+      schema:
+        type: integer
+        format: int64
+      explode: false
+    GetEventReviewsParams.offset:
+      name: offset
+      in: query
+      required: false
+      schema:
+        type: integer
+        format: int64
       explode: false
     GetEventsRequest.address:
       name: address
@@ -777,6 +948,24 @@ components:
       required: false
       schema:
         type: string
+    UpdateEventReviewParams.cookie:
+      name: Cookie
+      in: header
+      required: false
+      schema:
+        type: string
+    UpdateEventReviewParams.event_id:
+      name: event_id
+      in: path
+      required: true
+      schema:
+        type: string
+    UpdateEventReviewParams.review_id:
+      name: review_id
+      in: path
+      required: true
+      schema:
+        type: string
   schemas:
     CreateEventRequest:
       type: object
@@ -796,6 +985,19 @@ components:
           type: string
         finished_at:
           type: string
+    CreateEventReviewConflictResponse:
+      type: object
+      properties:
+        message:
+          type: string
+    CreateReviewRequest:
+      type: object
+      properties:
+        comment:
+          type: string
+        rating:
+          type: integer
+          format: int32
     ErrorResponse:
       type: object
       properties:
@@ -843,6 +1045,8 @@ components:
           type: string
         reactions:
           $ref: '#/components/schemas/EventReactions'
+        reviews:
+          $ref: '#/components/schemas/EventReviews'
     EventReactions:
       type: object
       required:
@@ -855,6 +1059,18 @@ components:
         dislikes:
           type: integer
           format: int64
+    EventReviews:
+      type: object
+      required:
+        - count
+        - rating
+      properties:
+        count:
+          type: integer
+          format: int64
+        rating:
+          type: number
+          format: double
     GetEventsResponse:
       type: object
       required:
@@ -865,6 +1081,19 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/EventData'
+        count:
+          type: integer
+          format: int64
+    GetReviewsResponse:
+      type: object
+      required:
+        - reviews
+        - count
+      properties:
+        reviews:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReviewData'
         count:
           type: integer
           format: int64
@@ -917,6 +1146,45 @@ components:
         price:
           type: integer
           format: int64
+    ReviewData:
+      type: object
+      required:
+        - id
+        - event_id
+        - comment
+        - created_at
+        - created_by
+        - rating
+        - updated_at
+      properties:
+        id:
+          type: string
+        event_id:
+          type: string
+        comment:
+          type: string
+        created_at:
+          type: string
+        created_by:
+          type: string
+        rating:
+          type: integer
+          format: int32
+        updated_at:
+          type: string
+    UpdateEventReviewNotFoundResponse:
+      type: object
+      properties:
+        message:
+          type: string
+    UpdateReviewRequest:
+      type: object
+      properties:
+        comment:
+          type: string
+        rating:
+          type: integer
+          format: int32
     UserData:
       type: object
       required:

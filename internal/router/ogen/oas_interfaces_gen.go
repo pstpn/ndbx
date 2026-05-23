@@ -5,12 +5,20 @@ type APICreateEventRes interface {
 	aPICreateEventRes()
 }
 
+type APICreateEventReviewRes interface {
+	aPICreateEventReviewRes()
+}
+
 type APIDislikeEventRes interface {
 	aPIDislikeEventRes()
 }
 
 type APIGetEventRes interface {
 	aPIGetEventRes()
+}
+
+type APIGetEventReviewsRes interface {
+	aPIGetEventReviewsRes()
 }
 
 type APIGetEventsRes interface {
@@ -51,4 +59,8 @@ type APIRegisterRes interface {
 
 type APISessionRes interface {
 	aPISessionRes()
+}
+
+type APIUpdateEventReviewRes interface {
+	aPIUpdateEventReviewRes()
 }

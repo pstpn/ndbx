@@ -33,6 +33,12 @@ type Invoker interface {
 	//
 	// POST /events
 	APICreateEvent(ctx context.Context, request *CreateEventRequest, params APICreateEventParams) (APICreateEventRes, error)
+	// APICreateEventReview invokes Api_createEventReview operation.
+	//
+	// Create a review for an event.
+	//
+	// POST /events/{event_id}/reviews
+	APICreateEventReview(ctx context.Context, request *CreateReviewRequest, params APICreateEventReviewParams) (APICreateEventReviewRes, error)
 	// APIDislikeEvent invokes Api_dislikeEvent operation.
 	//
 	// Dislike event by id.
@@ -45,6 +51,12 @@ type Invoker interface {
 	//
 	// GET /events/{id}
 	APIGetEvent(ctx context.Context, params APIGetEventParams) (APIGetEventRes, error)
+	// APIGetEventReviews invokes Api_getEventReviews operation.
+	//
+	// Get reviews for an event.
+	//
+	// GET /events/{event_id}/reviews
+	APIGetEventReviews(ctx context.Context, params APIGetEventReviewsParams) (APIGetEventReviewsRes, error)
 	// APIGetEvents invokes Api_getEvents operation.
 	//
 	// Get events with filtering and pagination.
@@ -111,6 +123,12 @@ type Invoker interface {
 	//
 	// POST /session
 	APISession(ctx context.Context, params APISessionParams) (APISessionRes, error)
+	// APIUpdateEventReview invokes Api_updateEventReview operation.
+	//
+	// Update a review for an event.
+	//
+	// PATCH /events/{event_id}/reviews/{review_id}
+	APIUpdateEventReview(ctx context.Context, request *UpdateReviewRequest, params APIUpdateEventReviewParams) (APIUpdateEventReviewRes, error)
 }
 
 // Client implements OAS client.
@@ -239,6 +257,119 @@ func (c *Client) sendAPICreateEvent(ctx context.Context, request *CreateEventReq
 
 	stage = "DecodeResponse"
 	result, err := decodeAPICreateEventResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// APICreateEventReview invokes Api_createEventReview operation.
+//
+// Create a review for an event.
+//
+// POST /events/{event_id}/reviews
+func (c *Client) APICreateEventReview(ctx context.Context, request *CreateReviewRequest, params APICreateEventReviewParams) (APICreateEventReviewRes, error) {
+	res, err := c.sendAPICreateEventReview(ctx, request, params)
+	return res, err
+}
+
+func (c *Client) sendAPICreateEventReview(ctx context.Context, request *CreateReviewRequest, params APICreateEventReviewParams) (res APICreateEventReviewRes, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("Api_createEventReview"),
+		semconv.HTTPRequestMethodKey.String("POST"),
+		semconv.URLTemplateKey.String("/events/{event_id}/reviews"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, APICreateEventReviewOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	stage = "BuildURL"
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [3]string
+	pathParts[0] = "/events/"
+	{
+		// Encode "event_id" parameter.
+		e := uri.NewPathEncoder(uri.PathEncoderConfig{
+			Param:   "event_id",
+			Style:   uri.PathStyleSimple,
+			Explode: false,
+		})
+		if err := func() error {
+			return e.EncodeValue(conv.StringToString(params.EventID))
+		}(); err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		encoded, err := e.Result()
+		if err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		pathParts[1] = encoded
+	}
+	pathParts[2] = "/reviews"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "POST", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+	if err := encodeAPICreateEventReviewRequest(request, r); err != nil {
+		return res, errors.Wrap(err, "encode request")
+	}
+
+	stage = "EncodeHeaderParams"
+	h := uri.NewHeaderEncoder(r.Header)
+	{
+		cfg := uri.HeaderParameterEncodingConfig{
+			Name:    "Cookie",
+			Explode: false,
+		}
+		if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.Cookie.Get(); ok {
+				return e.EncodeValue(conv.StringToString(val))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode header")
+		}
+	}
+
+	stage = "SendRequest"
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	body := resp.Body
+	defer body.Close()
+
+	stage = "DecodeResponse"
+	result, err := decodeAPICreateEventReviewResponse(resp)
 	if err != nil {
 		return res, errors.Wrap(err, "decode response")
 	}
@@ -479,6 +610,154 @@ func (c *Client) sendAPIGetEvent(ctx context.Context, params APIGetEventParams) 
 
 	stage = "DecodeResponse"
 	result, err := decodeAPIGetEventResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// APIGetEventReviews invokes Api_getEventReviews operation.
+//
+// Get reviews for an event.
+//
+// GET /events/{event_id}/reviews
+func (c *Client) APIGetEventReviews(ctx context.Context, params APIGetEventReviewsParams) (APIGetEventReviewsRes, error) {
+	res, err := c.sendAPIGetEventReviews(ctx, params)
+	return res, err
+}
+
+func (c *Client) sendAPIGetEventReviews(ctx context.Context, params APIGetEventReviewsParams) (res APIGetEventReviewsRes, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("Api_getEventReviews"),
+		semconv.HTTPRequestMethodKey.String("GET"),
+		semconv.URLTemplateKey.String("/events/{event_id}/reviews"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, APIGetEventReviewsOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	stage = "BuildURL"
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [3]string
+	pathParts[0] = "/events/"
+	{
+		// Encode "event_id" parameter.
+		e := uri.NewPathEncoder(uri.PathEncoderConfig{
+			Param:   "event_id",
+			Style:   uri.PathStyleSimple,
+			Explode: false,
+		})
+		if err := func() error {
+			return e.EncodeValue(conv.StringToString(params.EventID))
+		}(); err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		encoded, err := e.Result()
+		if err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		pathParts[1] = encoded
+	}
+	pathParts[2] = "/reviews"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeQueryParams"
+	q := uri.NewQueryEncoder()
+	{
+		// Encode "limit" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "limit",
+			Style:   uri.QueryStyleForm,
+			Explode: false,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.Limit.Get(); ok {
+				return e.EncodeValue(conv.Int64ToString(val))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	{
+		// Encode "offset" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "offset",
+			Style:   uri.QueryStyleForm,
+			Explode: false,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.Offset.Get(); ok {
+				return e.EncodeValue(conv.Int64ToString(val))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	u.RawQuery = q.Values().Encode()
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "GET", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+
+	stage = "EncodeHeaderParams"
+	h := uri.NewHeaderEncoder(r.Header)
+	{
+		cfg := uri.HeaderParameterEncodingConfig{
+			Name:    "Cookie",
+			Explode: false,
+		}
+		if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.Cookie.Get(); ok {
+				return e.EncodeValue(conv.StringToString(val))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode header")
+		}
+	}
+
+	stage = "SendRequest"
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	body := resp.Body
+	defer body.Close()
+
+	stage = "DecodeResponse"
+	result, err := decodeAPIGetEventReviewsResponse(resp)
 	if err != nil {
 		return res, errors.Wrap(err, "decode response")
 	}
@@ -2068,6 +2347,137 @@ func (c *Client) sendAPISession(ctx context.Context, params APISessionParams) (r
 
 	stage = "DecodeResponse"
 	result, err := decodeAPISessionResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// APIUpdateEventReview invokes Api_updateEventReview operation.
+//
+// Update a review for an event.
+//
+// PATCH /events/{event_id}/reviews/{review_id}
+func (c *Client) APIUpdateEventReview(ctx context.Context, request *UpdateReviewRequest, params APIUpdateEventReviewParams) (APIUpdateEventReviewRes, error) {
+	res, err := c.sendAPIUpdateEventReview(ctx, request, params)
+	return res, err
+}
+
+func (c *Client) sendAPIUpdateEventReview(ctx context.Context, request *UpdateReviewRequest, params APIUpdateEventReviewParams) (res APIUpdateEventReviewRes, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("Api_updateEventReview"),
+		semconv.HTTPRequestMethodKey.String("PATCH"),
+		semconv.URLTemplateKey.String("/events/{event_id}/reviews/{review_id}"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, APIUpdateEventReviewOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	stage = "BuildURL"
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [4]string
+	pathParts[0] = "/events/"
+	{
+		// Encode "event_id" parameter.
+		e := uri.NewPathEncoder(uri.PathEncoderConfig{
+			Param:   "event_id",
+			Style:   uri.PathStyleSimple,
+			Explode: false,
+		})
+		if err := func() error {
+			return e.EncodeValue(conv.StringToString(params.EventID))
+		}(); err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		encoded, err := e.Result()
+		if err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		pathParts[1] = encoded
+	}
+	pathParts[2] = "/reviews/"
+	{
+		// Encode "review_id" parameter.
+		e := uri.NewPathEncoder(uri.PathEncoderConfig{
+			Param:   "review_id",
+			Style:   uri.PathStyleSimple,
+			Explode: false,
+		})
+		if err := func() error {
+			return e.EncodeValue(conv.StringToString(params.ReviewID))
+		}(); err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		encoded, err := e.Result()
+		if err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		pathParts[3] = encoded
+	}
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "PATCH", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+	if err := encodeAPIUpdateEventReviewRequest(request, r); err != nil {
+		return res, errors.Wrap(err, "encode request")
+	}
+
+	stage = "EncodeHeaderParams"
+	h := uri.NewHeaderEncoder(r.Header)
+	{
+		cfg := uri.HeaderParameterEncodingConfig{
+			Name:    "Cookie",
+			Explode: false,
+		}
+		if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.Cookie.Get(); ok {
+				return e.EncodeValue(conv.StringToString(val))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode header")
+		}
+	}
+
+	stage = "SendRequest"
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	body := resp.Body
+	defer body.Close()
+
+	stage = "DecodeResponse"
+	result, err := decodeAPIUpdateEventReviewResponse(resp)
 	if err != nil {
 		return res, errors.Wrap(err, "decode response")
 	}

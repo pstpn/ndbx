@@ -12,6 +12,11 @@ type EventReactions struct {
 	Dislikes int64
 }
 
+type EventReviewsSummary struct {
+	Count  int64
+	Rating float64
+}
+
 type EventData struct {
 	ID          string
 	Title       string
@@ -24,6 +29,7 @@ type EventData struct {
 	StartedAt   time.Time
 	FinishedAt  time.Time
 	Reactions   EventReactions
+	Reviews     EventReviewsSummary
 }
 
 type CreateEventReq struct {
@@ -54,6 +60,7 @@ type GetEventsReq struct {
 	Limit            int64
 	Offset           int64
 	IncludeReactions bool
+	IncludeReviews   bool
 }
 
 type GetEventsResp struct {
@@ -63,6 +70,7 @@ type GetEventsResp struct {
 type GetEventReq struct {
 	ID               string
 	IncludeReactions bool
+	IncludeReviews   bool
 }
 
 type ReactEventReq struct {

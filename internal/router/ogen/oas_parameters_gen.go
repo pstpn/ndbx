@@ -76,6 +76,121 @@ func decodeAPICreateEventParams(args [0]string, argsEscaped bool, r *http.Reques
 	return params, nil
 }
 
+// APICreateEventReviewParams is parameters of Api_createEventReview operation.
+type APICreateEventReviewParams struct {
+	EventID string
+	Cookie  OptString `json:",omitempty,omitzero"`
+}
+
+func unpackAPICreateEventReviewParams(packed middleware.Parameters) (params APICreateEventReviewParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "event_id",
+			In:   "path",
+		}
+		params.EventID = packed[key].(string)
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "Cookie",
+			In:   "header",
+		}
+		if v, ok := packed[key]; ok {
+			params.Cookie = v.(OptString)
+		}
+	}
+	return params
+}
+
+func decodeAPICreateEventReviewParams(args [1]string, argsEscaped bool, r *http.Request) (params APICreateEventReviewParams, _ error) {
+	h := uri.NewHeaderDecoder(r.Header)
+	// Decode path: event_id.
+	if err := func() error {
+		param := args[0]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[0])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "event_id",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToString(val)
+				if err != nil {
+					return err
+				}
+
+				params.EventID = c
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "event_id",
+			In:   "path",
+			Err:  err,
+		}
+	}
+	// Decode header: Cookie.
+	if err := func() error {
+		cfg := uri.HeaderParameterDecodingConfig{
+			Name:    "Cookie",
+			Explode: false,
+		}
+		if err := h.HasParam(cfg); err == nil {
+			if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotCookieVal string
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotCookieVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.Cookie.SetTo(paramsDotCookieVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "Cookie",
+			In:   "header",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
 // APIDislikeEventParams is parameters of Api_dislikeEvent operation.
 type APIDislikeEventParams struct {
 	ID     string
@@ -351,6 +466,224 @@ func decodeAPIGetEventParams(args [1]string, argsEscaped bool, r *http.Request) 
 	}(); err != nil {
 		return params, &ogenerrors.DecodeParamError{
 			Name: "include",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
+// APIGetEventReviewsParams is parameters of Api_getEventReviews operation.
+type APIGetEventReviewsParams struct {
+	EventID string
+	Cookie  OptString `json:",omitempty,omitzero"`
+	Limit   OptInt64  `json:",omitempty,omitzero"`
+	Offset  OptInt64  `json:",omitempty,omitzero"`
+}
+
+func unpackAPIGetEventReviewsParams(packed middleware.Parameters) (params APIGetEventReviewsParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "event_id",
+			In:   "path",
+		}
+		params.EventID = packed[key].(string)
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "Cookie",
+			In:   "header",
+		}
+		if v, ok := packed[key]; ok {
+			params.Cookie = v.(OptString)
+		}
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "limit",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.Limit = v.(OptInt64)
+		}
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "offset",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.Offset = v.(OptInt64)
+		}
+	}
+	return params
+}
+
+func decodeAPIGetEventReviewsParams(args [1]string, argsEscaped bool, r *http.Request) (params APIGetEventReviewsParams, _ error) {
+	q := uri.NewQueryDecoder(r.URL.Query())
+	h := uri.NewHeaderDecoder(r.Header)
+	// Decode path: event_id.
+	if err := func() error {
+		param := args[0]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[0])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "event_id",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToString(val)
+				if err != nil {
+					return err
+				}
+
+				params.EventID = c
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "event_id",
+			In:   "path",
+			Err:  err,
+		}
+	}
+	// Decode header: Cookie.
+	if err := func() error {
+		cfg := uri.HeaderParameterDecodingConfig{
+			Name:    "Cookie",
+			Explode: false,
+		}
+		if err := h.HasParam(cfg); err == nil {
+			if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotCookieVal string
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotCookieVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.Cookie.SetTo(paramsDotCookieVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "Cookie",
+			In:   "header",
+			Err:  err,
+		}
+	}
+	// Decode query: limit.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "limit",
+			Style:   uri.QueryStyleForm,
+			Explode: false,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotLimitVal int64
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToInt64(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotLimitVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.Limit.SetTo(paramsDotLimitVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "limit",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	// Decode query: offset.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "offset",
+			Style:   uri.QueryStyleForm,
+			Explode: false,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotOffsetVal int64
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToInt64(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotOffsetVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.Offset.SetTo(paramsDotOffsetVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "offset",
 			In:   "query",
 			Err:  err,
 		}
@@ -2722,6 +3055,174 @@ func unpackAPISessionParams(packed middleware.Parameters) (params APISessionPara
 
 func decodeAPISessionParams(args [0]string, argsEscaped bool, r *http.Request) (params APISessionParams, _ error) {
 	h := uri.NewHeaderDecoder(r.Header)
+	// Decode header: Cookie.
+	if err := func() error {
+		cfg := uri.HeaderParameterDecodingConfig{
+			Name:    "Cookie",
+			Explode: false,
+		}
+		if err := h.HasParam(cfg); err == nil {
+			if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotCookieVal string
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotCookieVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.Cookie.SetTo(paramsDotCookieVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "Cookie",
+			In:   "header",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
+// APIUpdateEventReviewParams is parameters of Api_updateEventReview operation.
+type APIUpdateEventReviewParams struct {
+	EventID  string
+	ReviewID string
+	Cookie   OptString `json:",omitempty,omitzero"`
+}
+
+func unpackAPIUpdateEventReviewParams(packed middleware.Parameters) (params APIUpdateEventReviewParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "event_id",
+			In:   "path",
+		}
+		params.EventID = packed[key].(string)
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "review_id",
+			In:   "path",
+		}
+		params.ReviewID = packed[key].(string)
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "Cookie",
+			In:   "header",
+		}
+		if v, ok := packed[key]; ok {
+			params.Cookie = v.(OptString)
+		}
+	}
+	return params
+}
+
+func decodeAPIUpdateEventReviewParams(args [2]string, argsEscaped bool, r *http.Request) (params APIUpdateEventReviewParams, _ error) {
+	h := uri.NewHeaderDecoder(r.Header)
+	// Decode path: event_id.
+	if err := func() error {
+		param := args[0]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[0])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "event_id",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToString(val)
+				if err != nil {
+					return err
+				}
+
+				params.EventID = c
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "event_id",
+			In:   "path",
+			Err:  err,
+		}
+	}
+	// Decode path: review_id.
+	if err := func() error {
+		param := args[1]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[1])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "review_id",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToString(val)
+				if err != nil {
+					return err
+				}
+
+				params.ReviewID = c
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "review_id",
+			In:   "path",
+			Err:  err,
+		}
+	}
 	// Decode header: Cookie.
 	if err := func() error {
 		cfg := uri.HeaderParameterDecodingConfig{

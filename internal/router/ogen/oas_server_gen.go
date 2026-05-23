@@ -14,6 +14,12 @@ type Handler interface {
 	//
 	// POST /events
 	APICreateEvent(ctx context.Context, req *CreateEventRequest, params APICreateEventParams) (APICreateEventRes, error)
+	// APICreateEventReview implements Api_createEventReview operation.
+	//
+	// Create a review for an event.
+	//
+	// POST /events/{event_id}/reviews
+	APICreateEventReview(ctx context.Context, req *CreateReviewRequest, params APICreateEventReviewParams) (APICreateEventReviewRes, error)
 	// APIDislikeEvent implements Api_dislikeEvent operation.
 	//
 	// Dislike event by id.
@@ -26,6 +32,12 @@ type Handler interface {
 	//
 	// GET /events/{id}
 	APIGetEvent(ctx context.Context, params APIGetEventParams) (APIGetEventRes, error)
+	// APIGetEventReviews implements Api_getEventReviews operation.
+	//
+	// Get reviews for an event.
+	//
+	// GET /events/{event_id}/reviews
+	APIGetEventReviews(ctx context.Context, params APIGetEventReviewsParams) (APIGetEventReviewsRes, error)
 	// APIGetEvents implements Api_getEvents operation.
 	//
 	// Get events with filtering and pagination.
@@ -92,6 +104,12 @@ type Handler interface {
 	//
 	// POST /session
 	APISession(ctx context.Context, params APISessionParams) (APISessionRes, error)
+	// APIUpdateEventReview implements Api_updateEventReview operation.
+	//
+	// Update a review for an event.
+	//
+	// PATCH /events/{event_id}/reviews/{review_id}
+	APIUpdateEventReview(ctx context.Context, req *UpdateReviewRequest, params APIUpdateEventReviewParams) (APIUpdateEventReviewRes, error)
 }
 
 // Server implements http server based on OpenAPI v3 specification and

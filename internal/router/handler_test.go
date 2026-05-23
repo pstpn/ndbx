@@ -62,7 +62,7 @@ func TestHandler_APIHealth(t *testing.T) {
 			}
 			w := httptest.NewRecorder()
 
-			h := newHandler(t, sessionService, userService, eventService)
+			h := newHandler(t, sessionService, userService, eventService, mock.Mock[router.ReviewService](ctrl))
 			srv, err := oas.NewServer(h)
 			require.NoError(t, err)
 
@@ -150,7 +150,7 @@ func TestHandler_APISession(t *testing.T) {
 			sessionService := mock.Mock[router.SessionService](ctrl)
 			userService := mock.Mock[router.UserService](ctrl)
 			eventService := mock.Mock[router.EventService](ctrl)
-			h := newHandler(t, sessionService, userService, eventService)
+			h := newHandler(t, sessionService, userService, eventService, mock.Mock[router.ReviewService](ctrl))
 			if tt.setup != nil {
 				tt.setup(h)
 			}
@@ -295,7 +295,7 @@ func TestHandler_APIRegister(t *testing.T) {
 			sessionService := mock.Mock[router.SessionService](ctrl)
 			userService := mock.Mock[router.UserService](ctrl)
 			eventService := mock.Mock[router.EventService](ctrl)
-			h := newHandler(t, sessionService, userService, eventService)
+			h := newHandler(t, sessionService, userService, eventService, mock.Mock[router.ReviewService](ctrl))
 			if tt.setup != nil {
 				tt.setup(h)
 			}
@@ -422,7 +422,7 @@ func TestHandler_APILogin(t *testing.T) {
 			sessionService := mock.Mock[router.SessionService](ctrl)
 			userService := mock.Mock[router.UserService](ctrl)
 			eventService := mock.Mock[router.EventService](ctrl)
-			h := newHandler(t, sessionService, userService, eventService)
+			h := newHandler(t, sessionService, userService, eventService, mock.Mock[router.ReviewService](ctrl))
 			if tt.setup != nil {
 				tt.setup(h)
 			}
@@ -501,7 +501,7 @@ func TestHandler_APILogout(t *testing.T) {
 			sessionService := mock.Mock[router.SessionService](ctrl)
 			userService := mock.Mock[router.UserService](ctrl)
 			eventService := mock.Mock[router.EventService](ctrl)
-			h := newHandler(t, sessionService, userService, eventService)
+			h := newHandler(t, sessionService, userService, eventService, mock.Mock[router.ReviewService](ctrl))
 			if tt.setup != nil {
 				tt.setup(h)
 			}
@@ -689,7 +689,7 @@ func TestHandler_APICreateEvent(t *testing.T) {
 			sessionService := mock.Mock[router.SessionService](ctrl)
 			userService := mock.Mock[router.UserService](ctrl)
 			eventService := mock.Mock[router.EventService](ctrl)
-			h := newHandler(t, sessionService, userService, eventService)
+			h := newHandler(t, sessionService, userService, eventService, mock.Mock[router.ReviewService](ctrl))
 			if tt.setup != nil {
 				tt.setup(h)
 			}
@@ -840,7 +840,7 @@ func TestHandler_APIGetEvents(t *testing.T) {
 			sessionService := mock.Mock[router.SessionService](ctrl)
 			userService := mock.Mock[router.UserService](ctrl)
 			eventService := mock.Mock[router.EventService](ctrl)
-			h := newHandler(t, sessionService, userService, eventService)
+			h := newHandler(t, sessionService, userService, eventService, mock.Mock[router.ReviewService](ctrl))
 			if tt.setup != nil {
 				tt.setup(h)
 			}
@@ -953,7 +953,7 @@ func TestHandler_APIGetEvent(t *testing.T) {
 			sessionService := mock.Mock[router.SessionService](ctrl)
 			userService := mock.Mock[router.UserService](ctrl)
 			eventService := mock.Mock[router.EventService](ctrl)
-			h := newHandler(t, sessionService, userService, eventService)
+			h := newHandler(t, sessionService, userService, eventService, mock.Mock[router.ReviewService](ctrl))
 			if tt.setup != nil {
 				tt.setup(h)
 			}
@@ -1121,7 +1121,7 @@ func TestHandler_APIPatchEvent(t *testing.T) {
 			sessionService := mock.Mock[router.SessionService](ctrl)
 			userService := mock.Mock[router.UserService](ctrl)
 			eventService := mock.Mock[router.EventService](ctrl)
-			h := newHandler(t, sessionService, userService, eventService)
+			h := newHandler(t, sessionService, userService, eventService, mock.Mock[router.ReviewService](ctrl))
 			if tt.setup != nil {
 				tt.setup(h)
 			}
@@ -1195,7 +1195,7 @@ func TestHandler_APIGetUsers(t *testing.T) {
 			sessionService := mock.Mock[router.SessionService](ctrl)
 			userService := mock.Mock[router.UserService](ctrl)
 			eventService := mock.Mock[router.EventService](ctrl)
-			h := newHandler(t, sessionService, userService, eventService)
+			h := newHandler(t, sessionService, userService, eventService, mock.Mock[router.ReviewService](ctrl))
 			if tt.setup != nil {
 				tt.setup(h)
 			}
@@ -1257,7 +1257,7 @@ func TestHandler_APIGetUser(t *testing.T) {
 			sessionService := mock.Mock[router.SessionService](ctrl)
 			userService := mock.Mock[router.UserService](ctrl)
 			eventService := mock.Mock[router.EventService](ctrl)
-			h := newHandler(t, sessionService, userService, eventService)
+			h := newHandler(t, sessionService, userService, eventService, mock.Mock[router.ReviewService](ctrl))
 			if tt.setup != nil {
 				tt.setup(h)
 			}
@@ -1355,7 +1355,7 @@ func TestHandler_APIGetUserEvents(t *testing.T) {
 			sessionService := mock.Mock[router.SessionService](ctrl)
 			userService := mock.Mock[router.UserService](ctrl)
 			eventService := mock.Mock[router.EventService](ctrl)
-			h := newHandler(t, sessionService, userService, eventService)
+			h := newHandler(t, sessionService, userService, eventService, mock.Mock[router.ReviewService](ctrl))
 			if tt.setup != nil {
 				tt.setup(h)
 			}
@@ -1389,10 +1389,11 @@ func newHandler(
 	sessionService router.SessionService,
 	userService router.UserService,
 	eventService router.EventService,
+	reviewService router.ReviewService,
 ) *router.Handler {
 	t.Helper()
 
-	return router.NewHandler(logger.NewWithOutput("debug", io.Discard), sessionService, userService, eventService, mockTTL)
+	return router.NewHandler(logger.NewWithOutput("debug", io.Discard), sessionService, userService, eventService, reviewService, mockTTL)
 }
 
 func createEventRequestBody(title string, description string, address string, startedAt string, finishedAt string) string {

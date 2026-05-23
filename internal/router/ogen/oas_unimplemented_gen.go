@@ -22,6 +22,15 @@ func (UnimplementedHandler) APICreateEvent(ctx context.Context, req *CreateEvent
 	return r, ht.ErrNotImplemented
 }
 
+// APICreateEventReview implements Api_createEventReview operation.
+//
+// Create a review for an event.
+//
+// POST /events/{event_id}/reviews
+func (UnimplementedHandler) APICreateEventReview(ctx context.Context, req *CreateReviewRequest, params APICreateEventReviewParams) (r APICreateEventReviewRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // APIDislikeEvent implements Api_dislikeEvent operation.
 //
 // Dislike event by id.
@@ -37,6 +46,15 @@ func (UnimplementedHandler) APIDislikeEvent(ctx context.Context, params APIDisli
 //
 // GET /events/{id}
 func (UnimplementedHandler) APIGetEvent(ctx context.Context, params APIGetEventParams) (r APIGetEventRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// APIGetEventReviews implements Api_getEventReviews operation.
+//
+// Get reviews for an event.
+//
+// GET /events/{event_id}/reviews
+func (UnimplementedHandler) APIGetEventReviews(ctx context.Context, params APIGetEventReviewsParams) (r APIGetEventReviewsRes, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -136,5 +154,14 @@ func (UnimplementedHandler) APIRegister(ctx context.Context, req *UserRegisterRe
 //
 // POST /session
 func (UnimplementedHandler) APISession(ctx context.Context, params APISessionParams) (r APISessionRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// APIUpdateEventReview implements Api_updateEventReview operation.
+//
+// Update a review for an event.
+//
+// PATCH /events/{event_id}/reviews/{review_id}
+func (UnimplementedHandler) APIUpdateEventReview(ctx context.Context, req *UpdateReviewRequest, params APIUpdateEventReviewParams) (r APIUpdateEventReviewRes, _ error) {
 	return r, ht.ErrNotImplemented
 }
