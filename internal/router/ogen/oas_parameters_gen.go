@@ -1483,6 +1483,68 @@ func decodeAPIGetEventsParams(args [0]string, argsEscaped bool, r *http.Request)
 	return params, nil
 }
 
+// APIGetRecommendationsParams is parameters of Api_getRecommendations operation.
+type APIGetRecommendationsParams struct {
+	Cookie OptString `json:",omitempty,omitzero"`
+}
+
+func unpackAPIGetRecommendationsParams(packed middleware.Parameters) (params APIGetRecommendationsParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "Cookie",
+			In:   "header",
+		}
+		if v, ok := packed[key]; ok {
+			params.Cookie = v.(OptString)
+		}
+	}
+	return params
+}
+
+func decodeAPIGetRecommendationsParams(args [0]string, argsEscaped bool, r *http.Request) (params APIGetRecommendationsParams, _ error) {
+	h := uri.NewHeaderDecoder(r.Header)
+	// Decode header: Cookie.
+	if err := func() error {
+		cfg := uri.HeaderParameterDecodingConfig{
+			Name:    "Cookie",
+			Explode: false,
+		}
+		if err := h.HasParam(cfg); err == nil {
+			if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotCookieVal string
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotCookieVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.Cookie.SetTo(paramsDotCookieVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "Cookie",
+			In:   "header",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
 // APIGetUserParams is parameters of Api_getUser operation.
 type APIGetUserParams struct {
 	ID     string

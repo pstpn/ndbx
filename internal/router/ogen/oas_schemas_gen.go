@@ -134,6 +134,11 @@ type APIDislikeEventUnauthorized struct{}
 
 func (*APIDislikeEventUnauthorized) aPIDislikeEventRes() {}
 
+// APIGetRecommendationsUnauthorized is response for APIGetRecommendations operation.
+type APIGetRecommendationsUnauthorized struct{}
+
+func (*APIGetRecommendationsUnauthorized) aPIGetRecommendationsRes() {}
+
 // APILikeEventNoContent is response for APILikeEvent operation.
 type APILikeEventNoContent struct {
 	SetCookie string
@@ -494,22 +499,23 @@ func (s *ErrorResponseStatusCodeWithHeaders) SetResponse(val ErrorResponse) {
 	s.Response = val
 }
 
-func (*ErrorResponseStatusCodeWithHeaders) aPICreateEventRes()       {}
-func (*ErrorResponseStatusCodeWithHeaders) aPICreateEventReviewRes() {}
-func (*ErrorResponseStatusCodeWithHeaders) aPIDislikeEventRes()      {}
-func (*ErrorResponseStatusCodeWithHeaders) aPIGetEventRes()          {}
-func (*ErrorResponseStatusCodeWithHeaders) aPIGetEventReviewsRes()   {}
-func (*ErrorResponseStatusCodeWithHeaders) aPIGetEventsRes()         {}
-func (*ErrorResponseStatusCodeWithHeaders) aPIGetUserEventsRes()     {}
-func (*ErrorResponseStatusCodeWithHeaders) aPIGetUserRes()           {}
-func (*ErrorResponseStatusCodeWithHeaders) aPIGetUsersRes()          {}
-func (*ErrorResponseStatusCodeWithHeaders) aPILikeEventRes()         {}
-func (*ErrorResponseStatusCodeWithHeaders) aPILoginRes()             {}
-func (*ErrorResponseStatusCodeWithHeaders) aPILogoutRes()            {}
-func (*ErrorResponseStatusCodeWithHeaders) aPIPatchEventRes()        {}
-func (*ErrorResponseStatusCodeWithHeaders) aPIRegisterRes()          {}
-func (*ErrorResponseStatusCodeWithHeaders) aPISessionRes()           {}
-func (*ErrorResponseStatusCodeWithHeaders) aPIUpdateEventReviewRes() {}
+func (*ErrorResponseStatusCodeWithHeaders) aPICreateEventRes()        {}
+func (*ErrorResponseStatusCodeWithHeaders) aPICreateEventReviewRes()  {}
+func (*ErrorResponseStatusCodeWithHeaders) aPIDislikeEventRes()       {}
+func (*ErrorResponseStatusCodeWithHeaders) aPIGetEventRes()           {}
+func (*ErrorResponseStatusCodeWithHeaders) aPIGetEventReviewsRes()    {}
+func (*ErrorResponseStatusCodeWithHeaders) aPIGetEventsRes()          {}
+func (*ErrorResponseStatusCodeWithHeaders) aPIGetRecommendationsRes() {}
+func (*ErrorResponseStatusCodeWithHeaders) aPIGetUserEventsRes()      {}
+func (*ErrorResponseStatusCodeWithHeaders) aPIGetUserRes()            {}
+func (*ErrorResponseStatusCodeWithHeaders) aPIGetUsersRes()           {}
+func (*ErrorResponseStatusCodeWithHeaders) aPILikeEventRes()          {}
+func (*ErrorResponseStatusCodeWithHeaders) aPILoginRes()              {}
+func (*ErrorResponseStatusCodeWithHeaders) aPILogoutRes()             {}
+func (*ErrorResponseStatusCodeWithHeaders) aPIPatchEventRes()         {}
+func (*ErrorResponseStatusCodeWithHeaders) aPIRegisterRes()           {}
+func (*ErrorResponseStatusCodeWithHeaders) aPISessionRes()            {}
+func (*ErrorResponseStatusCodeWithHeaders) aPIUpdateEventReviewRes()  {}
 
 // Ref: #/components/schemas/EventCategory
 type EventCategory string
@@ -844,6 +850,49 @@ func (s *GetEventsResponseHeaders) SetResponse(val GetEventsResponse) {
 
 func (*GetEventsResponseHeaders) aPIGetEventsRes()     {}
 func (*GetEventsResponseHeaders) aPIGetUserEventsRes() {}
+
+// Ref: #/components/schemas/GetRecommendationsResponse
+type GetRecommendationsResponse struct {
+	Events []EventData `json:"events"`
+}
+
+// GetEvents returns the value of Events.
+func (s *GetRecommendationsResponse) GetEvents() []EventData {
+	return s.Events
+}
+
+// SetEvents sets the value of Events.
+func (s *GetRecommendationsResponse) SetEvents(val []EventData) {
+	s.Events = val
+}
+
+// GetRecommendationsResponseHeaders wraps GetRecommendationsResponse with response headers.
+type GetRecommendationsResponseHeaders struct {
+	SetCookie string
+	Response  GetRecommendationsResponse
+}
+
+// GetSetCookie returns the value of SetCookie.
+func (s *GetRecommendationsResponseHeaders) GetSetCookie() string {
+	return s.SetCookie
+}
+
+// GetResponse returns the value of Response.
+func (s *GetRecommendationsResponseHeaders) GetResponse() GetRecommendationsResponse {
+	return s.Response
+}
+
+// SetSetCookie sets the value of SetCookie.
+func (s *GetRecommendationsResponseHeaders) SetSetCookie(val string) {
+	s.SetCookie = val
+}
+
+// SetResponse sets the value of Response.
+func (s *GetRecommendationsResponseHeaders) SetResponse(val GetRecommendationsResponse) {
+	s.Response = val
+}
+
+func (*GetRecommendationsResponseHeaders) aPIGetRecommendationsRes() {}
 
 // Ref: #/components/schemas/GetReviewsResponse
 type GetReviewsResponse struct {

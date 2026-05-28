@@ -21,14 +21,16 @@ type UserStorage interface {
 }
 
 type UserService struct {
-	l       logger.Interface
-	storage UserStorage
+	l            logger.Interface
+	storage      UserStorage
+	graphStorage GraphStorageInterface
 }
 
-func NewUserService(l logger.Interface, storage UserStorage) *UserService {
+func NewUserService(l logger.Interface, storage UserStorage, graphStorage GraphStorageInterface) *UserService {
 	return &UserService{
-		l:       l,
-		storage: storage,
+		l:            l,
+		storage:      storage,
+		graphStorage: graphStorage,
 	}
 }
 
@@ -48,6 +50,10 @@ func (s *UserService) Register(ctx context.Context, req *sdto.RegisterReq) (*sdt
 			err = ErrUserAlreadyExists
 		}
 		return nil, fmt.Errorf("create user: %w", err)
+	}
+
+	if err := s.graphStorage.CreateUser(ctx, user.ID); err != nil {
+		s.l.Errorf("failed to create user in neo4j: %s", err.Error())
 	}
 
 	return &sdto.RegisterResp{ID: user.ID}, nil

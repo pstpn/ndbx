@@ -49,13 +49,18 @@ type ReviewService interface {
 	UpdateReview(ctx context.Context, req *dto.UpdateReviewReq) error
 }
 
+type RecommendationService interface {
+	GetRecommendations(ctx context.Context, req *dto.GetRecommendationsReq) (*dto.GetRecommendationsResp, error)
+}
+
 type Handler struct {
-	l                 logger.Interface
-	SessionService    SessionService
-	UserService       UserService
-	EventService      EventService
-	ReviewService     ReviewService
-	sessionTTLSeconds int
+	l                     logger.Interface
+	SessionService        SessionService
+	UserService           UserService
+	EventService          EventService
+	ReviewService         ReviewService
+	RecommendationService RecommendationService
+	sessionTTLSeconds     int
 }
 
 func NewHandler(
@@ -64,15 +69,17 @@ func NewHandler(
 	userService UserService,
 	eventService EventService,
 	reviewService ReviewService,
+	recommendationService RecommendationService,
 	sessionTTLSeconds int,
 ) *Handler {
 	return &Handler{
-		l:                 l,
-		SessionService:    sessionService,
-		UserService:       userService,
-		EventService:      eventService,
-		ReviewService:     reviewService,
-		sessionTTLSeconds: sessionTTLSeconds,
+		l:                     l,
+		SessionService:        sessionService,
+		UserService:           userService,
+		EventService:          eventService,
+		ReviewService:         reviewService,
+		RecommendationService: recommendationService,
+		sessionTTLSeconds:     sessionTTLSeconds,
 	}
 }
 
@@ -880,6 +887,43 @@ func (h *Handler) APIUpdateEventReview(
 	h.extendSession(ctx, sid, session.UserID, "update review")
 
 	return &oas.APIUpdateEventReviewNoContent{SetCookie: setCookie}, nil
+}
+
+func (h *Handler) APIGetRecommendations(ctx context.Context, params oas.APIGetRecommendationsParams) (oas.APIGetRecommendationsRes, error) {
+	sid := extractSID(params.Cookie.Value)
+	setCookie := formSetCookie(sid, h.sessionTTLSeconds)
+
+	if sid == "" {
+		return &oas.APIGetRecommendationsUnauthorized{}, nil
+	}
+
+	session, err := h.SessionService.GetSession(ctx, &dto.GetSessionReq{SID: sid})
+	if err != nil {
+		if errors.Is(err, service.ErrNotFound) {
+			return &oas.APIGetRecommendationsUnauthorized{}, nil
+		}
+		h.l.Errorf("failed to get session: %s", err.Error())
+		return NewInternalError(), nil
+	}
+	if session.UserID == "" {
+		return &oas.APIGetRecommendationsUnauthorized{}, nil
+	}
+
+	resp, err := h.RecommendationService.GetRecommendations(ctx, &dto.GetRecommendationsReq{UserID: session.UserID})
+	if err != nil {
+		h.l.Errorf("failed to get recommendations: %s", err.Error())
+		return NewInternalError(), nil
+	}
+
+	events := make([]oas.EventData, len(resp.Events))
+	for i, event := range resp.Events {
+		events[i] = toOASEventData(&event, false, false)
+	}
+
+	return &oas.GetRecommendationsResponseHeaders{
+		SetCookie: setCookie,
+		Response:  oas.GetRecommendationsResponse{Events: events},
+	}, nil
 }
 
 // extractSID parses Cookie header to find X-Session-Id cookie value

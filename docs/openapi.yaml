@@ -430,6 +430,37 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HealthResponse'
+  /recommendations:
+    get:
+      operationId: Api_getRecommendations
+      summary: get recommended events for user
+      parameters:
+        - $ref: '#/components/parameters/GetRecommendationsRequest'
+      responses:
+        '200':
+          description: The request has succeeded.
+          headers:
+            Set-Cookie:
+              required: true
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetRecommendationsResponse'
+        '401':
+          description: Access is unauthorized.
+        default:
+          description: An unexpected error response.
+          headers:
+            Set-Cookie:
+              required: true
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /session:
     post:
       operationId: Api_session
@@ -783,6 +814,12 @@ components:
       schema:
         type: string
       explode: false
+    GetRecommendationsRequest:
+      name: Cookie
+      in: header
+      required: false
+      schema:
+        type: string
     GetUserEventsRequest.address:
       name: address
       in: query
@@ -1084,6 +1121,15 @@ components:
         count:
           type: integer
           format: int64
+    GetRecommendationsResponse:
+      type: object
+      required:
+        - events
+      properties:
+        events:
+          type: array
+          items:
+            $ref: '#/components/schemas/EventData'
     GetReviewsResponse:
       type: object
       required:

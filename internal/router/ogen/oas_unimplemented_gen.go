@@ -67,6 +67,15 @@ func (UnimplementedHandler) APIGetEvents(ctx context.Context, params APIGetEvent
 	return r, ht.ErrNotImplemented
 }
 
+// APIGetRecommendations implements Api_getRecommendations operation.
+//
+// Get recommended events for user.
+//
+// GET /recommendations
+func (UnimplementedHandler) APIGetRecommendations(ctx context.Context, params APIGetRecommendationsParams) (r APIGetRecommendationsRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // APIGetUser implements Api_getUser operation.
 //
 // Get user by id.

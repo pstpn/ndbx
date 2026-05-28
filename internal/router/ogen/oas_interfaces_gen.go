@@ -25,6 +25,10 @@ type APIGetEventsRes interface {
 	aPIGetEventsRes()
 }
 
+type APIGetRecommendationsRes interface {
+	aPIGetRecommendationsRes()
+}
+
 type APIGetUserEventsRes interface {
 	aPIGetUserEventsRes()
 }

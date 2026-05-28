@@ -50,6 +50,7 @@ type EventService struct {
 	reactionStorage EventReactionStorageInterface
 	reactionCache   EventReactionCacheInterface
 	reviewService   ReviewServiceInterface
+	graphStorage    GraphStorageInterface
 	reactionTTL     time.Duration
 }
 
@@ -59,6 +60,7 @@ func NewEventService(
 	reactionStorage EventReactionStorageInterface,
 	reactionCache EventReactionCacheInterface,
 	reviewService ReviewServiceInterface,
+	graphStorage GraphStorageInterface,
 	reactionTTLSeconds int,
 ) *EventService {
 	return &EventService{
@@ -67,6 +69,7 @@ func NewEventService(
 		reactionStorage: reactionStorage,
 		reactionCache:   reactionCache,
 		reviewService:   reviewService,
+		graphStorage:    graphStorage,
 		reactionTTL:     time.Duration(reactionTTLSeconds) * time.Second,
 	}
 }
@@ -85,6 +88,10 @@ func (s *EventService) CreateEvent(ctx context.Context, req *sdto.CreateEventReq
 			return nil, ErrAlreadyExists
 		}
 		return nil, fmt.Errorf("create event: %w", err)
+	}
+
+	if err := s.graphStorage.CreateEvent(ctx, event.ID, event.Title); err != nil {
+		s.l.Errorf("failed to create event in neo4j: %s", err.Error())
 	}
 
 	return &sdto.CreateEventResp{ID: event.ID}, nil
@@ -207,6 +214,12 @@ func (s *EventService) reactToEvent(ctx context.Context, req *sdto.ReactEventReq
 
 	if err := s.reactionStorage.UpsertReaction(ctx, req.ID, req.UserID, value, time.Now().UTC()); err != nil {
 		return fmt.Errorf("upsert reaction: %w", err)
+	}
+
+	if value == likeValue {
+		if err := s.graphStorage.AddLike(ctx, req.UserID, req.ID, event.Title); err != nil {
+			s.l.Errorf("failed to add like in neo4j: %s", err.Error())
+		}
 	}
 
 	reactions, err := s.reactionsByTitleNoCache(ctx, event.Title)
